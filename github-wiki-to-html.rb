@@ -79,7 +79,7 @@ wiki.pages.each do |page|
     canonical_url: canonical_url.to_s,
     wiki_page_url: wiki_page_url.to_s,
     article_title:,
-    page_footer: page_footer_html,
+    page_footer_html:,
 
     is_modified:,
     published_date_iso:,
@@ -112,7 +112,7 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   canonical_url: SITE_URL.to_s,
   wiki_page_url: WIKI_URL.to_s,
   article_title: HOME_HEADING,
-  page_footer: page_footer_html,
+  page_footer_html:,
 
   # Liquid does not support symbol keys, so stringify them.
   all_pages: pages_by_published_date.map { |page| page.transform_keys(&:to_s) },

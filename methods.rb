@@ -4,40 +4,38 @@
 # frozen_string_literal: true
 #
 
-# Tweak HTML converted from Markdown
+# Tweak HTML converted from Markdown.
 def postprocess_html(html)
   dom = Nokogiri::HTML5.fragment(html)
 
-  # Handle links with class="internal"
+  # Handle links converted from internal link syntax.
   dom.css('a.internal').each do |a|
     uri = URI(a['href'])
-    path = Pathname(uri.path)
 
-    # Strip the extension
-    path = path.sub_ext('')
+    # Strip the extension.
+    uri.path = Pathname(uri.path).sub_ext('').to_s
 
-    uri.path = path.to_s
     a['href'] = uri.to_s
   end
 
   dom.to_html
 end
 
-# Generate an HTML file
-def generate_html_file(output_filename, article_body_html, html_template, options)
+# Generate the HTML file.
+def generate_html_file(filename, article_body_html, html_template, options)
   article_body_html = postprocess_html(article_body_html)
 
-  # Render full HTML
+  # Render full HTML.
   full_html = html_template.render!({
-    site_url: SITE_URL.to_s,
     site_name: SITE_NAME,
-    home_url: HOME_URL.to_s,
+    site_url: SITE_URL.to_s,
     publisher_name: PUBLISHER_NAME,
     publisher_url: PUBLISHER_URL.to_s,
     publisher_logo_url: PUBLISHER_LOGO_URL.to_s,
+    home_url: HOME_URL.to_s,
     stylesheet_url: STYLESHEET_URL.to_s,
     mathjax_config_script_url: MATHJAX_CONFIG_SCRIPT_URL.to_s,
-    article_body: article_body_html,
+    article_body_html:,
     **options
   }.transform_keys(&:to_s), {
     strict_variables: true,
@@ -45,7 +43,7 @@ def generate_html_file(output_filename, article_body_html, html_template, option
   })
 
   # Write HTML to a file
-  output_file = OUTPUT_DIRECTORY.join(output_filename)
+  output_file = OUTPUT_DIRECTORY.join(filename)
   output_file.write(full_html)
 end
 
