@@ -1,39 +1,41 @@
 ##
-# Configuration for Gollum
+# Configuration for Gollum.
 #
 # frozen_string_literal: true
 #
 
-# Options for the Gollum::Wiki constructor
+# Options for the `Gollum::Wiki` constructor.
 GOLLUM_OPTIONS = {
-  # Base path for internal links
+  # Base path for internal links.
   base_path: HOME_URL.to_s,
 
-  # Convert spaces to hyphens in internal links
+  # Convert spaces to hyphens in internal links.
   hyphened_tag_lookup: true,
 
-  # Do not add class="editable" to section headings
+  # Do not add `class="editable"` to section headings.
   allow_editing: false,
 
-  # Keep Gollum's filter chain minimal
-  # :Tags - Convert internal links to standard Markdown links
-  # :Render - Render Markdown to HTML
+  # Override Gollum's filter chain to keep it minimal.
+  # `:Tags` - Convert internal links to standard Markdown links.
+  # `:Render` - Render Markdown to HTML.
   filter_chain: [:Tags, :Render],
 }
 
-# Use Commonmarker as the Markdown renderer
+# Use Commonmarker as the Markdown renderer.
 GitHub::Markup::Markdown::MARKDOWN_GEMS.clear
 GitHub::Markup::Markdown::MARKDOWN_GEMS['commonmarker'] = proc do |markdown|
   ::Commonmarker.to_html(markdown, options: {
     render: {
-      # Allow raw HTML tags to support <details> tags etc.
+      # Allow raw HTML tags to support `<details>` tags etc.
       unsafe: true,
     },
     extension: {
-      # Remove blacklisted HTML tags (GFM)
+      # Enable GFM extensions.
+      strikethrough: true,
       tagfilter: true,
-
-      # Enable footnote syntax (GFM)
+      table: true,
+      autolink: true,
+      tasklist: true,
       footnotes: true,
     },
   })
