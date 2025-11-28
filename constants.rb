@@ -57,7 +57,7 @@ STYLESHEET_URL = URI('/assets/css/style.css')
 # URL of the MathJax configuration script.
 MATHJAX_CONFIG_SCRIPT_URL = URI('/assets/js/mathjax-config.js')
 
-# Local path to the HTML template.
+# Local path to the HTML template file.
 HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 
 # Date format for article headers.
