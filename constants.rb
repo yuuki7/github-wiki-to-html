@@ -10,7 +10,10 @@
 WIKI_REPO = Pathname('./wikinder.wiki')
 
 # URL of the wiki
-WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki/')
+WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki')
+
+# URL with a trailing slash for joining purposes
+WIKI_URL_SLASH = URI(WIKI_URL.to_s.delete_suffix('/') + '/')
 
 ##
 # Constants for the converted site
@@ -18,9 +21,6 @@ WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki/')
 
 # Path to the output directory
 OUTPUT_DIRECTORY = Pathname('./wikinder.github.io')
-
-# Path to the HTML template file
-HTML_TEMPLATE_FILE = Pathname('./template.html.liquid')
 
 # Title of the site
 SITE_NAME = 'Wikinder'
@@ -30,6 +30,9 @@ SITE_URL = URI('https://wikinder.org/')
 
 # Base path for internal links
 BASE_PATH = Pathname(SITE_URL.path)
+
+# Path to the HTML template file
+HTML_TEMPLATE_FILE = Pathname('./template.html.liquid')
 
 # URL of the site logo
 LOGO_URL = URI.join(SITE_URL, '/assets/images/icon.jpg')

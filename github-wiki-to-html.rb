@@ -44,31 +44,33 @@ wiki.pages.each do |page|
   encoded_slug = URI.encode_uri_component(slug)
 
   # URL of the page on the converted site.
-  canonical_url = URI.join(SITE_URL, encoded_slug)
+  canonical_url = URI.join(SITE_URL, BASE_PATH.join(encoded_slug))
 
   # URL of the page on the wiki.
-  wiki_page_url = URI.join(WIKI_URL, encoded_slug)
+  wiki_page_url = URI.join(WIKI_URL_SLASH, encoded_slug)
 
-  # Get the first commit of the page (following renames)
-  first_commit = page.versions({
+  # Get the oldest commit of the page (following renames).
+  oldest_commit = page.versions({
     follow: true,
     per_page: 10000,
   }).last
 
-  last_commit = page.last_version
-  is_modified = last_commit.id != first_commit.id
+  # Get the latest commit of the page.
+  latest_commit = page.last_version
+
+  is_modified = latest_commit.id != oldest_commit.id
 
   # Published date in UTC
-  published_date = first_commit.authored_date.getutc
+  published_date = oldest_commit.authored_date.getutc
   published_date_iso = published_date.iso8601
   published_date_display = published_date.strftime(DATE_FORMAT)
 
   # Last modified date in UTC
-  modified_date = last_commit.authored_date.getutc
+  modified_date = latest_commit.authored_date.getutc
   modified_date_iso = modified_date.iso8601
   modified_date_display = modified_date.strftime(DATE_FORMAT)
 
-  author_name = first_commit.author.name
+  author_name = oldest_commit.author.name
 
   # Generate the HTML file
   generate_html_file("#{slug}.html", page.formatted_data, html_template, {
@@ -102,7 +104,7 @@ end
 generate_html_file('index.html', home_page.formatted_data, html_template, {
   'is_home' => true,
   'canonical_url' => SITE_URL.to_s,
-  'wiki_page_url' => WIKI_URL.to_s.delete_suffix('/'), # Remove the trailing slash
+  'wiki_page_url' => WIKI_URL.to_s,
   'article_title' => SITE_NAME,
   'page_footer' => page_footer_html,
 
