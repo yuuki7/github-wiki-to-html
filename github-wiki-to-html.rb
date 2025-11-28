@@ -1,3 +1,6 @@
+##
+# Main script
+#
 require 'cgi'
 require 'pathname'
 require 'uri'
