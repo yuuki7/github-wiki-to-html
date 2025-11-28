@@ -25,13 +25,13 @@ end
 def generate_html_file(filename, article_body_html, html_template, options)
   article_body_html = postprocess_html(article_body_html)
 
-  options[:article_title] = CGI.escape_html(options[:article_title])
+  [:article_title, :author_name].each do |key|
+    options[key] = CGI.escape_html(options[key]) if options[key]
+  end
 
-  if options[:all_pages]
-    options[:all_pages].map! do |page|
-      page.merge(title: CGI.escape_html(page[:title]))
-        .transform_keys(&:to_s) # Stringify symbol keys for Liquid.
-    end
+  options[:all_pages]&.map! do |page|
+    page.merge(title: CGI.escape_html(page[:title]))
+      .transform_keys(&:to_s) # Stringify symbol keys for Liquid.
   end
 
   # Render full HTML.
