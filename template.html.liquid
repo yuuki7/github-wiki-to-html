@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- OG meta tags -->
+    {% if is_home %}
+      <meta property="og:type" content="website">
+    {% else %}
+      <meta property="og:type" content="article">
+    {% endif %}
+
+    <meta property="og:title" content="{{ article_title }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ logo_url }}">
+    <!-- /OG meta tags -->
+
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary">
+    <!-- /Twitter Card meta tags -->
+
+    <title>{{ article_title }}</title>
+
+    <link rel="canonical" href="{{ canonical_url }}">
+    <link rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">
+    <link rel="stylesheet" href="{{ stylesheet_file }}">
+
+    <!-- MathJax -->
+    <script defer src="{{ mathjax_config_script }}"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/startup.js"
+      integrity="sha384-V8Uc+jzQMe7n4tFx1oAuCOiBj0WFbXurxmgghjXXzYHRKbpk8D/aCD16BkdE/MDh"
+      crossorigin="anonymous"
+    ></script>
+    <!-- /MathJax -->
+
+    <!-- Structured data -->
+    {% if is_home %}
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org/",
+          "@type": "WebSite",
+          "name": "{{ site_name }}",
+          "url": "{{ canonical_url }}",
+          "publisher": {
+            "@type": "Organization",
+            "name": "{{ site_name }}",
+            "url": "{{ site_url }}",
+            "logo": "{{ logo_url }}"
+          }
+        }
+      </script>
+    {% else %}
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org/",
+          "@type": "Article",
+          "headline": "{{ article_title }}",
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "{{ canonical_url }}"
+          },
+          "image": "{{ logo_url }}",
+          "datePublished": "{{ published_date_iso }}",
+          "dateModified": "{{ modified_date_iso }}",
+          "author": {
+            "@type": "Person",
+            "name": "{{ author_name }}"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "{{ site_name }}",
+            "url": "{{ site_url }}",
+            "logo": "{{ logo_url }}"
+          }
+        }
+      </script>
+    {% endif %}
+    <!-- /Structured data -->
+  </head>
+  <body>
+    <!-- Page header -->
+    <header>
+      <nav>
+        <p>
+          {% if is_home %}
+            {% for page in all_pages %}
+              <a href="{{ page.encoded_slug }}">{{ page.escaped_title }}</a>
+
+              {% unless forloop.last %}
+                ·
+              {% endunless %}
+            {% endfor %}
+          {% else %}
+            <a href="{{ base_path }}">{{ site_name }}</a>
+          {% endif %}
+        </p>
+      </nav>
+    </header>
+    <!-- /Page header -->
+
+    <!-- Page body -->
+    <main>
+      <article>
+        <!-- Article header -->
+        <header>
+          <h1>{{ article_title }}</h1>
+
+          {% unless is_home %}
+            <p>
+              <time datetime="{{ published_date_iso }}">{{ published_date_display }}</time>
+
+              {% if is_modified %}
+                · 🕒
+                <time datetime="{{ modified_date_iso }}">{{ modified_date_display }}</time>
+              {% endif %}
+            </p>
+          {% endunless %}
+        </header>
+        <!-- /Article header -->
+
+        <!-- Article body -->
+        <div>
+          {{ article_body }}
+        </div>
+        <!-- /Article body -->
+      </article>
+    </main>
+    <!-- /Page body -->
+
+    <!-- Page footer -->
+    <footer>
+      {{ page_footer }}
+
+      <p>
+        <a href="{{ wiki_page_url }}">Edit this page</a>
+      </p>
+    </footer>
+    <!-- /Page footer -->
+  </body>
+</html>

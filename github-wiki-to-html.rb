@@ -1,0 +1,139 @@
+require 'cgi'
+require 'pathname'
+require 'uri'
+
+require 'commonmarker'
+require 'gollum-lib'
+require 'liquid'
+require 'nokogiri'
+
+# Load constants
+require_relative './config'
+
+# Load Gollum configuration
+require_relative './gollum-config'
+
+# Load methods
+require_relative './utils'
+
+# Load the HTML template
+html_template = Liquid::Template.parse(HTML_TEMPLATE_FILE.read, error_mode: :strict)
+
+# Load the wiki
+wiki = Gollum::Wiki.new(WIKI_REPO.to_s, GOLLUM_OPTIONS)
+home_page = wiki.page('Home')
+page_footer_html = home_page.footer.formatted_data
+
+# Pages to list on the home page and sitemap
+all_pages = []
+
+# Generate individual article pages and add them to the list
+wiki.pages.each do |page|
+  # Skip non-Markdown pages
+  next unless page.format == :markdown
+
+  slug = page.filename_stripped
+
+  # Skip Home and special pages
+  next if slug =~ /^(?:Home|LICENSE|README)$/
+
+  article_title = slug.tr('-', ' ')
+  encoded_slug = URI.encode_uri_component(slug)
+
+  # URL of the page on the generated site
+  canonical_url = URI.join(SITE_URL, encoded_slug)
+
+  # URL of the page on the wiki
+  wiki_page_url = URI.join(WIKI_URL, encoded_slug)
+
+  # Get the first commit of the page (following renames)
+  first_commit = page.versions({
+    follow: true,
+    per_page: 10000,
+  }).last
+
+  last_commit = page.last_version
+  is_modified = last_commit.id != first_commit.id
+
+  # Published date in UTC
+  published_date = first_commit.authored_date.getutc
+  published_date_iso = published_date.iso8601
+  published_date_display = published_date.strftime(DATE_FORMAT)
+
+  # Last modified date in UTC
+  modified_date = last_commit.authored_date.getutc
+  modified_date_iso = modified_date.iso8601
+  modified_date_display = modified_date.strftime(DATE_FORMAT)
+
+  author_name = first_commit.author.name
+
+  # Generate the HTML file
+  generate_html_file("#{slug}.html", page.formatted_data, html_template, {
+    'is_home' => false,
+    'canonical_url' => canonical_url.to_s,
+    'wiki_page_url' => wiki_page_url.to_s,
+    'article_title' => article_title,
+    'page_footer' => page_footer_html,
+
+    'is_modified' => is_modified,
+    'published_date_display' => published_date_display,
+    'published_date_iso' => published_date_iso,
+    'modified_date_display' => modified_date_display,
+    'modified_date_iso' => modified_date_iso,
+    'author_name' => author_name,
+  })
+
+  # Add the page to the list
+  all_pages << {
+    encoded_slug: encoded_slug,
+    canonical_url: canonical_url,
+    title: article_title,
+    escaped_title: CGI.escapeHTML(article_title),
+    published_date: published_date,
+    modified_date: modified_date,
+    modified_date_iso: modified_date_iso,
+  }
+end
+
+# Generate the home page
+generate_html_file('index.html', home_page.formatted_data, html_template, {
+  'is_home' => true,
+  'canonical_url' => SITE_URL.to_s,
+  'wiki_page_url' => WIKI_URL.to_s.delete_suffix('/'), # Remove the trailing slash
+  'article_title' => SITE_NAME,
+  'page_footer' => page_footer_html,
+
+  # Sort pages by published date (newest first)
+  'all_pages' => all_pages
+    .reject { |page| page[:title].start_with?(SITE_NAME) } # Exclude About pages
+    .sort_by { |page| page[:published_date] }
+    .reverse
+    .map { |page| page.transform_keys(&:to_s) }, # Stringify keys because Liquid doesn't support symbols
+})
+
+# Generate the sitemap sorted by modified date (newest first)
+sitemap_urls_xml = all_pages
+  .sort_by { |page| page[:modified_date] }
+  .reverse
+  .map { |page|
+    <<~XML % page
+      <url>
+        <loc>%{canonical_url}</loc>
+        <lastmod>%{modified_date_iso}</lastmod>
+      </url>
+    XML
+  }
+  .join('')
+
+sitemap_xml = <<~XML
+  <?xml version="1.0" encoding="UTF-8"?>
+  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+      <loc>#{SITE_URL}</loc>
+    </url>
+    #{sitemap_urls_xml}
+  </urlset>
+XML
+
+sitemap_file = OUTPUT_DIRECTORY.join('sitemap.xml')
+sitemap_file.write(sitemap_xml)
