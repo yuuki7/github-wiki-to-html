@@ -43,7 +43,7 @@ wiki.pages.each do |page|
   encoded_slug = URI.encode_uri_component(slug)
 
   # URL of the page on the converted site.
-  canonical_url = URI.join(SITE_URL, BASE_PATH.join(encoded_slug).to_s)
+  canonical_url = URI.join(SITE_URL_SLASH, encoded_slug)
 
   # URL of the page on the wiki.
   wiki_page_url = URI.join(WIKI_URL_SLASH, encoded_slug)
@@ -109,7 +109,7 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   is_home: true,
   canonical_url: SITE_URL.to_s,
   wiki_page_url: WIKI_URL.to_s,
-  article_title: MAIN_HEADING,
+  article_title: HOME_HEADING,
   page_footer: page_footer_html,
 
   # Liquid does not support symbol keys, so stringify them.

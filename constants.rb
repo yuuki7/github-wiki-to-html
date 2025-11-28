@@ -38,7 +38,7 @@ SITE_URL_SLASH = URI("#{SITE_URL.to_s.delete_suffix('/')}/")
 BASE_PATH = Pathname(SITE_URL_SLASH.path)
 
 # URL of the site logo.
-LOGO_URL = URI.join(SITE_URL, '/assets/images/icon.jpg')
+LOGO_URL = URI.join(SITE_URL_SLASH, '/assets/images/icon.jpg')
 
 # Path to the stylesheet.
 STYLESHEET_FILE = Pathname('/assets/css/style.css')
@@ -49,5 +49,5 @@ MATHJAX_CONFIG_SCRIPT = Pathname('/assets/js/mathjax-config.js')
 # Path to the HTML template.
 HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 
-# Format for dates displayed on articles.
+# Date format for article headers.
 DISPLAY_DATE_FORMAT = '%B %-d, %-Y'
