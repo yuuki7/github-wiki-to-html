@@ -14,11 +14,12 @@
     <!-- OG meta tags -->
     {% if is_home %}
       <meta property="og:type" content="website">
+      <meta property="og:title" content="{{ site_name }}">
     {% else %}
       <meta property="og:type" content="article">
+      <meta property="og:title" content="{{ article_title }}">
     {% endif %}
 
-    <meta property="og:title" content="{{ article_title }}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:image" content="{{ logo_url }}">
     <!-- /OG meta tags -->
@@ -27,7 +28,11 @@
     <meta name="twitter:card" content="summary">
     <!-- /Twitter Card meta tags -->
 
-    <title>{{ article_title }}</title>
+    {% if is_home %}
+      <title>{{ site_name }}</title>
+    {% else %}
+      <title>{{ article_title }}</title>
+    {% endif %}
 
     <link rel="canonical" href="{{ canonical_url }}">
     <link rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">
@@ -47,7 +52,7 @@
     {% if is_home %}
       <script type="application/ld+json">
         {
-          "@context": "https://schema.org/",
+          "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "{{ site_name }}",
           "url": "{{ canonical_url }}",
@@ -62,7 +67,7 @@
     {% else %}
       <script type="application/ld+json">
         {
-          "@context": "https://schema.org/",
+          "@context": "https://schema.org",
           "@type": "Article",
           "headline": "{{ article_title }}",
           "mainEntityOfPage": {
@@ -113,7 +118,11 @@
       <article>
         <!-- Article header -->
         <header>
-          <h1>{{ article_title }}</h1>
+          {% if is_home %}
+            <h1>{{ main_heading }}</h1>
+          {% else %}
+            <h1>{{ article_title }}</h1>
+          {% endif %}
 
           {% unless is_home %}
             <p>

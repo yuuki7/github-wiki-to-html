@@ -44,7 +44,7 @@ wiki.pages.each do |page|
   encoded_slug = URI.encode_uri_component(slug)
 
   # URL of the page on the converted site.
-  canonical_url = URI.join(SITE_URL, BASE_PATH.join(encoded_slug))
+  canonical_url = URI.join(SITE_URL, BASE_PATH.join(encoded_slug).to_s)
 
   # URL of the page on the wiki.
   wiki_page_url = URI.join(WIKI_URL_SLASH, encoded_slug)
@@ -72,48 +72,49 @@ wiki.pages.each do |page|
 
   author_name = oldest_commit.author.name
 
-  # Generate the HTML file
+  # Generate the HTML file for the article.
   generate_html_file("#{slug}.html", page.formatted_data, html_template, {
-    'is_home' => false,
-    'canonical_url' => canonical_url.to_s,
-    'wiki_page_url' => wiki_page_url.to_s,
-    'article_title' => article_title,
-    'page_footer' => page_footer_html,
+    is_home: false,
+    canonical_url: canonical_url.to_s,
+    wiki_page_url: wiki_page_url.to_s,
+    page_footer: page_footer_html,
 
-    'is_modified' => is_modified,
-    'published_date_display' => published_date_display,
-    'published_date_iso' => published_date_iso,
-    'modified_date_display' => modified_date_display,
-    'modified_date_iso' => modified_date_iso,
-    'author_name' => author_name,
+    article_title:,
+    is_modified:,
+    published_date_iso:,
+    published_date_display:,
+    modified_date_iso:,
+    modified_date_display:,
+    author_name:,
   })
 
-  # Add the page to the list
+  # Add the page to the list.
   all_pages << {
-    encoded_slug: encoded_slug,
-    canonical_url: canonical_url,
+    encoded_slug:,
+    canonical_url:,
     title: article_title,
     escaped_title: CGI.escapeHTML(article_title),
-    published_date: published_date,
-    modified_date: modified_date,
-    modified_date_iso: modified_date_iso,
+    published_date:,
+    modified_date:,
+    modified_date_iso:,
   }
 end
 
-# Generate the home page
-generate_html_file('index.html', home_page.formatted_data, html_template, {
-  'is_home' => true,
-  'canonical_url' => SITE_URL.to_s,
-  'wiki_page_url' => WIKI_URL.to_s,
-  'article_title' => SITE_NAME,
-  'page_footer' => page_footer_html,
+# Pages sorted by published date (newest first).
+all_pages_by_date = all_pages
+  .reject { |page| page[:title].start_with?(SITE_NAME) } # Exclude About pages.
+  .sort_by { |page| page[:published_date] }
+  .reverse
 
-  # Sort pages by published date (newest first)
-  'all_pages' => all_pages
-    .reject { |page| page[:title].start_with?(SITE_NAME) } # Exclude About pages
-    .sort_by { |page| page[:published_date] }
-    .reverse
-    .map { |page| page.transform_keys(&:to_s) }, # Stringify keys because Liquid doesn't support symbols
+# Generate the HTML file for the home page.
+generate_html_file('index.html', home_page.formatted_data, html_template, {
+  is_home: true,
+  canonical_url: SITE_URL.to_s,
+  wiki_page_url: WIKI_URL.to_s,
+  page_footer: page_footer_html,
+
+  main_heading: MAIN_HEADING,
+  all_pages: all_pages_by_date.map { |page| page.transform_keys(&:to_s) },
 })
 
 # Generate the sitemap sorted by modified date (newest first)

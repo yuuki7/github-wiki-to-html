@@ -25,11 +25,14 @@ OUTPUT_DIRECTORY = Pathname('./wikinder.github.io')
 # Title of the site
 SITE_NAME = 'Wikinder'
 
+# Heading of the home page
+MAIN_HEADING = "Welcome to #{SITE_NAME}"
+
 # URL of the site
-SITE_URL = URI('https://wikinder.org/')
+SITE_URL = URI('https://wikinder.org')
 
 # Base path for internal links
-BASE_PATH = Pathname(SITE_URL.path)
+BASE_PATH = Pathname('/')
 
 # Path to the HTML template file
 HTML_TEMPLATE_FILE = Pathname('./template.html.liquid')

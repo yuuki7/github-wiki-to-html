@@ -30,15 +30,15 @@ def generate_html_file(output_filename, article_body_html, html_template, option
 
   # Render full HTML
   full_html = html_template.render!({
-    'site_url' => SITE_URL.to_s,
-    'site_name' => SITE_NAME,
-    'base_path' => BASE_PATH.to_s,
-    'logo_url' => LOGO_URL.to_s,
-    'stylesheet_file' => STYLESHEET_FILE.to_s,
-    'mathjax_config_script' => MATHJAX_CONFIG_SCRIPT.to_s,
-    'article_body' => article_body_html,
+    site_url: SITE_URL.to_s,
+    site_name: SITE_NAME,
+    base_path: BASE_PATH.to_s,
+    logo_url: LOGO_URL.to_s,
+    stylesheet_file: STYLESHEET_FILE.to_s,
+    mathjax_config_script: MATHJAX_CONFIG_SCRIPT.to_s,
+    article_body: article_body_html,
     **options
-  }, {
+  }.transform_keys(&:to_s), {
     strict_variables: true,
     strict_filters: true,
   })
