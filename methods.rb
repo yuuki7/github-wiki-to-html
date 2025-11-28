@@ -36,7 +36,7 @@ def generate_html_file(filename, article_body_html, html_template, options)
       .transform_keys(&:to_s) # Stringify symbol keys for Liquid.
   end
 
-  # Render full HTML.
+  # Render the full HTML.
   full_html = html_template.render!({
     site_name: CGI.escape_html(SITE_NAME),
     site_url: SITE_URL.to_s,
