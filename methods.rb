@@ -25,11 +25,20 @@ end
 def generate_html_file(filename, article_body_html, html_template, options)
   article_body_html = postprocess_html(article_body_html)
 
+  options[:article_title] = CGI.escape_html(options[:article_title])
+
+  if options[:all_pages]
+    options[:all_pages].map! do |page|
+      page.merge(title: CGI.escape_html(page[:title]))
+        .transform_keys(&:to_s) # Stringify symbol keys for Liquid.
+    end
+  end
+
   # Render full HTML.
   full_html = html_template.render!({
-    site_name: SITE_NAME,
+    site_name: CGI.escape_html(SITE_NAME),
     site_url: SITE_URL.to_s,
-    publisher_name: PUBLISHER_NAME,
+    publisher_name: CGI.escape_html(PUBLISHER_NAME),
     publisher_url: PUBLISHER_URL.to_s,
     publisher_logo_url: PUBLISHER_LOGO_URL.to_s,
     home_url: HOME_URL.to_s,
@@ -42,7 +51,7 @@ def generate_html_file(filename, article_body_html, html_template, options)
     strict_filters: true,
   })
 
-  # Write HTML to a file
+  # Write HTML to a file.
   output_file = OUTPUT_DIRECTORY.join(filename)
   output_file.write(full_html)
 end

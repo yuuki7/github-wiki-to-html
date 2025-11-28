@@ -3,6 +3,7 @@
 #
 # frozen_string_literal: true
 #
+require 'cgi'
 require 'pathname'
 require 'uri'
 
@@ -114,14 +115,11 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   article_title: HOME_HEADING,
   page_footer_html:,
 
-  # Liquid does not support symbol keys, so stringify them.
-  all_pages: pages_by_published_date.map { |page| page.transform_keys(&:to_s) },
+  all_pages: pages_by_published_date,
 })
 
 # Pages sorted by modified date (newest first).
-pages_by_modified_date = all_pages
-  .sort_by { |page| page[:modified_date] }
-  .reverse
+pages_by_modified_date = all_pages.sort_by { |page| page[:modified_date] }.reverse
 
 # Generate the sitemap file.
 generate_sitemap_file(pages_by_modified_date)
