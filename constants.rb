@@ -43,5 +43,5 @@ STYLESHEET_FILE = Pathname('/assets/css/style.css')
 # Path to the MathJax configuration script
 MATHJAX_CONFIG_SCRIPT = Pathname('/assets/js/mathjax-config.js')
 
-# Article date format for display
-DATE_FORMAT = '%B %-d, %-Y'
+# Format for dates displayed on articles
+DISPLAY_DATE_FORMAT = '%B %-d, %-Y'

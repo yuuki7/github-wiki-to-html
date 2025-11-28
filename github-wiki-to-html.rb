@@ -52,7 +52,7 @@ wiki.pages.each do |page|
   # Get the oldest commit of the page (following renames).
   oldest_commit = page.versions({
     follow: true,
-    per_page: 10000,
+    per_page: 100_000,
   }).last
 
   # Get the latest commit of the page.
@@ -60,15 +60,15 @@ wiki.pages.each do |page|
 
   is_modified = latest_commit.id != oldest_commit.id
 
-  # Published date in UTC
+  # Published date in UTC.
   published_date = oldest_commit.authored_date.getutc
   published_date_iso = published_date.iso8601
-  published_date_display = published_date.strftime(DATE_FORMAT)
+  published_date_display = published_date.strftime(DISPLAY_DATE_FORMAT)
 
-  # Last modified date in UTC
+  # Last modified date in UTC.
   modified_date = latest_commit.authored_date.getutc
   modified_date_iso = modified_date.iso8601
-  modified_date_display = modified_date.strftime(DATE_FORMAT)
+  modified_date_display = modified_date.strftime(DISPLAY_DATE_FORMAT)
 
   author_name = oldest_commit.author.name
 
