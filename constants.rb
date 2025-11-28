@@ -13,7 +13,7 @@ WIKI_REPO = Pathname('./wikinder.wiki')
 WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki/')
 
 ##
-# Constants for the generated site
+# Constants for the converted site
 #
 
 # Path to the output directory

@@ -10,43 +10,43 @@ require 'gollum-lib'
 require 'liquid'
 require 'nokogiri'
 
-# Load constants
+# Load constants.
 require_relative 'constants'
 
-# Load methods
+# Load methods.
 require_relative 'methods'
 
-# Load Gollum configuration
+# Load Gollum configuration.
 require_relative 'gollum-config'
 
-# Load the HTML template
-html_template = Liquid::Template.parse(HTML_TEMPLATE_FILE.read, error_mode: :strict)
+# Load the HTML template.
+html_template = Liquid::Template.parse(HTML_TEMPLATE_FILE.read, error_mode: :strict2)
 
-# Load the wiki
+# Load the wiki.
 wiki = Gollum::Wiki.new(WIKI_REPO.to_s, GOLLUM_OPTIONS)
 home_page = wiki.page('Home')
 page_footer_html = home_page.footer.formatted_data
 
-# Pages to list on the home page and sitemap
+# Pages to list on the home page and sitemap.
 all_pages = []
 
-# Generate individual article pages and add them to the list
+# Generate individual article pages and add them to the list.
 wiki.pages.each do |page|
-  # Skip non-Markdown pages
+  # Skip non-Markdown pages.
   next unless page.format == :markdown
 
   slug = page.filename_stripped
 
-  # Skip Home and special pages
+  # Skip Home and special pages.
   next if slug =~ /^(?:Home|LICENSE|README)$/
 
   article_title = slug.tr('-', ' ')
   encoded_slug = URI.encode_uri_component(slug)
 
-  # URL of the page on the generated site
+  # URL of the page on the converted site.
   canonical_url = URI.join(SITE_URL, encoded_slug)
 
-  # URL of the page on the wiki
+  # URL of the page on the wiki.
   wiki_page_url = URI.join(WIKI_URL, encoded_slug)
 
   # Get the first commit of the page (following renames)
