@@ -1,5 +1,5 @@
 ##
-# Main script
+# Main script, intended to be run by `github-wiki-to-html.sh`.
 #
 require 'cgi'
 require 'pathname'

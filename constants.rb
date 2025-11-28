@@ -1,5 +1,5 @@
 ##
-# Constants for use in the main script
+# Constants for use in the main script.
 #
 
 ##
