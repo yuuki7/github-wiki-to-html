@@ -21,7 +21,7 @@
     {% endif %}
 
     <meta property="og:url" content="{{ canonical_url }}">
-    <meta property="og:image" content="{{ logo_url }}">
+    <meta property="og:image" content="{{ publisher_logo_url }}">
     <!-- /OG meta tags -->
 
     <!-- Twitter Card meta tags -->
@@ -36,10 +36,10 @@
 
     <link rel="canonical" href="{{ canonical_url }}">
     <link rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">
-    <link rel="stylesheet" href="{{ stylesheet_file }}">
+    <link rel="stylesheet" href="{{ stylesheet_url }}">
 
     <!-- MathJax -->
-    <script defer src="{{ mathjax_config_script }}"></script>
+    <script defer src="{{ mathjax_config_script_url }}"></script>
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/startup.js"
@@ -58,9 +58,9 @@
           "url": "{{ canonical_url }}",
           "publisher": {
             "@type": "Organization",
-            "name": "{{ site_name }}",
-            "url": "{{ site_url }}",
-            "logo": "{{ logo_url }}"
+            "name": "{{ publisher_name }}",
+            "url": "{{ publisher_url }}",
+            "logo": "{{ publisher_logo_url }}"
           }
         }
       </script>
@@ -74,7 +74,7 @@
             "@type": "WebPage",
             "@id": "{{ canonical_url }}"
           },
-          "image": "{{ logo_url }}",
+          "image": "{{ publisher_logo_url }}",
           "datePublished": "{{ published_date_iso }}",
           "dateModified": "{{ modified_date_iso }}",
           "author": {
@@ -83,9 +83,9 @@
           },
           "publisher": {
             "@type": "Organization",
-            "name": "{{ site_name }}",
-            "url": "{{ site_url }}",
-            "logo": "{{ logo_url }}"
+            "name": "{{ publisher_name }}",
+            "url": "{{ publisher_url }}",
+            "logo": "{{ publisher_logo_url }}"
           }
         }
       </script>
@@ -99,14 +99,14 @@
         <p>
           {% if is_home %}
             {% for page in all_pages %}
-              <a href="{{ page.url }}">{{ page.title | escape }}</a>
+              <a href="{{ page.url }}">{{ page.title }}</a>
 
               {% unless forloop.last %}
                 ·
               {% endunless %}
             {% endfor %}
           {% else %}
-            <a href="{{ base_path }}">{{ site_name }}</a>
+            <a href="{{ home_url }}">{{ site_name }}</a>
           {% endif %}
         </p>
       </nav>

@@ -1,11 +1,13 @@
 ##
 # Configuration for Gollum
 #
+# frozen_string_literal: true
+#
 
 # Options for the Gollum::Wiki constructor
 GOLLUM_OPTIONS = {
   # Base path for internal links
-  base_path: BASE_PATH.to_s,
+  base_path: HOME_URL.to_s,
 
   # Convert spaces to hyphens in internal links
   hyphened_tag_lookup: true,

@@ -1,6 +1,8 @@
 ##
 # Main script, intended to be run by `github-wiki-to-html.sh`.
 #
+# frozen_string_literal: true
+#
 require 'pathname'
 require 'uri'
 
@@ -43,10 +45,10 @@ wiki.pages.each do |page|
   encoded_slug = URI.encode_uri_component(slug)
 
   # URL of the page on the converted site.
-  canonical_url = URI.join(SITE_URL_SLASH, encoded_slug)
+  canonical_url = SITE_URL_SLASH.merge(encoded_slug)
 
   # URL of the page on the wiki.
-  wiki_page_url = URI.join(WIKI_URL_SLASH, encoded_slug)
+  wiki_page_url = WIKI_URL_SLASH.merge(encoded_slug)
 
   # Get the oldest commit of the page (following renames).
   oldest_commit = page.versions({
@@ -89,7 +91,7 @@ wiki.pages.each do |page|
 
   # Add the page to the list.
   all_pages << {
-    url: BASE_PATH.join(encoded_slug).to_s,
+    url: Pathname(HOME_URL_SLASH).join(encoded_slug).to_s,
     canonical_url:,
     title: article_title,
     published_date:,
