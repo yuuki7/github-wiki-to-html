@@ -24,6 +24,9 @@ WIKI_URL_SLASH = URI("#{WIKI_URL.to_s.delete_suffix('/')}/")
 # Local path to the output directory.
 OUTPUT_DIRECTORY = Pathname('wikinder.github.io')
 
+# Local path to the HTML template file.
+HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
+
 # Title of the site.
 SITE_NAME = 'Wikinder'
 
@@ -56,9 +59,6 @@ STYLESHEET_URL = URI('/assets/css/style.css')
 
 # URL of the MathJax configuration script.
 MATHJAX_CONFIG_SCRIPT_URL = URI('/assets/js/mathjax-config.js')
-
-# Local path to the HTML template file.
-HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 
 # Date format for article headers.
 DISPLAY_DATE_FORMAT = '%B %-d, %-Y'
