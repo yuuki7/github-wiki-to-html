@@ -8,13 +8,13 @@ require 'liquid'
 require 'nokogiri'
 
 # Load constants
-require_relative './config'
-
-# Load Gollum configuration
-require_relative './gollum-config'
+require_relative 'constants'
 
 # Load methods
-require_relative './utils'
+require_relative 'methods'
+
+# Load Gollum configuration
+require_relative 'gollum-config'
 
 # Load the HTML template
 html_template = Liquid::Template.parse(HTML_TEMPLATE_FILE.read, error_mode: :strict)
