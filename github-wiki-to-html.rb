@@ -27,7 +27,7 @@ wiki = Gollum::Wiki.new(WIKI_REPO.to_s, GOLLUM_OPTIONS)
 home_page = wiki.page('Home')
 page_footer_html = home_page.footer.formatted_data
 
-# Pages to list on the home page and sitemap.
+# Pages to list on the home page and sitemap file.
 all_pages = []
 
 # Generate individual article pages and add them to the list.
@@ -101,7 +101,7 @@ wiki.pages.each do |page|
 end
 
 # Pages sorted by published date (newest first).
-all_pages_by_date = all_pages
+pages_by_published_date = all_pages
   .reject { |page| page[:title].start_with?(SITE_NAME) } # Exclude About pages.
   .sort_by { |page| page[:published_date] }
   .reverse
@@ -114,32 +114,13 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   article_title: MAIN_HEADING,
   page_footer: page_footer_html,
 
-  all_pages: all_pages_by_date.map { |page| page.transform_keys(&:to_s) },
+  all_pages: pages_by_published_date.map { |page| page.transform_keys(&:to_s) },
 })
 
-# Generate the sitemap sorted by modified date (newest first)
-sitemap_urls_xml = all_pages
+# Pages sorted by modified date (newest first).
+pages_by_modified_date = all_pages
   .sort_by { |page| page[:modified_date] }
   .reverse
-  .map { |page|
-    <<~XML % page
-      <url>
-        <loc>%{canonical_url}</loc>
-        <lastmod>%{modified_date_iso}</lastmod>
-      </url>
-    XML
-  }
-  .join('')
 
-sitemap_xml = <<~XML
-  <?xml version="1.0" encoding="UTF-8"?>
-  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-      <loc>#{SITE_URL}</loc>
-    </url>
-    #{sitemap_urls_xml}
-  </urlset>
-XML
-
-sitemap_file = OUTPUT_DIRECTORY.join('sitemap.xml')
-sitemap_file.write(sitemap_xml)
+# Generate the sitemap file.
+generate_sitemap_file(pages_by_modified_date)

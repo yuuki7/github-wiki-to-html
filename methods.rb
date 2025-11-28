@@ -47,3 +47,30 @@ def generate_html_file(output_filename, article_body_html, html_template, option
   output_file = OUTPUT_DIRECTORY.join(output_filename)
   output_file.write(full_html)
 end
+
+# Generate a sitemap file.
+def generate_sitemap_file(pages)
+  sitemap_xml = <<~XML
+    <?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url>
+        <loc>#{SITE_URL}</loc>
+      </url>
+  XML
+
+  pages.each do |page|
+    sitemap_xml << <<~XML % page
+      <url>
+        <loc>%{canonical_url}</loc>
+        <lastmod>%{modified_date_iso}</lastmod>
+      </url>
+    XML
+  end
+
+  sitemap_xml << <<~XML
+    </urlset>
+  XML
+
+  sitemap_file = OUTPUT_DIRECTORY.join('sitemap.xml')
+  sitemap_file.write(sitemap_xml)
+end
