@@ -89,7 +89,7 @@ wiki.pages.each do |page|
 
   # Add the page to the list.
   all_pages << {
-    url: encoded_slug,
+    url: BASE_PATH.join(encoded_slug).to_s,
     canonical_url:,
     title: article_title,
     published_date:,

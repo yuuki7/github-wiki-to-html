@@ -14,9 +14,6 @@ def postprocess_html(html)
     # Strip the extension
     path = path.sub_ext('')
 
-    # Make the path relative
-    path = path.relative_path_from(BASE_PATH)
-
     uri.path = path.to_s
     a['href'] = uri.to_s
   end
