@@ -77,9 +77,9 @@ wiki.pages.each do |page|
     is_home: false,
     canonical_url: canonical_url.to_s,
     wiki_page_url: wiki_page_url.to_s,
+    article_title:,
     page_footer: page_footer_html,
 
-    article_title:,
     is_modified:,
     published_date_iso:,
     published_date_display:,
@@ -111,9 +111,9 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   is_home: true,
   canonical_url: SITE_URL.to_s,
   wiki_page_url: WIKI_URL.to_s,
+  article_title: MAIN_HEADING,
   page_footer: page_footer_html,
 
-  main_heading: MAIN_HEADING,
   all_pages: all_pages_by_date.map { |page| page.transform_keys(&:to_s) },
 })
 

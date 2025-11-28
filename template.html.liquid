@@ -118,11 +118,7 @@
       <article>
         <!-- Article header -->
         <header>
-          {% if is_home %}
-            <h1>{{ main_heading }}</h1>
-          {% else %}
-            <h1>{{ article_title }}</h1>
-          {% endif %}
+          <h1>{{ article_title }}</h1>
 
           {% unless is_home %}
             <p>
