@@ -12,7 +12,7 @@ def postprocess_html(html)
   dom.css('a.internal').each do |a|
     uri = URI(a['href'])
 
-    # Strip the extension.
+    # Strip the file extension.
     uri.path = Pathname(uri.path).sub_ext('').to_s
 
     a['href'] = uri.to_s
@@ -23,10 +23,10 @@ end
 
 # Generate the HTML file.
 def generate_html_file(filename, article_body_html, html_template, options)
-  # Tweak HTML.
+  # Tweak the HTML.
   article_body_html = postprocess_html(article_body_html)
 
-  # Escape unsafe strings.
+  # Escape user-provided strings.
   [:article_title, :author_name].each do |key|
     options[key] = CGI.escape_html(options[key]) if options[key]
   end
@@ -57,7 +57,7 @@ def generate_html_file(filename, article_body_html, html_template, options)
     strict_filters: true,
   })
 
-  # Write HTML to a file.
+  # Write the HTML file.
   output_file = OUTPUT_DIRECTORY.join(filename)
   output_file.write(full_html)
 end
