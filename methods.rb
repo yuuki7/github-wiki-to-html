@@ -23,7 +23,7 @@ end
 
 # Generate the HTML file.
 def generate_html_file(filename, article_body_html, html_template, options)
-  # Tweak the body HTML.
+  # Tweak HTML.
   article_body_html = postprocess_html(article_body_html)
 
   # Escape unsafe strings.
@@ -40,13 +40,17 @@ def generate_html_file(filename, article_body_html, html_template, options)
   full_html = html_template.render!({
     site_name: CGI.escape_html(SITE_NAME),
     site_url: SITE_URL.to_s,
+
     publisher_name: CGI.escape_html(PUBLISHER_NAME),
     publisher_url: PUBLISHER_URL.to_s,
     publisher_logo_url: PUBLISHER_LOGO_URL.to_s,
+
     home_url: HOME_URL.to_s,
     stylesheet_url: STYLESHEET_URL.to_s,
     mathjax_config_script_url: MATHJAX_CONFIG_SCRIPT_URL.to_s,
+
     article_body_html:,
+
     **options
   }.transform_keys(&:to_s), {
     strict_variables: true,
