@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-# Wrapper for the main Ruby script, intended to be run directly from the terminal.
+# Wrapper for the Ruby script. Run directly from the terminal.
 #
 
 # Exit on error
