@@ -50,7 +50,7 @@ end
 
 # Generate a sitemap file.
 def generate_sitemap_file(pages)
-  sitemap_xml = <<~XML
+  xml = <<~XML
     <?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
@@ -59,7 +59,7 @@ def generate_sitemap_file(pages)
   XML
 
   pages.each do |page|
-    sitemap_xml << <<~XML % page
+    xml << <<~XML % page
       <url>
         <loc>%{canonical_url}</loc>
         <lastmod>%{modified_date_iso}</lastmod>
@@ -67,10 +67,8 @@ def generate_sitemap_file(pages)
     XML
   end
 
-  sitemap_xml << <<~XML
-    </urlset>
-  XML
+  xml << '</urlset>'
 
   sitemap_file = OUTPUT_DIRECTORY.join('sitemap.xml')
-  sitemap_file.write(sitemap_xml)
+  sitemap_file.write(xml)
 end
