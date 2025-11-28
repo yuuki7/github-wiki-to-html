@@ -1,7 +1,6 @@
 ##
 # Main script, intended to be run by `github-wiki-to-html.sh`.
 #
-require 'cgi'
 require 'pathname'
 require 'uri'
 
@@ -90,10 +89,9 @@ wiki.pages.each do |page|
 
   # Add the page to the list.
   all_pages << {
-    encoded_slug:,
+    url: encoded_slug,
     canonical_url:,
     title: article_title,
-    escaped_title: CGI.escapeHTML(article_title),
     published_date:,
     modified_date:,
     modified_date_iso:,

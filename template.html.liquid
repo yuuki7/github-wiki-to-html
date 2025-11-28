@@ -99,7 +99,7 @@
         <p>
           {% if is_home %}
             {% for page in all_pages %}
-              <a href="{{ page.encoded_slug }}">{{ page.title | escape }}</a>
+              <a href="{{ page.url }}">{{ page.title | escape }}</a>
 
               {% unless forloop.last %}
                 ·
