@@ -112,6 +112,7 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   article_title: MAIN_HEADING,
   page_footer: page_footer_html,
 
+  # Liquid does not support symbol keys, so stringify them.
   all_pages: pages_by_published_date.map { |page| page.transform_keys(&:to_s) },
 })
 
