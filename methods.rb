@@ -1,5 +1,5 @@
 ##
-# Methods for the main script
+# Methods for use in the main script
 #
 
 # Tweak HTML converted from Markdown
