@@ -1,0 +1,89 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bigdecimal (3.3.1)
+    commonmarker (2.5.0)
+      rb_sys (~> 0.9)
+    commonmarker (2.5.0-aarch64-linux)
+    commonmarker (2.5.0-aarch64-linux-musl)
+    commonmarker (2.5.0-x86_64-linux)
+    commonmarker (2.5.0-x86_64-linux-musl)
+    crass (1.0.6)
+    gemojione (4.3.3)
+      json
+    github-markup (4.0.2)
+    gollum-lib (6.1.0)
+      gemojione (~> 4.1)
+      github-markup (~> 4.0)
+      gollum-rugged_adapter (~> 3.0)
+      loofah (~> 2.3)
+      nokogiri (~> 1.8)
+      rouge (~> 3.1)
+      twitter-text (= 1.14.7)
+    gollum-rugged_adapter (3.0)
+      mime-types (~> 3.4)
+      rugged (~> 1.5)
+    json (2.16.0)
+    liquid (5.11.0)
+      bigdecimal
+      strscan (>= 3.1.1)
+    logger (1.7.0)
+    loofah (2.24.1)
+      crass (~> 1.0.2)
+      nokogiri (>= 1.12.0)
+    mime-types (3.7.0)
+      logger
+      mime-types-data (~> 3.2025, >= 3.2025.0507)
+    mime-types-data (3.2025.0924)
+    nokogiri (1.18.10-aarch64-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.18.10-aarch64-linux-musl)
+      racc (~> 1.4)
+    nokogiri (1.18.10-arm-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.18.10-arm-linux-musl)
+      racc (~> 1.4)
+    nokogiri (1.18.10-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.18.10-x86_64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.18.10-x86_64-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.18.10-x86_64-linux-musl)
+      racc (~> 1.4)
+    racc (1.8.1)
+    rake-compiler-dock (1.9.1)
+    rb_sys (0.9.117)
+      rake-compiler-dock (= 1.9.1)
+    rouge (3.30.0)
+    rugged (1.9.0)
+    strscan (3.1.5)
+    twitter-text (1.14.7)
+      unf (~> 0.1.0)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.9.1)
+
+PLATFORMS
+  aarch64-linux
+  aarch64-linux-gnu
+  aarch64-linux-musl
+  arm-linux-gnu
+  arm-linux-musl
+  arm64-darwin
+  x86_64-darwin
+  x86_64-linux
+  x86_64-linux-gnu
+  x86_64-linux-musl
+
+DEPENDENCIES
+  commonmarker (~> 2.5.0)
+  gollum-lib (~> 6.1.0)
+  liquid (~> 5.11.0)
+  nokogiri (~> 1.18.0)
+
+RUBY VERSION
+   ruby 3.4.7p58
+
+BUNDLED WITH
+   2.7.2
