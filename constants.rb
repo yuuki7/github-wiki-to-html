@@ -3,48 +3,51 @@
 #
 
 ##
-# Constants for the GitHub Wiki
+# Constants for the GitHub Wiki.
 #
 
-# Path to the locally cloned wiki repository
-WIKI_REPO = Pathname('./wikinder.wiki')
+# Path to the locally cloned wiki repository.
+WIKI_REPO = Pathname('wikinder.wiki')
 
-# URL of the wiki
+# URL of the wiki.
 WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki')
 
-# URL with a trailing slash for joining purposes
-WIKI_URL_SLASH = URI(WIKI_URL.to_s.delete_suffix('/') + '/')
+# Wiki URL with a trailing slash for path joining.
+WIKI_URL_SLASH = URI("#{WIKI_URL.to_s.delete_suffix('/')}/")
 
 ##
-# Constants for the converted site
+# Constants for the converted site.
 #
 
-# Path to the output directory
-OUTPUT_DIRECTORY = Pathname('./wikinder.github.io')
+# Path to the output directory.
+OUTPUT_DIRECTORY = Pathname('wikinder.github.io')
 
-# Title of the site
+# Title of the site.
 SITE_NAME = 'Wikinder'
 
-# Heading of the home page
-MAIN_HEADING = "Welcome to #{SITE_NAME}"
+# Heading of the home page.
+HOME_HEADING = "Welcome to #{SITE_NAME}"
 
-# URL of the site
+# URL of the site.
 SITE_URL = URI('https://wikinder.org')
 
-# Base path for internal links
-BASE_PATH = Pathname('/')
+# Site URL with a trailing slash for path joining.
+SITE_URL_SLASH = URI("#{SITE_URL.to_s.delete_suffix('/')}/")
 
-# Path to the HTML template file
-HTML_TEMPLATE_FILE = Pathname('./template.html.liquid')
+# Base path for internal links.
+BASE_PATH = Pathname(SITE_URL_SLASH.path)
 
-# URL of the site logo
+# URL of the site logo.
 LOGO_URL = URI.join(SITE_URL, '/assets/images/icon.jpg')
 
-# Path to the stylesheet file
+# Path to the stylesheet.
 STYLESHEET_FILE = Pathname('/assets/css/style.css')
 
-# Path to the MathJax configuration script
+# Path to the MathJax configuration script.
 MATHJAX_CONFIG_SCRIPT = Pathname('/assets/js/mathjax-config.js')
 
-# Format for dates displayed on articles
+# Path to the HTML template.
+HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
+
+# Format for dates displayed on articles.
 DISPLAY_DATE_FORMAT = '%B %-d, %-Y'
