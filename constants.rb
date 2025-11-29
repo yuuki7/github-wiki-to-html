@@ -14,7 +14,6 @@ WIKI_REPO = Pathname('wikinder.wiki')
 # Full URL of the wiki.
 WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki')
 
-# Wiki URL with a trailing slash for path handling.
 WIKI_URL_SLASH = URI("#{WIKI_URL.to_s.delete_suffix('/')}/")
 
 ##
@@ -30,14 +29,17 @@ HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 # Title of the site.
 SITE_NAME = 'Wikinder'
 
+ESCAPED_SITE_NAME = CGI.escape_html(SITE_NAME)
+
 # Full URL of the site.
 SITE_URL = URI('https://wikinder.org')
 
-# Site URL with a trailing slash for path handling.
 SITE_URL_SLASH = URI("#{SITE_URL.to_s.delete_suffix('/')}/")
 
 # Name of the publisher.
 PUBLISHER_NAME = 'Wikinder'
+
+ESCAPED_PUBLISHER_NAME = CGI.escape_html(PUBLISHER_NAME)
 
 # Full URL of the publisher.
 PUBLISHER_URL = URI('https://wikinder.org')
@@ -48,10 +50,8 @@ PUBLISHER_LOGO_URL = SITE_URL_SLASH.merge('/assets/images/icon.jpg')
 # Heading of the home page.
 HOME_HEADING = "Welcome to #{SITE_NAME}"
 
-# Root-relative URL of the home page.
 HOME_URL = URI(SITE_URL.request_uri)
 
-# Home URL with a trailing slash for path handling.
 HOME_URL_SLASH = URI("#{HOME_URL.to_s.delete_suffix('/')}/")
 
 # URL of the stylesheet.

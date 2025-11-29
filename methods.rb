@@ -38,10 +38,10 @@ def generate_html_file(filename, article_body_html, html_template, options)
 
   # Render the full HTML.
   full_html = html_template.render!({
-    site_name: CGI.escape_html(SITE_NAME),
+    site_name: ESCAPED_SITE_NAME,
     site_url: SITE_URL.to_s,
 
-    publisher_name: CGI.escape_html(PUBLISHER_NAME),
+    publisher_name: ESCAPED_PUBLISHER_NAME,
     publisher_url: PUBLISHER_URL.to_s,
     publisher_logo_url: PUBLISHER_LOGO_URL.to_s,
 
