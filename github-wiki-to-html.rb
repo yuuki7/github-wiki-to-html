@@ -59,20 +59,26 @@ wiki.pages.each do |page|
     per_page: 100_000,
   }).last
 
-  # Get the latest commit of the page.
-  latest_commit = page.last_version
-
-  is_modified = latest_commit.id != oldest_commit.id
-
   # Published date in UTC.
   published_date = oldest_commit.authored_date.getutc
   published_date_iso = published_date.iso8601
   published_date_display = published_date.strftime(DISPLAY_DATE_FORMAT)
 
+  # Get the latest commit of the page.
+  latest_commit = page.last_version
+
+  is_modified = latest_commit.id != oldest_commit.id
+
   # Last modified date in UTC.
-  modified_date = latest_commit.authored_date.getutc
-  modified_date_iso = modified_date.iso8601
-  modified_date_display = modified_date.strftime(DISPLAY_DATE_FORMAT)
+  if is_modified
+    modified_date = latest_commit.authored_date.getutc
+    modified_date_iso = modified_date.iso8601
+    modified_date_display = modified_date.strftime(DISPLAY_DATE_FORMAT)
+  else
+    modified_date = published_date
+    modified_date_iso = published_date_iso
+    modified_date_display = published_date_display
+  end
 
   # Name of the author of the oldest commit.
   author_name = oldest_commit.author.name
