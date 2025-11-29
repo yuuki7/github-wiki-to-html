@@ -121,7 +121,9 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
 })
 
 # Pages sorted by modified date (newest first).
-pages_by_modified_date = all_pages.sort_by { |page| page[:modified_date] }.reverse
+pages_by_modified_date = all_pages
+  .sort_by { |page| page[:modified_date] }
+  .reverse
 
 # Generate the sitemap file.
 generate_sitemap_file(pages_by_modified_date)
