@@ -14,4 +14,4 @@ find . \
   \( -name '*.html' -o -name '*.xml' \) \
   \! -name '404.html' \
   -type f -print0 \
-  | xargs -0 html-beautify --quiet --replace
+  | xargs -0 npx html-beautify --quiet --replace

@@ -77,10 +77,10 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  commonmarker (~> 2.5.0)
-  gollum-lib (~> 6.1.0)
-  liquid (~> 5.11.0)
-  nokogiri (~> 1.18.0)
+  commonmarker (~> 2.5)
+  gollum-lib (~> 6.1)
+  liquid (~> 5.11)
+  nokogiri (~> 1.18)
 
 RUBY VERSION
    ruby 3.4.7p58
