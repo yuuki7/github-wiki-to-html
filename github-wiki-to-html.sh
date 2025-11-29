@@ -10,8 +10,8 @@ set -e
 ruby github-wiki-to-html.rb
 
 # Beautify the generated HTML/XML files.
-find . \
+find . -type f \
   \( -name '*.html' -o -name '*.xml' \) \
   \! -name '404.html' \
-  -type f -print0 \
+  -print0 \
   | xargs -0 npx html-beautify --quiet --replace
