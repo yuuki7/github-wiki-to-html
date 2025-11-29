@@ -94,11 +94,11 @@ wiki.pages.each do |page|
     main_heading:,
     page_footer_html:,
 
-    is_modified:,
     published_date_iso:,
     published_date_display:,
     modified_date_iso:,
     modified_date_display:,
+    is_modified:,
 
     author_name:,
     author_url: author_url.to_s,
