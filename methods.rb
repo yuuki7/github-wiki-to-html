@@ -46,6 +46,7 @@ def generate_html_file(filename, article_body_html, html_template, options)
     publisher_logo_url: PUBLISHER_LOGO_URL.to_s,
 
     home_url: HOME_URL.to_s,
+    license_url: LICENSE_URL.to_s,
     stylesheet_url: STYLESHEET_URL.to_s,
     mathjax_config_script_url: MATHJAX_CONFIG_SCRIPT_URL.to_s,
 

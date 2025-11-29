@@ -54,6 +54,9 @@ HOME_URL = URI(SITE_URL.request_uri)
 
 HOME_URL_SLASH = URI("#{HOME_URL.to_s.delete_suffix('/')}/")
 
+# Full URL of the content license.
+LICENSE_URL = URI('https://creativecommons.org/licenses/by-sa/4.0/')
+
 # URL of the stylesheet.
 STYLESHEET_URL = URI('/assets/css/style.css')
 
