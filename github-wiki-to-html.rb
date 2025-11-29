@@ -75,6 +75,7 @@ wiki.pages.each do |page|
   modified_date_display = modified_date.strftime(DISPLAY_DATE_FORMAT)
 
   author_name = oldest_commit.author.name
+  author_url = MIRROR_REPO_URL_SLASH.merge("commit/#{oldest_commit.id}")
 
   # Generate the HTML file for the article.
   generate_html_file("#{slug}.html", page.formatted_data, html_template, {
@@ -89,7 +90,9 @@ wiki.pages.each do |page|
     published_date_display:,
     modified_date_iso:,
     modified_date_display:,
+
     author_name:,
+    author_url: author_url.to_s,
   })
 
   # Add the page to the list.

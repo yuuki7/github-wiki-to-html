@@ -16,6 +16,11 @@ WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki')
 
 WIKI_URL_SLASH = URI("#{WIKI_URL.to_s.delete_suffix('/')}/")
 
+# Full URL of the GitHub repository where the wiki is mirrored.
+MIRROR_REPO_URL = URI('https://github.com/wikinder/wikinder')
+
+MIRROR_REPO_URL_SLASH = URI("#{MIRROR_REPO_URL.to_s.delete_suffix('/')}/")
+
 ##
 # Constants for the converted site.
 #
