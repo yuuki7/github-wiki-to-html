@@ -17,7 +17,7 @@
       <meta property="og:title" content="{{ site_name }}">
     {% else %}
       <meta property="og:type" content="article">
-      <meta property="og:title" content="{{ article_title }}">
+      <meta property="og:title" content="{{ main_heading }}">
     {% endif %}
 
     <meta property="og:url" content="{{ canonical_url }}">
@@ -31,7 +31,7 @@
     {% if is_home %}
       <title>{{ site_name }}</title>
     {% else %}
-      <title>{{ article_title }}</title>
+      <title>{{ main_heading }}</title>
     {% endif %}
 
     <link rel="canonical" href="{{ canonical_url }}">
@@ -69,7 +69,7 @@
         {
           "@context": "https://schema.org",
           "@type": "Article",
-          "headline": "{{ article_title }}",
+          "headline": "{{ main_heading }}",
           "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "{{ canonical_url }}"
@@ -118,7 +118,7 @@
       <article>
         <!-- Article header -->
         <header>
-          <h1>{{ article_title }}</h1>
+          <h1>{{ main_heading }}</h1>
 
           {% unless is_home %}
             <p>

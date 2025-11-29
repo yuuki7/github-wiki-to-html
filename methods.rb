@@ -27,7 +27,7 @@ def generate_html_file(filename, article_body_html, html_template, options)
   article_body_html = postprocess_html(article_body_html)
 
   # Escape user-provided strings.
-  [:article_title, :author_name].each do |key|
+  [:main_heading, :author_name].each do |key|
     options[key] = CGI.escape_html(options[key]) if options[key]
   end
 

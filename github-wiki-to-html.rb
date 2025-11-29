@@ -42,7 +42,9 @@ wiki.pages.each do |page|
   # Skip Home and special pages.
   next if slug =~ /^(?:Home|LICENSE|README)$/
 
-  article_title = slug.tr('-', ' ')
+  # Article title.
+  main_heading = slug.tr('-', ' ')
+
   encoded_slug = URI.encode_uri_component(slug)
 
   # URL of the page on the converted site.
@@ -79,7 +81,7 @@ wiki.pages.each do |page|
     is_home: false,
     canonical_url: canonical_url.to_s,
     wiki_page_url: wiki_page_url.to_s,
-    article_title:,
+    main_heading:,
     page_footer_html:,
 
     is_modified:,
@@ -94,7 +96,7 @@ wiki.pages.each do |page|
   all_pages << {
     url: Pathname(HOME_URL_SLASH).join(encoded_slug).to_s,
     canonical_url:,
-    title: article_title,
+    title: main_heading,
     published_date:,
     modified_date:,
     modified_date_iso:,
@@ -112,7 +114,7 @@ generate_html_file('index.html', home_page.formatted_data, html_template, {
   is_home: true,
   canonical_url: SITE_URL.to_s,
   wiki_page_url: WIKI_URL.to_s,
-  article_title: HOME_HEADING,
+  main_heading: HOME_HEADING,
   page_footer_html:,
 
   all_pages: pages_by_published_date,
