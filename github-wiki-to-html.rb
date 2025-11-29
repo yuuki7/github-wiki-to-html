@@ -89,9 +89,9 @@ wiki.pages.each do |page|
   # Generate the HTML file for the article.
   generate_html_file("#{slug}.html", page.formatted_data, html_template, {
     is_home: false,
+    main_heading:,
     canonical_url: canonical_url.to_s,
     wiki_page_url: wiki_page_url.to_s,
-    main_heading:,
     page_footer_html:,
 
     published_date_iso:,
@@ -106,9 +106,9 @@ wiki.pages.each do |page|
 
   # Add the page to the list.
   all_pages << {
+    title: main_heading,
     url: Pathname(HOME_URL_SLASH).join(encoded_slug).to_s,
     canonical_url:,
-    title: main_heading,
     published_date:,
     modified_date:,
     modified_date_iso:,
@@ -124,9 +124,9 @@ pages_by_published_date = all_pages
 # Generate the HTML file for the home page.
 generate_html_file('index.html', home_page.formatted_data, html_template, {
   is_home: true,
+  main_heading: HOME_HEADING,
   canonical_url: SITE_URL.to_s,
   wiki_page_url: WIKI_URL.to_s,
-  main_heading: HOME_HEADING,
   page_footer_html:,
 
   all_pages: pages_by_published_date,
