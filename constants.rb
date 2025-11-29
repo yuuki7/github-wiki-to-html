@@ -52,7 +52,7 @@ PUBLISHER_URL = URI('https://wikinder.org')
 # Full URL of the publisher's logo.
 PUBLISHER_LOGO_URL = SITE_URL_SLASH.merge('/assets/images/icon.jpg')
 
-# Heading of the home page.
+# Main heading of the home page.
 HOME_HEADING = "Welcome to #{SITE_NAME}".freeze
 
 HOME_URL = URI(SITE_URL.request_uri)
