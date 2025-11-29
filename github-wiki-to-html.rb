@@ -74,7 +74,10 @@ wiki.pages.each do |page|
   modified_date_iso = modified_date.iso8601
   modified_date_display = modified_date.strftime(DISPLAY_DATE_FORMAT)
 
+  # Name of the author of the oldest commit.
   author_name = oldest_commit.author.name
+
+  # URL of the oldest commit in the mirror repo.
   author_url = MIRROR_REPO_URL_SLASH.merge("commit/#{oldest_commit.id}")
 
   # Generate the HTML file for the article.
