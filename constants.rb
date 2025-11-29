@@ -34,7 +34,7 @@ HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 # Title of the site.
 SITE_NAME = 'Wikinder'
 
-ESCAPED_SITE_NAME = CGI.escape_html(SITE_NAME)
+ESCAPED_SITE_NAME = CGI.escape_html(SITE_NAME).freeze
 
 # Full URL of the site.
 SITE_URL = URI('https://wikinder.org')
@@ -44,7 +44,7 @@ SITE_URL_SLASH = URI("#{SITE_URL.to_s.delete_suffix('/')}/")
 # Name of the publisher.
 PUBLISHER_NAME = 'Wikinder'
 
-ESCAPED_PUBLISHER_NAME = CGI.escape_html(PUBLISHER_NAME)
+ESCAPED_PUBLISHER_NAME = CGI.escape_html(PUBLISHER_NAME).freeze
 
 # Full URL of the publisher.
 PUBLISHER_URL = URI('https://wikinder.org')
