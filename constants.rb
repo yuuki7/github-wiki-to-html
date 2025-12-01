@@ -34,7 +34,7 @@ SITE_NAME = 'Yuukinder'
 ESCAPED_SITE_NAME = CGI.escape_html(SITE_NAME).freeze
 
 # Full URL of the site.
-SITE_URL = URI('https://yuukikonno.com/wiki/').freeze
+SITE_URL = URI('https://wikinder.org').freeze
 
 SITE_URL_SLASH = ensure_trailing_slash(SITE_URL).freeze
 
@@ -53,7 +53,7 @@ PUBLISHER_LOGO_URL = SITE_URL_SLASH.merge('/assets/images/icon.jpg').freeze
 HOME_HEADING = "Welcome to #{SITE_NAME}".freeze
 
 # Root-relative URL of the home page.
-HOME_URL = URI(SITE_URL.request_uri).freeze
+HOME_URL = URI('/wiki/').freeze
 
 HOME_URL_SLASH = ensure_trailing_slash(HOME_URL).freeze
 
