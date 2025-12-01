@@ -61,10 +61,10 @@ HOME_URL_SLASH = ensure_trailing_slash(HOME_URL).freeze
 LICENSE_URL = URI('https://creativecommons.org/licenses/by-sa/4.0/').freeze
 
 # URL of the stylesheet.
-STYLESHEET_URL = URI('/assets/css/style.css').freeze
+STYLESHEET_URL = URI(Pathname(HOME_URL_SLASH).join('assets/css/style.css').to_s).freeze
 
 # URL of the MathJax configuration script.
-MATHJAX_CONFIG_SCRIPT_URL = URI('/assets/js/mathjax-config.js').freeze
+MATHJAX_CONFIG_SCRIPT_URL = URI(Pathname(HOME_URL_SLASH).join('assets/js/mathjax-config.js').to_s).freeze
 
 # Date format for article headers.
 DISPLAY_DATE_FORMAT = '%B %-d, %-Y'
