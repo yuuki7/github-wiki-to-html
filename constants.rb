@@ -23,7 +23,7 @@ MIRROR_REPO_URL_SLASH = ensure_trailing_slash(MIRROR_REPO_URL).freeze
 # Constants for the converted site.
 
 # Local path to the output directory.
-OUTPUT_DIRECTORY = Pathname('wikinder.github.io')
+OUTPUT_DIRECTORY = Pathname('wiki')
 
 # Local path to the HTML template file.
 HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
