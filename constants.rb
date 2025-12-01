@@ -29,12 +29,12 @@ OUTPUT_DIRECTORY = Pathname('wiki')
 HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 
 # Title of the site.
-SITE_NAME = 'Wikinder'
+SITE_NAME = 'Yuukinder'
 
 ESCAPED_SITE_NAME = CGI.escape_html(SITE_NAME).freeze
 
 # Full URL of the site.
-SITE_URL = URI('https://wikinder.org').freeze
+SITE_URL = URI('https://yuukikonno.com/wiki/').freeze
 
 SITE_URL_SLASH = ensure_trailing_slash(SITE_URL).freeze
 
