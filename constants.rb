@@ -7,7 +7,7 @@
 # Constants for the GitHub Wiki.
 
 # Local path to the cloned wiki repository.
-WIKI_REPO = Pathname('wikinder.wiki')
+WIKI_REPO = Pathname('source-wiki')
 
 # Full URL of the wiki.
 WIKI_URL = URI('https://github.com/wikinder/wikinder/wiki').freeze
@@ -23,7 +23,7 @@ MIRROR_REPO_URL_SLASH = ensure_trailing_slash(MIRROR_REPO_URL).freeze
 # Constants for the converted site.
 
 # Local path to the output directory.
-OUTPUT_DIRECTORY = Pathname('wiki')
+OUTPUT_DIRECTORY = Pathname('target-site')
 
 # Local path to the HTML template file.
 HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
