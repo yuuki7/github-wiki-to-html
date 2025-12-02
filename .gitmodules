@@ -1,6 +1,6 @@
-[submodule "wikinder.wiki"]
-	path = wikinder.wiki
+[submodule "source-wiki"]
+	path = source-wiki
 	url = https://github.com/wikinder/wikinder.wiki.git
-[submodule "wiki"]
-	path = wiki
+[submodule "target-site"]
+	path = target-site
 	url = git@github.com:yuuki7/wiki.git
