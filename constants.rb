@@ -29,7 +29,7 @@ OUTPUT_DIRECTORY = Pathname('target-site')
 HTML_TEMPLATE_FILE = Pathname('template.html.liquid')
 
 # Title of the site.
-SITE_NAME = 'Wikinder'
+SITE_NAME = 'Yuukinder'
 
 ESCAPED_SITE_NAME = CGI.escape_html(SITE_NAME).freeze
 
@@ -53,7 +53,7 @@ PUBLISHER_LOGO_URL = SITE_URL_SLASH.merge('/assets/images/icon.jpg').freeze
 HOME_HEADING = "Welcome to #{SITE_NAME}".freeze
 
 # Root-relative URL of the home page.
-HOME_URL = Pathname('/')
+HOME_URL = Pathname('/wiki/')
 
 # Full URL of the license for the content.
 LICENSE_URL = URI('https://creativecommons.org/licenses/by-sa/4.0/').freeze

@@ -2,12 +2,14 @@ GEM
   remote: https://rubygems.org/
   specs:
     bigdecimal (3.3.1)
-    commonmarker (2.5.0)
+    commonmarker (2.6.0)
       rb_sys (~> 0.9)
-    commonmarker (2.5.0-aarch64-linux)
-    commonmarker (2.5.0-aarch64-linux-musl)
-    commonmarker (2.5.0-x86_64-linux)
-    commonmarker (2.5.0-x86_64-linux-musl)
+    commonmarker (2.6.0-aarch64-linux)
+    commonmarker (2.6.0-aarch64-linux-musl)
+    commonmarker (2.6.0-arm64-darwin)
+    commonmarker (2.6.0-x86_64-darwin)
+    commonmarker (2.6.0-x86_64-linux)
+    commonmarker (2.6.0-x86_64-linux-musl)
     crass (1.0.6)
     gemojione (4.3.3)
       json
@@ -77,7 +79,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  commonmarker (~> 2.5.0)
+  commonmarker (~> 2.6.0)
   gollum-lib (~> 6.1.0)
   liquid (~> 5.11.0)
   nokogiri (~> 1.18.10)
