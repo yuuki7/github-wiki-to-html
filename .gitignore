@@ -1,3 +1,4 @@
 .DS_Store
+.gem_rbs_collection/
 astro/.astro/
-astro/node_modules/
+node_modules/

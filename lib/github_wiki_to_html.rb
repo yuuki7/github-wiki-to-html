@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rbs_inline: enabled
 
 require 'gollum-lib'
 require 'json'
@@ -10,10 +11,14 @@ end
 
 module GitHubWikiToHTML
   class Wiki
+    #: @wiki: ::Gollum::Wiki
+
+    #: (String) -> void
     def initialize(path)
       @wiki = ::Gollum::Wiki.new(path)
     end
 
+    #: () -> String
     def to_json
       JSON.pretty_generate(
         @wiki.pages.map do |page|
@@ -27,6 +32,7 @@ module GitHubWikiToHTML
     end
   end
 
+  #: (String) -> Wiki
   def self.new(*args)
     Wiki.new(*args)
   end

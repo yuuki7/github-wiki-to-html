@@ -1,0 +1,14 @@
+# Generated from lib/github_wiki_to_html.rb with RBS::Inline
+
+module GitHubWikiToHTML
+  class Wiki
+    # : (String) -> void
+    def initialize: (String) -> void
+
+    # : () -> String
+    def to_json: () -> String
+  end
+
+  # : (String) -> Wiki
+  def self.new: (String) -> Wiki
+end
