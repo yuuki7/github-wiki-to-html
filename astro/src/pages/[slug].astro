@@ -1,0 +1,24 @@
+---
+import pages from '../../all-pages.json';
+
+export async function getStaticPaths() {
+  return pages.map((page) => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>{page.title}</title>
+  </head>
+  <body>
+    <h1>{page.title}</h1>
+    <Fragment set:html={page.html} />
+  </body>
+</html>

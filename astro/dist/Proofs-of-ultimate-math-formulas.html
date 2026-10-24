@@ -1,0 +1,104 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Proofs of ultimate math formulas</title></head><body><h1>Proofs of ultimate math formulas</h1><p>&lt; <a class="internal absent" href="/Ultimate%20math%20formulas" rel="nofollow">Ultimate math formulas</a></p>
+<h2 id="expansion-and-factorization" class="editable"><a class="anchor" id="expansion-and-factorization" href="#expansion-and-factorization"></a>Expansion and factorization<a href="#expansion-and-factorization" aria-label="Link to heading 'Expansion and factorization'" data-heading-content="Expansion and factorization" class="anchor" rel="nofollow"></a>
+</h2>
+<h2 id="quadratic-formula" class="editable"><a class="anchor" id="quadratic-formula" href="#quadratic-formula"></a>Quadratic formula<a href="#quadratic-formula" aria-label="Link to heading 'Quadratic formula'" data-heading-content="Quadratic formula" class="anchor" rel="nofollow"></a>
+</h2>
+<h2 id="exponent-rules" class="editable"><a class="anchor" id="exponent-rules" href="#exponent-rules"></a>Exponent rules<a href="#exponent-rules" aria-label="Link to heading 'Exponent rules'" data-heading-content="Exponent rules" class="anchor" rel="nofollow"></a>
+</h2>
+<p>Let $<code>a</code>$ and $<code>b</code>$ be real numbers, and let $<code>m</code>$ and $<code>n</code>$ be positive integers.</p>
+<p><strong>Definition (<em>Exponentiation</em>):</strong></p>
+<p>$<code>a^1 = a</code>$ (Def. 1)</p>
+<p>$<code>a^{n + 1} = a^n a</code>$ for $<code>n \ge 1</code>$ (Def. 2)</p>
+<p>By induction on $<code>n</code>$:</p>
+
+<p>$<code>a^m a^n = a^{m + n}</code>$</p>
+<p>Base case ($<code>n = 1</code>$):</p>
+<p>$<code>a^m a^1 = a^m a</code>$ (by Def. 1)</p>
+<p>$<code>= a^{m + 1}</code>$ (by Def. 2)</p>
+<p>Inductive step:</p>
+<p>Assume $<code>a^m a^n = a^{m + n}</code>$. Then:</p>
+<p>$<code>a^m a^{n + 1} = a^m(a^n a)</code>$ (by Def. 2)</p>
+<p>$<code>= (a^m a^n)a</code>$ (by associativity)</p>
+<p>$<code>= a^{m + n} a</code>$ (by the induction hypothesis)</p>
+<p>$<code>= a^{(m + n) + 1}</code>$ (by Def. 2)</p>
+<p>$<code>= a^{m + (n + 1)}</code>$ (by associativity)</p>
+
+
+<p>$<code>(a^m)^n = a^{mn}</code>$</p>
+<p>Base case ($<code>n = 1</code>$):</p>
+<p>$<code>(a^m)^1 = a^m</code>$ (by Def. 1)</p>
+<p>$<code>= a^{m \cdot 1}</code>$ (by identity)</p>
+<p>Inductive step:</p>
+<p>Assume $<code>(a^m)^n = a^{mn}</code>$. Then:</p>
+<p>$<code>(a^m)^{n + 1} = (a^m)^n a^m</code>$ (by Def. 2)</p>
+<p>$<code>= a^{mn} a^m</code>$ (by the induction hypothesis)</p>
+<p>$<code>= a^{mn + m}</code>$ (by product of powers)</p>
+<p>$<code>= a^{m(n + 1)}</code>$ (by distributivity)</p>
+
+
+<p>$<code>(ab)^n = a^n b^n</code>$</p>
+<p>Base case ($<code>n = 1</code>$):</p>
+<p>$<code>(ab)^1 = ab</code>$ (by Def. 1)</p>
+<p>$<code>= a^1 b^1</code>$ (by Def. 1)</p>
+<p>Inductive step:</p>
+<p>Assume $<code>(ab)^n = a^n b^n</code>$. Then:</p>
+<p>$<code>(ab)^{n + 1} = (ab)^n(ab)</code>$ (by Def. 2)</p>
+<p>$<code>= (a^n b^n)(ab)</code>$ (by the induction hypothesis)</p>
+<p>$<code>= (a^n a)(b^n b)</code>$ (by associativity and commutativity)</p>
+<p>$<code>= a^{n + 1} b^{n + 1}</code>$ (by Def. 2)</p>
+
+<h2 id="logarithm-rules" class="editable"><a class="anchor" id="logarithm-rules" href="#logarithm-rules"></a>Logarithm rules<a href="#logarithm-rules" aria-label="Link to heading 'Logarithm rules'" data-heading-content="Logarithm rules" class="anchor" rel="nofollow"></a>
+</h2>
+<p>Let $<code>a, b, M, N, x &gt; 0</code>$ and $<code>n</code>$ be real numbers, with $<code>a, b \ne 1</code>$. Since a logarithm is an inverse of exponentiation, we have</p>
+<p>$<code>\log_a(a^x) = a^{\log_a x} = x</code>$,</p>
+<p>just like $<code>f^{-1}(f(x)) = f(f^{-1}(x)) = x</code>$. Using this:</p>
+<p>$<code>\log_a(MN) = \log_a(a^{\log_a M} a^{\log_a N}) = \log_a(a^{\log_a M + \log_a N}) = \log_a M + \log_a N</code>$</p>
+<p>$<code>\log_a(M^n) = \log_a((a^{\log_a M})^n) = \log_a(a^{n \log_a M}) = n \log_a M</code>$</p>
+<p>$<code>\log_a M = \displaystyle \frac{\log_a M \cdot \log_b a}{\log_b a} = \frac{\log_b(a^{\log_a M})}{\log_b a} = \frac{\log_b M}{\log_b a}</code>$</p>
+<h2 id="fractions" class="editable"><a class="anchor" id="fractions" href="#fractions"></a>Fractions<a href="#fractions" aria-label="Link to heading 'Fractions'" data-heading-content="Fractions" class="anchor" rel="nofollow"></a>
+</h2>
+<h2 id="systems-of-linear-equations" class="editable"><a class="anchor" id="systems-of-linear-equations" href="#systems-of-linear-equations"></a>Systems of linear equations<a href="#systems-of-linear-equations" aria-label="Link to heading 'Systems of linear equations'" data-heading-content="Systems of linear equations" class="anchor" rel="nofollow"></a>
+</h2>
+<h2 id="sequences" class="editable"><a class="anchor" id="sequences" href="#sequences"></a>Sequences<a href="#sequences" aria-label="Link to heading 'Sequences'" data-heading-content="Sequences" class="anchor" rel="nofollow"></a>
+</h2>
+<h2 id="derivatives" class="editable"><a class="anchor" id="derivatives" href="#derivatives"></a>Derivatives<a href="#derivatives" aria-label="Link to heading 'Derivatives'" data-heading-content="Derivatives" class="anchor" rel="nofollow"></a>
+</h2>
+<h2 id="trigonometric-identities" class="editable"><a class="anchor" id="trigonometric-identities" href="#trigonometric-identities"></a>Trigonometric identities<a href="#trigonometric-identities" aria-label="Link to heading 'Trigonometric identities'" data-heading-content="Trigonometric identities" class="anchor" rel="nofollow"></a>
+</h2>
+<h3 id="pythagorean-identity" class="editable"><a class="anchor" id="pythagorean-identity" href="#pythagorean-identity"></a>Pythagorean identity<a href="#pythagorean-identity" aria-label="Link to heading 'Pythagorean identity'" data-heading-content="Pythagorean identity" class="anchor" rel="nofollow"></a>
+</h3>
+<h3 id="addition-formulas" class="editable"><a class="anchor" id="addition-formulas" href="#addition-formulas"></a>Addition formulas<a href="#addition-formulas" aria-label="Link to heading 'Addition formulas'" data-heading-content="Addition formulas" class="anchor" rel="nofollow"></a>
+</h3>
+<p>$<code>\cos(\alpha + \beta) + i \sin(\alpha + \beta) = e^{i(\alpha + \beta)}</code>$</p>
+<p>$<code>= e^{i\alpha} e^{i\beta}</code>$</p>
+<p>$<code>= (\cos \alpha + i \sin \alpha)(\cos \beta + i \sin \beta)</code>$</p>
+<p>$<code>= (\cos \alpha \cos \beta - \sin \alpha \sin \beta) + i(\sin \alpha \cos \beta + \cos \alpha \sin \beta)</code>$</p>
+<h3 id="double-angle-formulas" class="editable"><a class="anchor" id="double-angle-formulas" href="#double-angle-formulas"></a>Double-angle formulas<a href="#double-angle-formulas" aria-label="Link to heading 'Double-angle formulas'" data-heading-content="Double-angle formulas" class="anchor" rel="nofollow"></a>
+</h3>
+<p>$<code>\sin 2\theta = \sin(\theta + \theta) = \sin \theta \cos \theta + \cos \theta \sin \theta = 2 \sin \theta \cos \theta</code>$</p>
+<p>$<code>\cos 2\theta = \cos(\theta + \theta) = \cos \theta \cos \theta - \sin \theta \sin \theta = \cos^2 \theta - \sin^2 \theta</code>$</p>
+<p>$<code>\cos^2 \theta - \sin^2 \theta = (1 - \sin^2 \theta) - \sin^2 \theta = 1 - 2 \sin^2 \theta</code>$</p>
+<p>$<code>\cos^2 \theta - \sin^2 \theta = \cos^2 \theta - (1 - \cos^2 \theta) = 2 \cos^2 \theta - 1</code>$</p>
+<h3 id="multiple-angle-formulas" class="editable"><a class="anchor" id="multiple-angle-formulas" href="#multiple-angle-formulas"></a>Multiple-angle formulas<a href="#multiple-angle-formulas" aria-label="Link to heading 'Multiple-angle formulas'" data-heading-content="Multiple-angle formulas" class="anchor" rel="nofollow"></a>
+</h3>
+<p>$<code>\cos n\theta + i \sin n\theta = (\cos \theta + i \sin \theta)^n = \displaystyle \sum_{k = 0}^n \binom{n}{k} \cos^{n - k} \theta \, i^k \sin^k \theta</code>$</p>
+<h2 id="eulers-formula" class="editable"><a class="anchor" id="euler-s-formula" href="#euler-s-formula"></a>Euler's formula<a href="#eulers-formula" aria-label="Link to heading 'Euler's formula'" data-heading-content="Euler's formula" class="anchor" rel="nofollow"></a>
+</h2>
+<p>Let $<code>e^{ix} = f + ig</code>$ (Eq. 1).</p>
+<p>Differentiate both sides with respect to $<code>x</code>$:</p>
+<p>$<code>(e^{ix})' = (f + ig)'</code>$</p>
+<p>$<code>ie^{ix} = f' + ig'</code>$ (Eq. 2)</p>
+<p>Substitute Eq. 1 into the left-hand side:</p>
+<p>$<code>i(f + ig) = f' + ig'</code>$</p>
+<p>$<code>-g + if = f' + ig'</code>$</p>
+<p>Equate the real and imaginary parts of both sides:</p>
+<p>$<code>-g = f'</code>$</p>
+<p>$<code>f = g'</code>$</p>
+<p>Which can be rewritten as:</p>
+<p>$<code>f'' = -f</code>$</p>
+<p>$<code>g'' = -g</code>$</p>
+<p>These are second-order differential equations with initial conditions $<code>f(0) = 1</code>$, $<code>f'(0) = 0</code>$, $<code>g(0) = 0</code>$, and $<code>g'(0) = 1</code>$, obtained by substituting $<code>x = 0</code>$ into Eqs. 1 and 2. The unique solutions are:</p>
+<p>$<code>f = \cos x</code>$</p>
+<p>$<code>g = \sin x</code>$</p>
+<p><a class="internal present" href="/Math.md" rel="nofollow">#math</a></p>
+</body></html>

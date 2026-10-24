@@ -1,0 +1,71 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Next prime after 11 is 1111111111111111111</title></head><body><h1>Next prime after 11 is 1111111111111111111</h1><p>I thought about this in a sauna at a hot spring:</p>
+<p>Is 111 prime?</p>
+<p>No, it is divisible by 3.</p>
+<p>What about 1111?</p>
+<p>This looks like a prime. It is not divisible by 3, 5, or 7. But no. It has a factorization: $1111 = 11 \cdot 101$.</p>
+<p>What about 11111? Then I got overheated.</p>
+<p>Later, I became interested in palindromes in language, which led me to study numbers as strings in math.</p>
+<table>
+<thead>
+<tr>
+<th>Examples</th>
+<th>Name</th>
+<th>Prime only if</th>
+<th>OEIS</th>
+<th>Regex</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11, 111, 1111</td>
+<td>repunit $R_n$</td>
+<td>$n$ is prime</td>
+<td>A002275</td>
+<td><code>1+</code></td>
+</tr>
+<tr>
+<td>111, 222, 3333</td>
+<td>repdigit</td>
+<td>repunit[^1]</td>
+<td>A010785</td>
+<td><code>(.)\1*</code></td>
+</tr>
+<tr>
+<td>123, 234, 5678</td>
+<td></td>
+<td></td>
+<td>A138141</td>
+<td></td>
+</tr>
+<tr>
+<td>121, 1221, 12321</td>
+<td>palindromic number</td>
+<td>length is odd[^2]</td>
+<td>A002113</td>
+<td></td>
+</tr>
+<tr>
+<td>101, 1001, 10001</td>
+<td></td>
+<td>of the form $10^{2^n} + 1$</td>
+<td>A000533</td>
+<td><code>10*1</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="repunits" class="editable"><a class="anchor" id="repunits" href="#repunits"></a>Repunits<a href="#repunits" aria-label="Link to heading 'Repunits'" data-heading-content="Repunits" class="anchor" rel="nofollow"></a>
+</h2>
+<p>A number of the form $11...1$ is called a repunit, denoted $R_n$, where $n$ is the number of 1s.</p>
+<p>If $n$ is composite, then $R_n$ is divisible by $R_k$, where $k$ is a factor of $n$. For example, $R_9 = 111,111,111$ is divisible by $R_3 = 111$.</p>
+<p>Therefore, $R_n$ is prime only if $n$ is prime.</p>
+<p>$R_2 = 11$ is prime, but neither $R_3$ nor $R_5$ is. The next primes are $R_{19}$ and $R_{23}$, followed by $R_{317}$.</p>
+<h2 id="repdigits" class="editable"><a class="anchor" id="repdigits" href="#repdigits"></a>Repdigits<a href="#repdigits" aria-label="Link to heading 'Repdigits'" data-heading-content="Repdigits" class="anchor" rel="nofollow"></a>
+</h2>
+<p>A number like 111, 222, or 3333 is called a repdigit. Every repunit is a repdigit.</p>
+<p>Repdigits are not prime (except for repunit primes and single-digit primes) because they are divisible by a repunit, e.g., $777 = 7 \cdot 111$.</p>
+<p><a class="internal present" href="/Math.md" rel="nofollow">#math</a> <a class="internal present" href="/yuuki.md" rel="nofollow">#yuuki</a></p>
+<h2 id="notes" class="editable"><a class="anchor" id="notes" href="#notes"></a>Notes<a href="#notes" aria-label="Link to heading 'Notes'" data-heading-content="Notes" class="anchor" rel="nofollow"></a>
+</h2>
+<p>[^1]: Except single-digit primes.</p>
+<p>[^2]: Except 11.</p>
+</body></html>

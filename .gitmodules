@@ -1,0 +1,3 @@
+[submodule "yuukinder.wiki"]
+	path = yuukinder.wiki
+	url = git@github.com:yuuki7/yuukinder.wiki.git
