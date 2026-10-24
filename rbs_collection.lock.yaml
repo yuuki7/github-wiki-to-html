@@ -1,6 +1,14 @@
 ---
 path: ".gem_rbs_collection"
 gems:
+- name: ast
+  version: '2.4'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: commonmarker
   version: '1.1'
   source:
@@ -17,6 +25,18 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: language_server-protocol
+  version: 3.17.0.6
+  source:
+    type: rubygems
+- name: lint_roller
+  version: '1.1'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: logger
   version: '1.7'
   source:
@@ -49,20 +69,36 @@ gems:
   version: '0'
   source:
     type: stdlib
-- name: pp
-  version: '0'
+- name: parallel
+  version: '1.20'
   source:
-    type: stdlib
-- name: prettyprint
-  version: '0'
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: parser
+  version: '3.2'
   source:
-    type: stdlib
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: prism
-  version: 2.0.0
+  version: 1.9.0
   source:
     type: rubygems
 - name: racc
   version: '1.8'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: rainbow
+  version: '3.0'
   source:
     type: git
     name: ruby/gem_rbs_collection
@@ -81,6 +117,34 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: regexp_parser
+  version: '2.8'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: rubocop
+  version: '1.57'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: rubocop-ast
+  version: '1.46'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: rubocop-rbs_inline
+  version: 2.0.0
+  source:
+    type: rubygems
 - name: strscan
   version: '0'
   source:

@@ -1,7 +1,11 @@
 # Generated from lib/github_wiki_to_html.rb with RBS::Inline
 
+# Converts GitHub Wiki into HTML
 module GitHubWikiToHTML
+  # Represents GitHub Wiki
   class Wiki
+    @wiki: Gollum::Wiki
+
     # : (String) -> void
     def initialize: (String) -> void
 

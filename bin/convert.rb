@@ -3,7 +3,10 @@
 
 require_relative '../lib/github_wiki_to_html'
 
+require 'json'
+
 Dir.chdir(__dir__) do
-  converter = GitHubWikiToHTML.new('../yuukinder.wiki')
-  File.write('../astro/all-pages.json', converter.to_json + "\n")
+  wiki = GitHubWikiToHTML.new('../yuukinder.wiki')
+  json = JSON.pretty_generate(wiki)
+  File.write('../all-pages.json', "#{json}\n")
 end

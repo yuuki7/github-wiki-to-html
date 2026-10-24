@@ -1,0 +1,17 @@
+plugins:
+  - rubocop-rbs_inline
+
+AllCops:
+  NewCops: enable
+
+Layout/LeadingCommentSpace:
+  AllowRBSInlineAnnotation: true
+
+Style/RbsInline/MissingTypeAnnotation:
+  EnforcedStyle: method_type_signature
+
+Style/RbsInline/RequireRbsInlineComment:
+  AllowMissingComment: false
+  Exclude:
+    - 'bin/**/*'
+    - 'Gemfile'
