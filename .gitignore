@@ -1,4 +1,6 @@
 .DS_Store
 .astro/
 .gem_rbs_collection/
+all-pages.json
+dist/
 node_modules/
