@@ -2,8 +2,11 @@
 
 source 'https://rubygems.org'
 
+gem 'base64', '~> 0.3.0'
 gem 'commonmarker', '~> 2.10.1'
 gem 'gollum-lib', '~> 6.1.0'
+gem 'ostruct', '~> 0.6.3'
+gem 'rdoc', '~> 8.1.0'
 
 group :development do
   gem 'rake', '~> 13.4.2'

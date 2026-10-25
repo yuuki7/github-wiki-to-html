@@ -4,4 +4,5 @@ export default defineConfig({
   build: {
     format: 'file',
   },
+  srcDir: './templates',
 });

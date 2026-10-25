@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "astro build",
+    "build": "astro build --config .config/astro.config.mjs",
     "preview": "astro preview"
   },
   "devDependencies": {
