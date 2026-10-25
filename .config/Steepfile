@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+D = Steep::Diagnostic
+
+target :lib do
+  collection_config 'rbs_collection.yaml'
+
+  signature '../sig'
+
+  check '../lib' # , inline: true
+end

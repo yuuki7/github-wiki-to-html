@@ -1,4 +1,5 @@
 plugins:
+  - rubocop-rake
   - rubocop-rbs_inline
 
 AllCops:
@@ -13,5 +14,7 @@ Style/RbsInline/MissingTypeAnnotation:
 Style/RbsInline/RequireRbsInlineComment:
   AllowMissingComment: false
   Exclude:
-    - 'bin/**/*'
-    - 'Gemfile'
+    - '../bin/**/*'
+    - '../Gemfile'
+    - '../Rakefile'
+    - 'Steepfile'

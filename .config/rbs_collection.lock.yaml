@@ -17,6 +17,30 @@ gems:
     revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: concurrent-ruby
+  version: '1.1'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: csv
+  version: '3.3'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: ffi
+  version: 1.17.4
+  source:
+    type: rubygems
+- name: fileutils
+  version: '0'
+  source:
+    type: stdlib
 - name: forwardable
   version: '0'
   source:
@@ -31,6 +55,14 @@ gems:
     type: rubygems
 - name: lint_roller
   version: '1.1'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: listen
+  version: '3.9'
   source:
     type: git
     name: ruby/gem_rbs_collection
@@ -105,6 +137,18 @@ gems:
     revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: rake
+  version: '13.0'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: random-formatter
+  version: '0'
+  source:
+    type: stdlib
 - name: rbs
   version: 4.2.0
   source:
@@ -145,6 +189,14 @@ gems:
   version: 2.0.0
   source:
     type: rubygems
+- name: securerandom
+  version: '0'
+  source:
+    type: stdlib
+- name: stringio
+  version: '0'
+  source:
+    type: stdlib
 - name: strscan
   version: '0'
   source:
@@ -153,4 +205,8 @@ gems:
   version: '0'
   source:
     type: stdlib
-gemfile_lock_path: Gemfile.lock
+- name: uri
+  version: '0'
+  source:
+    type: stdlib
+gemfile_lock_path: "../Gemfile.lock"

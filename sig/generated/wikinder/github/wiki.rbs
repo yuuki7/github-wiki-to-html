@@ -1,0 +1,16 @@
+# Generated from lib/wikinder/github/wiki.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    # Represents GitHub Wiki
+    class Wiki
+      @wiki: Gollum::Wiki
+
+      # : (String) -> void
+      def initialize: (String) -> void
+
+      # : () -> String
+      def to_json: () -> String
+    end
+  end
+end

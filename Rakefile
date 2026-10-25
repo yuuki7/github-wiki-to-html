@@ -1,27 +1,29 @@
 # frozen_string_literal: true
 
-desc "Install project dependencies"
+desc 'Install project dependencies'
 task :setup do
-  sh "bundle install"
-  sh "npm install"
+  sh 'bundle install'
+  sh 'rbs --collection .config/rbs_collection.yaml collection install'
+  sh 'npm install'
 end
 
-desc "Run linter and type checks"
+desc 'Run linter and type checks'
 task :check do
-  sh "rubocop"
-  sh "rbs-inline --output lib"
-  sh "rbs validate"
+  sh 'rubocop --config .config/.rubocop.yml'
+  sh 'rbs-inline --output lib'
+  sh 'rbs validate'
+  sh 'steep check --steepfile .config/Steepfile'
 end
 
-desc "Generate HTML from Markdown"
+desc 'Generate HTML from Markdown'
 task build: [:check] do
-  sh "ruby bin/convert.rb"
-  sh "npm run build"
+  sh 'ruby bin/convert.rb'
+  sh 'npm run build'
 end
 
-desc "Start the preview server"
+desc 'Start the preview server'
 task :server do
-  sh "npm run preview -- --background"
+  sh 'npm run preview -- --background'
 end
 
 task default: :setup

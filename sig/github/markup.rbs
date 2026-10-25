@@ -1,0 +1,7 @@
+module GitHub
+  module Markup
+    module Markdown
+      MARKDOWN_GEMS: Hash[String, ^(String) -> String]
+    end
+  end
+end

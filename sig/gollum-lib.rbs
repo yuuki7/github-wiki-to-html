@@ -1,5 +1,12 @@
 module Gollum
+  class Page
+    def filename_stripped: () -> String
+    def formatted_data: () -> String
+    def title: () -> String
+  end
+
   class Wiki
     def initialize: (String) -> void
+    def pages: () -> Array[Page]
   end
 end
