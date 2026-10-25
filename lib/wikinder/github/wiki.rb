@@ -12,16 +12,22 @@ GitHub::Markup::Markdown::MARKDOWN_GEMS['commonmarker'] = markdown_proc
 
 module Wikinder
   module GitHub
-    # Represents GitHub Wiki
+    # Represents GitHub Wiki.
     class Wiki
       # @rbs @wiki: Gollum::Wiki
 
+      # Creates a new GitHub Wiki instance.
+      #
+      # @param path [String] The path to the GitHub Wiki repository.
       #: (String) -> void
       def initialize(path)
         @wiki = Gollum::Wiki.new(path)
       end
 
-      #: () -> String
+      # Serializes all pages into JSON.
+      #
+      # @return [String] A JSON string containing all page data.
+      #: (?(::JSON::State | nil)) -> String
       def to_json(...)
         @wiki.pages.map do |page|
           {

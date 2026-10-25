@@ -2,15 +2,21 @@
 
 module Wikinder
   module GitHub
-    # Represents GitHub Wiki
+    # Represents GitHub Wiki.
     class Wiki
       @wiki: Gollum::Wiki
 
+      # Creates a new GitHub Wiki instance.
+      #
+      # @param path [String] The path to the GitHub Wiki repository.
       # : (String) -> void
       def initialize: (String) -> void
 
-      # : () -> String
-      def to_json: () -> String
+      # Serializes all pages into JSON.
+      #
+      # @return [String] A JSON string containing all page data.
+      # : (?(::JSON::State | nil)) -> String
+      def to_json: (?::JSON::State | nil) -> String
     end
   end
 end

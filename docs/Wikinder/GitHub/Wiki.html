@@ -106,7 +106,7 @@
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-    <p>Represents GitHub Wiki</p>
+    <p>Represents GitHub Wiki.</p>
 
   </div>
 </div>
@@ -147,7 +147,7 @@
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String) -&gt; void.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Creates a new GitHub Wiki instance.</p></div></span>
   
 </li>
 
@@ -169,7 +169,7 @@
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: () -&gt; String.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Serializes all pages into JSON.</p></div></span>
   
 </li>
 
@@ -192,13 +192,28 @@
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String) -&gt; void</p>
+    <p>Creates a new GitHub Wiki instance.</p>
+<p>: (String) -&gt; void</p>
 
   </div>
 </div>
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
+  
+    <li>
+      
+        <span class='name'>path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The path to the GitHub Wiki repository.</p></div>
+      
+    </li>
   
     <li>
       
@@ -220,12 +235,12 @@
       <pre class="lines">
 
 
-20
-21
-22</pre>
+23
+24
+25</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 20</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 23</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='ivar'>@wiki</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Gollum.html" title="Gollum (module)">Gollum</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Gollum/Wiki.html" title="Gollum::Wiki (class)">Wiki</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Gollum/Wiki.html#initialize-instance_method" title="Gollum::Wiki#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
@@ -253,12 +268,28 @@
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: () -&gt; String</p>
+    <p>Serializes all pages into JSON.</p>
+<p>: (?(::JSON::State | nil)) -&gt; String</p>
 
   </div>
 </div>
 <div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
   
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>::JSON::State</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
 <p class="tag_title">Returns:</p>
 <ul class="return">
   
@@ -268,6 +299,9 @@
         <span class='type'>(<tt>String</tt>)</span>
       
       
+      
+        &mdash;
+        <div class='inline'><p>A JSON string containing all page data.</p></div>
       
     </li>
   
@@ -279,18 +313,18 @@
       <pre class="lines">
 
 
-25
-26
-27
-28
-29
-30
 31
 32
-33</pre>
+33
+34
+35
+36
+37
+38
+39</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 25</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 31</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
   <span class='ivar'>@wiki</span><span class='period'>.</span><span class='id identifier rubyid_pages'>pages</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_page'>page</span><span class='op'>|</span>
@@ -311,7 +345,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Oct 26 03:38:09 2026 by
+  Generated on Mon Oct 26 04:29:57 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.9).
 </div>
