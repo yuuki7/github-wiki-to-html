@@ -4,13 +4,13 @@ Convert GitHub Wiki into HTML
 
 ## Usage
 
-* **`bundle exec rake`**
+* `bundle exec rake`
 Installs project dependencies.
-* **`bundle exec rake check`**
+* `bundle exec rake check`
 Runs linter and type checks.
-* **`bundle exec rake build`**
+* `bundle exec rake build`
 Executes the check pipeline, converts Markdown to HTML.
-* **`bundle exec rake server`**
+* `bundle exec rake server`
 Starts the Astro preview server.
 
 ## Workflow
