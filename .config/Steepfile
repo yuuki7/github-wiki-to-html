@@ -7,5 +7,5 @@ target :lib do
 
   signature '../sig'
 
-  check '../lib' # , inline: true
+  check '../lib'
 end
