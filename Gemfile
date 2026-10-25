@@ -16,4 +16,6 @@ group :development do
   gem 'rubocop-rake', '~> 0.7.1'
   gem 'rubocop-rbs_inline', '~> 2.0.0'
   gem 'steep', '~> 2.1.0'
+  gem 'webrick', '~> 1.9.2'
+  gem 'yard', '~> 0.9.45'
 end

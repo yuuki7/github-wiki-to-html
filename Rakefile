@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'yard'
+
 desc 'Install project dependencies'
 task :setup do
   sh 'bundle install'
@@ -24,6 +26,15 @@ end
 desc 'Start the preview server'
 task :server do
   sh 'npm run preview -- --background'
+end
+
+ENV['OPTS'] = '--yardopts .config/.yardopts'
+
+YARD::Rake::YardocTask.new
+
+desc 'Start YARD documentation server'
+task 'yard:server' do
+  sh 'yard server --reload'
 end
 
 task default: :setup

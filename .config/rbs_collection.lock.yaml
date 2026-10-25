@@ -37,6 +37,18 @@ gems:
     revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: delegate
+  version: '0'
+  source:
+    type: stdlib
+- name: digest
+  version: '0'
+  source:
+    type: stdlib
+- name: erb
+  version: '0'
+  source:
+    type: stdlib
 - name: ffi
   version: 1.17.4
   source:
@@ -101,6 +113,10 @@ gems:
     revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: openssl
+  version: '0'
+  source:
+    type: stdlib
 - name: optparse
   version: '0'
   source:
@@ -173,6 +189,10 @@ gems:
     revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: ripper
+  version: '0'
+  source:
+    type: stdlib
 - name: rubocop
   version: '1.57'
   source:
@@ -197,11 +217,27 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: singleton
+  version: '0'
+  source:
+    type: stdlib
+- name: socket
+  version: '0'
+  source:
+    type: stdlib
 - name: stringio
   version: '0'
   source:
     type: stdlib
 - name: strscan
+  version: '0'
+  source:
+    type: stdlib
+- name: tempfile
+  version: '0'
+  source:
+    type: stdlib
+- name: tmpdir
   version: '0'
   source:
     type: stdlib
@@ -213,4 +249,16 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: webrick
+  version: 1.9.2
+  source:
+    type: rubygems
+- name: yard
+  version: '0.9'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: ddaa559df3fbd84ca630e937e2eb59b3e1b62e3b
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 gemfile_lock_path: "../Gemfile.lock"
