@@ -1,6 +1,7 @@
 plugins:
   - rubocop-rake
   - rubocop-rbs_inline
+  - rubocop-rspec
 
 AllCops:
   NewCops: enable

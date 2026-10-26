@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'rspec/core/rake_task'
 require 'yard'
 
 desc 'Install project dependencies'
@@ -26,6 +27,11 @@ end
 desc 'Start the preview server'
 task :server do
   sh 'npm run preview -- --background'
+end
+
+RSpec::Core::RakeTask.new(:test) do |t|
+  t.rspec_opts = '--options .config/.rspec'
+  t.pattern = 'test/**/*.rb'
 end
 
 namespace :docs do
