@@ -5,7 +5,22 @@ require 'gollum-lib'
 
 # @type var markdown_proc: ^(String) -> String
 markdown_proc = proc do |markdown|
-  Commonmarker.to_html(markdown)
+  Commonmarker.to_html(
+    markdown,
+    options: {
+      render: {
+        unsafe: true
+      },
+      extension: {
+        # strikethrough: true,
+        # tagfilter: true,
+        # table: true,
+        # autolink: true,
+        # tasklist: true,
+        footnotes: true
+      }
+    }
+  )
 end
 GitHub::Markup::Markdown::MARKDOWN_GEMS.clear
 GitHub::Markup::Markdown::MARKDOWN_GEMS['commonmarker'] = markdown_proc
@@ -21,7 +36,14 @@ module Wikinder
       # @param path [String] The path to the GitHub Wiki repository.
       #: (String) -> void
       def initialize(path)
-        @wiki = Gollum::Wiki.new(path)
+        @wiki = Gollum::Wiki.new(
+          path,
+          {
+            hyphened_tag_lookup: true,
+            allow_editing: false,
+            filter_chain: %i[Tags Render]
+          }
+        )
       end
 
       # Serializes all pages into JSON.

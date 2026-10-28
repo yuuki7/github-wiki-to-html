@@ -7,6 +7,11 @@ require 'json'
 
 Dir.chdir(__dir__) do
   wiki = Wikinder::GitHub::Wiki.new('../../yuukinder.wiki')
-  json = JSON.pretty_generate(wiki)
-  File.write('../all-pages.json', "#{json}\n")
+  all_pages = wiki.to_json
+
+  # json = JSON.parse(all_pages).find { |page| page['slug'] == 'yuuki' }
+  # puts json['md']
+  # puts json['html']
+
+  File.write('../all-pages.json', "#{all_pages}\n")
 end

@@ -1,3 +1,10 @@
+type gollum_wiki_options = {
+  ?allow_editing: bool,
+  ?base_path: String,
+  ?filter_chain: Array[Symbol],
+  ?hyphened_tag_lookup: bool
+}
+
 module Gollum
   class Page
     def filename_stripped: () -> String
@@ -6,7 +13,7 @@ module Gollum
   end
 
   class Wiki
-    def initialize: (String) -> void
+    def initialize: (String, ?gollum_wiki_options) -> void
     def pages: () -> Array[Page]
   end
 end
