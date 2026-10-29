@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
+require 'commonmarker'
 require 'gollum-lib'
+require 'json'
+require 'nokogiri'
+require 'pathname'
+require 'uri'
 
 # @type var markdown_proc: ^(String) -> String
 markdown_proc = proc do |markdown|
@@ -12,16 +17,19 @@ markdown_proc = proc do |markdown|
         unsafe: true
       },
       extension: {
-        # strikethrough: true,
-        # tagfilter: true,
-        # table: true,
-        # autolink: true,
-        # tasklist: true,
-        footnotes: true
+        autolink: true,
+        footnotes: true,
+        math_code: true,
+        math_dollars: true,
+        strikethrough: true,
+        table: true,
+        tagfilter: false,
+        tasklist: true
       }
     }
   )
 end
+
 GitHub::Markup::Markdown::MARKDOWN_GEMS.clear
 GitHub::Markup::Markdown::MARKDOWN_GEMS['commonmarker'] = markdown_proc
 
@@ -30,6 +38,8 @@ module Wikinder
     # Represents GitHub Wiki.
     class Wiki
       # @rbs @wiki: Gollum::Wiki
+      # @rbs type page = { title: String, slug: String, html: String, toc: String? }
+      # @rbs type site = { footer: String? }
 
       # Creates a new GitHub Wiki instance.
       #
@@ -39,25 +49,52 @@ module Wikinder
         @wiki = Gollum::Wiki.new(
           path,
           {
-            hyphened_tag_lookup: true,
             allow_editing: false,
-            filter_chain: %i[Tags Render]
+            filter_chain: %i[Tags TOC Render],
+            hyphened_tag_lookup: true,
+            universal_toc: true
           }
         )
       end
 
-      # Serializes all pages into JSON.
+      # Returns all pages data.
       #
-      # @return [String] A JSON string containing all page data.
-      #: (?(::JSON::State | nil)) -> String
-      def to_json(...)
-        @wiki.pages.map do |page|
+      # @return [Array[page]] An array of page data.
+      #: () -> Array[page]
+      def pages_data
+        @wiki.pages.select { |p| p.format == :markdown }.map do |page|
           {
             title: page.title.tr('-', ' '),
             slug: page.filename_stripped,
-            html: page.formatted_data
+            html: postprocess_html(page.formatted_data),
+            toc: page.toc_data,
+            creation_date: page.versions.last&.authored_date&.iso8601
           }
-        end.to_json(...)
+        end
+      end
+
+      # Returns site data.
+      #
+      # @return [site] A hash containing site-wide data.
+      #: () -> site
+      def site_data
+        {
+          footer: @wiki.page('Home')&.footer&.formatted_data
+        }
+      end
+
+      private
+
+      #: (String) -> String
+      def postprocess_html(html)
+        dom = Nokogiri::HTML5.fragment(html)
+        dom.css('a.internal').each do |a|
+          uri = URI(a['href'])
+          uri.path = Pathname(uri.path).sub_ext('').to_s
+          uri.path = uri.path.gsub('%20', '-')
+          a['href'] = uri.to_s
+        end
+        dom.to_html
       end
     end
   end

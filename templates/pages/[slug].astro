@@ -1,8 +1,11 @@
 ---
-import pages from '../../all-pages.json';
+import Layout from '../layouts/Layout.astro';
+import LeftSidebar from '../components/LeftSidebar.astro';
+import RightSidebar from '../components/RightSidebar.astro';
+import all_pages from '../../all-pages.json';
 
 export async function getStaticPaths() {
-  return pages.map((page) => ({
+  return all_pages.map((page) => ({
     params: { slug: page.slug },
     props: { page },
   }));
@@ -11,14 +14,13 @@ export async function getStaticPaths() {
 const { page } = Astro.props;
 ---
 
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>{page.title}</title>
-  </head>
-  <body>
+<Layout title={page.title}>
+  <LeftSidebar toc={page.toc} />
+  <main class="main-content">
     <h1>{page.title}</h1>
-    <Fragment set:html={page.html} />
-  </body>
-</html>
+    <article class="article-body">
+      <Fragment set:html={page.html} />
+    </article>
+  </main>
+  <RightSidebar />
+</Layout>

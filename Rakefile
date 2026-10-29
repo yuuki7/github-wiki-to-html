@@ -19,7 +19,7 @@ task :check do
 end
 
 desc 'Generate HTML from Markdown'
-task build: [:check] do
+task :build do
   sh 'ruby bin/convert.rb'
   sh 'npm run build'
 end
