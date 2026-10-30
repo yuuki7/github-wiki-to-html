@@ -1,6 +1,6 @@
 :root {
   --measure: 66ch;
-  --sidebar-measure: 33ch;
+  --sidebar-measure: calc(var(--measure) / 2);
   --computed-line-height: calc(1em + 1ex + (var(--measure) / 250));
   --computed-line-height-sidebar: calc(
     1em + 1ex + (var(--sidebar-measure) / 250)
@@ -17,7 +17,7 @@ body {
   /* 3 columns */
   display: grid;
   grid-template-columns: 1fr var(--measure) 1fr;
-  column-gap: 1rem;
+  column-gap: 2rem;
 
   /* Prevent stretch so sidebars can stick to top while scrolling */
   align-items: start;
@@ -47,16 +47,23 @@ body {
   grid-column: 2;
 }
 
-/* Left sidebar */
+/* Left and right sidebars */
+.left-sidebar,
+.right-sidebar {
+  grid-row: 2;
+  width: fit-content;
+  max-width: var(--sidebar-measure);
+  line-height: var(--computed-line-height-sidebar);
+}
+
 .left-sidebar {
   grid-column: 1;
-  grid-row: 2;
-
-  /* Align to right in column */
   justify-self: end;
+}
 
-  width: var(--sidebar-measure);
-  line-height: var(--computed-line-height-sidebar);
+.right-sidebar {
+  grid-column: 3;
+  justify-self: start;
 }
 
 /* Page body */
@@ -82,18 +89,6 @@ body {
 
 .article-body > * {
   margin: 0;
-}
-
-/* Right sidebar */
-.right-sidebar {
-  grid-column: 3;
-  grid-row: 2;
-
-  /* Align to left in column */
-  justify-self: start;
-
-  width: var(--sidebar-measure);
-  line-height: var(--computed-line-height-sidebar);
 }
 
 /* Page footer */
