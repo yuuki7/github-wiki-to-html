@@ -1,0 +1,40 @@
+---
+import PageHeader from "../components/PageHeader.astro";
+import LeftSidebar from "../components/LeftSidebar.astro";
+import PageBody from "../components/PageBody.astro";
+import RightSidebar from "../components/RightSidebar.astro";
+import PageFooter from "../components/PageFooter.astro";
+
+import "../styles/page.css";
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <PageHeader>
+      <slot name="page-header" />
+    </PageHeader>
+
+    <LeftSidebar>
+      <slot name="left-sidebar" />
+    </LeftSidebar>
+
+    <PageBody title={title}>
+      <slot />
+    </PageBody>
+
+    <RightSidebar set:html="aaa">
+      <slot name="right-sidebar" />
+    </RightSidebar>
+
+    <PageFooter>
+      <slot name="page-footer" />
+    </PageFooter>
+  </body>
+</html>

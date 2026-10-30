@@ -1,0 +1,10 @@
+---
+import Article from "./Article.astro";
+const { title } = Astro.props;
+---
+
+<main class="page-body">
+  <Article title={title}>
+    <slot />
+  </Article>
+</main>

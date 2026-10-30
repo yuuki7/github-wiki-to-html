@@ -1,21 +1,28 @@
 ---
-import all_pages from '../../all-pages.json';
-import Layout from '../layouts/Layout.astro';
+import Page from "../layouts/Page.astro";
+import allPages from "../../all-pages.json";
+import site from "../../site.json";
 
-const sorted_all_pages = [...all_pages].sort((a, b) => {
-  return Temporal.Instant.from(b.creation_date).epochMilliseconds - Temporal.Instant.from(a.creation_date).epochMilliseconds;
+const recentlyCreatedPages = [...allPages].sort((a, b) => {
+  return (
+    Temporal.Instant.from(b.creation_date).epochMilliseconds -
+    Temporal.Instant.from(a.creation_date).epochMilliseconds
+  );
 });
 
-const home = all_pages.find((page) => page.slug === 'Home');
+const home = allPages.find((page) => page.slug === "Home");
 ---
 
-<Layout title="Wikinder">
-  <aside>
-    <ul>
-      {sorted_all_pages.map((page) => <li><a href={`/${encodeURIComponent(page.slug)}`}>{page.title}</a></li>)}
-    </ul>
-  </aside>
-  <main>
-    <Fragment set:html={home.html} />
-  </main>
-</Layout>
+<Page title={site.name}>
+  <ul slot="left-sidebar">
+    {recentlyCreatedPages.map((page) => (
+      <li>
+        <a href={`/${encodeURIComponent(page.slug)}`}>{page.title}</a>
+      </li>
+    ))}
+  </ul>
+
+  <Fragment set:html={home.html} />
+
+  <Fragment slot="page-footer" set:html={site.footer} />
+</Page>

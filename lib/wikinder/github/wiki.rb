@@ -79,6 +79,7 @@ module Wikinder
       #: () -> site
       def site_data
         {
+          name: 'Wikinder',
           footer: @wiki.page('Home')&.footer&.formatted_data
         }
       end

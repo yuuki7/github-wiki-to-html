@@ -22,6 +22,7 @@ desc 'Generate HTML from Markdown'
 task :build do
   sh 'ruby bin/convert.rb'
   sh 'npm run build'
+  sh 'npm run format'
 end
 
 desc 'Start the preview server'

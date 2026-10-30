@@ -1,7 +1,3 @@
----
-const { toc } = Astro.props;
----
-
 <aside class="left-sidebar">
-  {toc ? <nav set:html={toc} /> : null}
+  <slot />
 </aside>

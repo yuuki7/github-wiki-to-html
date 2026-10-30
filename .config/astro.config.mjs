@@ -1,10 +1,12 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
+  srcDir: './templates',
+  compressHTML: false,
   build: {
+    assets: 'assets',
     format: 'file',
     inlineStylesheets: 'never',
-    assets: 'assets',
   },
   vite: {
     build: {
@@ -12,11 +14,9 @@ export default defineConfig({
       cssMinify: false,
       rollupOptions: {
         output: {
-          assetFileNames: 'assets/[name][extname]'
-        }
-      }
-    }
+          assetFileNames: 'assets/[name][extname]',
+        },
+      },
+    },
   },
-  srcDir: './templates',
-  compressHTML: false,
 });
