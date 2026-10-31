@@ -17,7 +17,7 @@
   --line-height: calc(1em + 1ex + var(--measure) / 250);
   --side-line-height: calc(1em + 1ex + var(--side-measure) / 250);
 
-  --header-margin-top: 1rlh;
+  --header-margin-top: 0.5rlh;
   --footer-margin-top: 1rlh;
   --main-margin-top: 1rlh;
 
