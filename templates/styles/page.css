@@ -1,3 +1,4 @@
+/* Root element */
 :root {
   font-family: "Palatino Linotype", Palatino, serif;
   font-size: 112.5%;
@@ -6,7 +7,7 @@
   --main-columns: 2fr;
   --side-columns: 1fr;
 
-  /* Line length */
+  /* Max line length */
   --measure: 66ch;
   --side-measure: calc(
     var(--measure) * var(--side-columns) / var(--main-columns)
@@ -23,7 +24,7 @@
   line-height: var(--line-height);
 }
 
-/* 3-column layout */
+/* Body: 3-column layout */
 body {
   display: grid;
   grid-template-columns: var(--side-columns) var(--main-columns) var(
@@ -40,7 +41,7 @@ body {
   align-items: start;
 }
 
-/* Inherit grid to align inner with main */
+/* Header & footer: inherit grid to align inner with main */
 .page-header,
 .page-footer {
   display: grid;
@@ -51,17 +52,18 @@ body {
   grid-area: header;
 }
 
-.page-header__inner:not(:empty) {
-  margin-top: var(--header-margin-top);
-}
-
+/* Center column */
 .page-header__inner,
 .page-footer__inner,
 .page-body {
   grid-column: 2;
-  max-width: var(--measure);
   width: 100%;
+  max-width: var(--measure);
   justify-self: center;
+}
+
+.page-header__inner:not(:empty) {
+  margin-top: var(--header-margin-top);
 }
 
 .page-footer {
@@ -69,14 +71,30 @@ body {
   margin-top: var(--footer-margin-top);
 }
 
-.page-body,
+/* Sidebars */
 .left-sidebar,
 .right-sidebar {
+  grid-row: 2;
   margin-top: var(--main-margin-top);
+  width: fit-content;
+  max-width: var(--side-measure);
+  line-height: var(--side-line-height);
 }
 
+.left-sidebar {
+  grid-area: left;
+  justify-self: end;
+}
+
+.right-sidebar {
+  grid-area: right;
+  justify-self: start;
+}
+
+/* Main */
 .page-body {
   grid-area: main;
+  margin-top: var(--main-margin-top);
 }
 
 .article-header h1 {
@@ -98,21 +116,4 @@ body {
   & > * {
     margin: 0;
   }
-}
-
-.left-sidebar,
-.right-sidebar {
-  width: fit-content;
-  max-width: var(--side-measure);
-  line-height: var(--side-line-height);
-}
-
-.left-sidebar {
-  grid-area: left;
-  justify-self: end;
-}
-
-.right-sidebar {
-  grid-area: right;
-  justify-self: start;
 }
