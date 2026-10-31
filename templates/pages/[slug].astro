@@ -15,7 +15,9 @@ const { page } = Astro.props;
 
 <Page title={page.title}>
   <Fragment slot="page-header">
-    <a href="/">{site.name}</a>
+    <nav>
+      <a href="/">{site.name}</a>
+    </nav>
   </Fragment>
 
   <Fragment slot="left-sidebar" set:html={page.toc} />

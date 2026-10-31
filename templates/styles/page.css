@@ -1,10 +1,11 @@
 :root {
+  font-family: "Palatino Linotype", Palatino, serif;
+  font-size: 1.125rem;
   --measure: 66ch;
   --sidebar-measure: calc(var(--measure) / 2);
-  --computed-line-height: calc(1em + 1ex + (var(--measure) / 250));
-  --computed-line-height-sidebar: calc(
-    1em + 1ex + (var(--sidebar-measure) / 250)
-  );
+  --line-height: calc(1em + 1ex + (var(--measure) / 250));
+  --sidebar-line-height: calc(1em + 1ex + (var(--sidebar-measure) / 250));
+  line-height: var(--line-height);
 }
 
 /*
@@ -22,9 +23,6 @@ body {
   /* Prevent stretch so sidebars can stick to top while scrolling */
   align-items: start;
 
-  font-family: "Palatino Linotype", Palatino, serif;
-  font-size: 1.125rem;
-  line-height: var(--computed-line-height);
   margin: 0;
 }
 
@@ -37,14 +35,21 @@ body {
   /* Inherit page grid to align inner to page body */
   display: grid;
   grid-template-columns: subgrid;
-
-  min-height: 1.5rem;
-  padding: 1rem 0 2rem;
 }
 
 .page-header__inner {
   /* Align to page body */
   grid-column: 2;
+}
+
+.page-header__inner:not(:empty) {
+  margin-top: 1rlh;
+}
+
+.left-sidebar,
+.right-sidebar,
+.page-body {
+  margin-top: 1rlh;
 }
 
 /* Left and right sidebars */
@@ -53,7 +58,7 @@ body {
   grid-row: 2;
   width: fit-content;
   max-width: var(--sidebar-measure);
-  line-height: var(--computed-line-height-sidebar);
+  line-height: var(--sidebar-line-height);
 }
 
 .left-sidebar {
