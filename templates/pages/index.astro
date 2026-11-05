@@ -13,7 +13,7 @@ const recentlyCreatedPages = [...allPages].sort((a, b) => {
 const home = allPages.find((page) => page.slug === "Home");
 ---
 
-<Page title={site.name}>
+<Page className="home" title={site.name}>
   <ul slot="left-sidebar">
     {recentlyCreatedPages.map((page) => (
       <li>

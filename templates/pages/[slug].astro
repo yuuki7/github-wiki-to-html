@@ -13,7 +13,7 @@ export async function getStaticPaths() {
 const { page } = Astro.props;
 ---
 
-<Page title={page.title}>
+<Page className="individual" title={page.title}>
   <Fragment slot="header">
     <nav>
       <a href="/">{site.name}</a>

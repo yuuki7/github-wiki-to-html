@@ -31,6 +31,15 @@
   /* Bottom frame, owned by the footer's last child
      so an empty footer contributes no frame */
   --footer-margin-bottom: 0.5rlh;
+
+  /* Viewport offset at which the sidebars are held fixed.
+     Must be greater than or equal to their flow offset
+     (top frame + single-line nav + main row gap + sidebar offset),
+     so sticky never has to travel before sticking */
+  --sidebar-offset: calc(
+    var(--header-margin-top) + 1rlh + var(--main-row-gap) +
+      var(--header-margin-top)
+  );
 }
 
 /* Body: 3-column layout
@@ -78,7 +87,7 @@ body {
   display: grid;
   grid-template-columns: subgrid;
   grid-template-areas: "left main right";
-  padding-top: var(--main-row-gap);
+  margin-top: var(--main-row-gap);
 }
 
 /* Footer */
@@ -110,22 +119,38 @@ body {
 }
 
 /* Sidebars */
+.left-sidebar-wrapper,
+.right-sidebar-wrapper {
+  align-self: start;
+  margin-top: var(--header-margin-top);
+  position: sticky;
+  top: var(--sidebar-offset);
+  width: fit-content;
+
+  /* Keep the sticky element inside the viewport,
+     so the top inset is never given up
+     (overflowing content scrolls inside) */
+  max-height: calc(100vh - var(--sidebar-offset));
+  overflow: auto;
+}
+
 .left-sidebar-wrapper {
   grid-area: left;
-  align-self: start;
-  position: sticky;
-  top: var(--header-margin-top);
-  width: fit-content;
   justify-self: end;
 }
 
 .right-sidebar-wrapper {
   grid-area: right;
-  align-self: start;
-  position: sticky;
-  top: var(--header-margin-top);
-  width: fit-content;
   justify-self: start;
+}
+
+/* The home page's scrollable range is shorter than the sidebar,
+   so sticky would run out of room; sidebars stay in flow there */
+.home .left-sidebar-wrapper,
+.home .right-sidebar-wrapper {
+  position: static;
+  max-height: none;
+  overflow: visible;
 }
 
 .left-sidebar,
