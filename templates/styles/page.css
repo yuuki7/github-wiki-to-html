@@ -16,14 +16,25 @@
 
   line-height: var(--line-height);
 
-  --body-margin-vertical: 0.5rlh;
   --body-margin-horizontal: 2ch;
 
+  /* Top frame, owned by the header's first child
+     so an empty header contributes no frame */
+  --header-margin-top: 0.5rlh;
+
+  /* Gap between the header row and the main row,
+     owned by the main row, always present */
+  --main-row-gap: 1rlh;
+
   --footer-margin-top: 1rlh;
-  --main-margin-top: 1rlh;
+
+  /* Bottom frame, owned by the footer's last child
+     so an empty footer contributes no frame */
+  --footer-margin-bottom: 0.5rlh;
 }
 
-/* Body: 3-column layout */
+/* Body: 3-column layout
+   (vertical frame margins are owned by the row contents) */
 body {
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
@@ -32,7 +43,7 @@ body {
     "left   main   right"
     "footer footer footer";
   column-gap: 2rem;
-  margin: var(--body-margin-vertical) var(--body-margin-horizontal);
+  margin: 0 var(--body-margin-horizontal);
 }
 
 /* Center column components */
@@ -55,6 +66,21 @@ body {
   grid-column: 2;
 }
 
+/* Top frame owned by the first child,
+   so an empty header contributes no frame */
+.header > :first-child {
+  margin-top: var(--header-margin-top);
+}
+
+/* Main row */
+.main-row-wrapper {
+  grid-area: 2 / 1 / 3 / 4;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-areas: "left main right";
+  padding-top: var(--main-row-gap);
+}
+
 /* Footer */
 .footer-wrapper {
   grid-area: footer;
@@ -71,24 +97,24 @@ body {
   margin-top: var(--footer-margin-top);
 }
 
+/* Bottom frame owned by the last child,
+   so an empty footer contributes no frame */
+.footer > :last-child {
+  margin-bottom: var(--footer-margin-bottom);
+}
+
 /* Main */
 .main-wrapper {
   grid-area: main;
   display: grid;
 }
 
-/* Top margin owned by the first child, so empty main stays flat */
-.main > :first-child {
-  margin-top: var(--main-margin-top);
-}
-
 /* Sidebars */
 .left-sidebar-wrapper {
   grid-area: left;
   align-self: start;
-  margin-top: var(--main-margin-top);
   position: sticky;
-  top: var(--main-margin-top);
+  top: var(--header-margin-top);
   width: fit-content;
   justify-self: end;
 }
@@ -96,9 +122,8 @@ body {
 .right-sidebar-wrapper {
   grid-area: right;
   align-self: start;
-  margin-top: var(--main-margin-top);
   position: sticky;
-  top: var(--main-margin-top);
+  top: var(--header-margin-top);
   width: fit-content;
   justify-self: start;
 }
@@ -109,23 +134,29 @@ body {
   line-height: var(--side-line-height);
 }
 
+/* First child owns no top margin, so sidebar starts flush with main */
+.left-sidebar > :first-child,
+.right-sidebar > :first-child {
+  margin-top: 0;
+}
+
 /* Article */
 .article-header h1 {
   margin: 0;
   line-height: calc(1em + 0.3ex);
 }
 
+/* Uniform spacing between children:
+   the article itself is a flex column,
+   so no separate margin-top is needed between header and main */
+.article,
 .article-main {
-  margin-top: 1em;
-}
-
-/* Uniform spacing between children */
-.article-main,
-.footer__inner {
   display: flex;
   flex-direction: column;
   gap: 1em;
-  & > * {
-    margin: 0;
-  }
+}
+
+/* Children own no margins; spacing belongs to the gap */
+.article-main > * {
+  margin: 0;
 }
