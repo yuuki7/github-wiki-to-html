@@ -18,32 +18,25 @@
 
   --body-margin-horizontal: 2ch;
 
-  /* Top frame, owned by the header's first child
-     so an empty header contributes no frame */
+  /* Top frame; owned by the header's first child */
   --header-margin-top: 0.5rlh;
 
-  /* Gap between the header row and the main row,
-     owned by the main row, always present */
+  /* Gap between header row and main row; always present */
   --main-row-gap: 1rlh;
 
   --footer-margin-top: 1rlh;
 
-  /* Bottom frame, owned by the footer's last child
-     so an empty footer contributes no frame */
+  /* Bottom frame; owned by the footer's last child */
   --footer-margin-bottom: 0.5rlh;
 
-  /* Viewport offset at which the sidebars are held fixed.
-     Must be greater than or equal to their flow offset
-     (top frame + single-line nav + main row gap + sidebar offset),
-     so sticky never has to travel before sticking */
+  /* Viewport offset where the sidebars are fixed */
   --sidebar-offset: calc(
     var(--header-margin-top) + 1rlh + var(--main-row-gap) +
       var(--header-margin-top)
   );
 }
 
-/* Body: 3-column layout
-   (vertical frame margins are owned by the row contents) */
+/* Body: 3-column layout; vertical margins are owned by row contents */
 body {
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
@@ -75,8 +68,7 @@ body {
   grid-column: 2;
 }
 
-/* Top frame owned by the first child,
-   so an empty header contributes no frame */
+/* Top frame; empty header adds no frame */
 .header > :first-child {
   margin-top: var(--header-margin-top);
 }
@@ -101,13 +93,11 @@ body {
   grid-column: 2;
 }
 
-/* Top margin owned by the first child, so empty footer stays flat */
+/* Empty footer stays flat */
 .footer > :first-child {
   margin-top: var(--footer-margin-top);
 }
 
-/* Bottom frame owned by the last child,
-   so an empty footer contributes no frame */
 .footer > :last-child {
   margin-bottom: var(--footer-margin-bottom);
 }
@@ -127,9 +117,7 @@ body {
   top: var(--sidebar-offset);
   width: fit-content;
 
-  /* Keep the sticky element inside the viewport,
-     so the top inset is never given up
-     (overflowing content scrolls inside) */
+  /* Stay within the viewport; overflow scrolls inside */
   max-height: calc(100vh - var(--sidebar-offset));
   overflow: auto;
 }
@@ -144,13 +132,14 @@ body {
   justify-self: start;
 }
 
-/* The home page's scrollable range is shorter than the sidebar,
-   so sticky would run out of room; sidebars stay in flow there */
+/* Home: scroll range is too short for sticky; flow start
+   matches the sticky offset on other pages */
 .home .left-sidebar-wrapper,
 .home .right-sidebar-wrapper {
   position: static;
   max-height: none;
   overflow: visible;
+  margin-top: calc(var(--sidebar-offset) - var(--main-row-gap));
 }
 
 .left-sidebar,
@@ -159,7 +148,7 @@ body {
   line-height: var(--side-line-height);
 }
 
-/* First child owns no top margin, so sidebar starts flush with main */
+/* Sidebar starts flush with main */
 .left-sidebar > :first-child,
 .right-sidebar > :first-child {
   margin-top: 0;
@@ -171,9 +160,7 @@ body {
   line-height: calc(1em + 0.3ex);
 }
 
-/* Uniform spacing between children:
-   the article itself is a flex column,
-   so no separate margin-top is needed between header and main */
+/* Uniform gap between children */
 .article,
 .article-main {
   display: flex;
@@ -181,7 +168,6 @@ body {
   gap: 1em;
 }
 
-/* Children own no margins; spacing belongs to the gap */
 .article-main > * {
   margin: 0;
 }
