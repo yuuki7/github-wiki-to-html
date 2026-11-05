@@ -3,8 +3,10 @@ import Article from "./Article.astro";
 const { title } = Astro.props;
 ---
 
-<main class="main">
-  <Article title={title}>
-    <slot />
-  </Article>
-</main>
+<div class="main-wrapper">
+  <main class="main">
+    <Article title={title}>
+      <slot />
+    </Article>
+  </main>
+</div>
