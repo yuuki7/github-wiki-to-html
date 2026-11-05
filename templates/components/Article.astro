@@ -2,17 +2,15 @@
 const { title } = Astro.props;
 ---
 
-<div class="article-wrapper">
-  <article class="article">
-    <div class="article-header-wrapper">
-      <header class="article-header">
-        <h1>{title}</h1>
-      </header>
+<article class="article">
+  <div class="article-header-wrapper">
+    <header class="article-header">
+      <h1>{title}</h1>
+    </header>
+  </div>
+  <div class="article-main-wrapper">
+    <div class="article-main">
+      <slot />
     </div>
-    <div class="article-main-wrapper">
-      <div class="article-main">
-        <slot />
-      </div>
-    </div>
-  </article>
-</div>
+  </div>
+</article>
