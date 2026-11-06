@@ -38,8 +38,6 @@ module Wikinder
     # Represents GitHub Wiki.
     class Wiki
       # @rbs @wiki: Gollum::Wiki
-      # @rbs type page = { title: String, slug: String, html: String, toc: String? }
-      # @rbs type site = { footer: String? }
 
       # Creates a new GitHub Wiki instance.
       #
@@ -59,8 +57,8 @@ module Wikinder
 
       # Returns all pages data.
       #
-      # @return [Array[page]] An array of page data.
-      #: () -> Array[page]
+      # @return [Array] An array of page data.
+      #: () -> Array[{ title: String, slug: String, html: String, toc: String?, creation_date: String? }]
       def pages_data
         @wiki.pages.select { |p| p.format == :markdown }.map do |page|
           {
@@ -75,8 +73,8 @@ module Wikinder
 
       # Returns site data.
       #
-      # @return [site] A hash containing site-wide data.
-      #: () -> site
+      # @return [Hash] A hash containing site-wide data.
+      #: () -> { name: String, footer: String? }
       def site_data
         {
           name: 'Wikinder',
@@ -91,11 +89,17 @@ module Wikinder
         dom = Nokogiri::HTML5.fragment(html)
         dom.css('a.internal').each do |a|
           uri = URI(a['href'])
-          uri.path = Pathname(uri.path).sub_ext('').to_s
-          uri.path = uri.path.gsub('%20', '-')
+          uri.path = normalize_link_path(uri.path.to_s)
           a['href'] = uri.to_s
         end
         dom.to_html
+      end
+
+      # Strips the file extension from a link path and un-escapes
+      # percent-encoded spaces to hyphens, matching the site's slugs.
+      #: (String) -> String
+      def normalize_link_path(path)
+        Pathname(path).sub_ext('').to_s.gsub('%20', '-')
       end
     end
   end

@@ -2,18 +2,28 @@ type gollum_wiki_options = {
   ?allow_editing: bool,
   ?base_path: String,
   ?filter_chain: Array[Symbol],
-  ?hyphened_tag_lookup: bool
+  ?hyphened_tag_lookup: bool,
+  ?universal_toc: bool
 }
 
 module Gollum
   class Page
     def filename_stripped: () -> String
+    def footer: () -> Page?
+    def format: () -> Symbol
     def formatted_data: () -> String
     def title: () -> String
+    def toc_data: () -> String
+    def versions: () -> Array[Version]
+  end
+
+  class Version
+    def authored_date: () -> Time
   end
 
   class Wiki
     def initialize: (String, ?gollum_wiki_options) -> void
+    def page: (String) -> Page?
     def pages: () -> Array[Page]
   end
 end

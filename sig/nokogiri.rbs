@@ -1,0 +1,5 @@
+module Nokogiri
+  module HTML5
+    def self.fragment: (String) -> untyped
+  end
+end

@@ -12,11 +12,27 @@ module Wikinder
       # : (String) -> void
       def initialize: (String) -> void
 
-      # Serializes all pages into JSON.
+      # Returns all pages data.
       #
-      # @return [String] A JSON string containing all page data.
-      # : (?(::JSON::State | nil)) -> String
-      def to_json: (?::JSON::State | nil) -> String
+      # @return [Array] An array of page data.
+      # : () -> Array[{ title: String, slug: String, html: String, toc: String?, creation_date: String? }]
+      def pages_data: () -> Array[{ title: String, slug: String, html: String, toc: String?, creation_date: String? }]
+
+      # Returns site data.
+      #
+      # @return [Hash] A hash containing site-wide data.
+      # : () -> { name: String, footer: String? }
+      def site_data: () -> { name: String, footer: String? }
+
+      private
+
+      # : (String) -> String
+      def postprocess_html: (String) -> String
+
+      # Strips the file extension from a link path and un-escapes
+      # percent-encoded spaces to hyphens, matching the site's slugs.
+      # : (String) -> String
+      def normalize_link_path: (String) -> String
     end
   end
 end
