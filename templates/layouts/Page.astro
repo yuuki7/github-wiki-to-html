@@ -1,6 +1,5 @@
 ---
 import Header from "../components/Header.astro";
-import ArticleHeader from "../components/ArticleHeader.astro";
 import LeftSidebar from "../components/LeftSidebar.astro";
 import Main from "../components/Main.astro";
 import RightSidebar from "../components/RightSidebar.astro";
@@ -22,14 +21,12 @@ const { title, className } = Astro.props;
       <slot name="left-sidebar" />
     </LeftSidebar>
 
-    <div class="page">
+    <div class="main-column-wrapper">
       <Header>
         <slot name="header" />
       </Header>
 
-      <ArticleHeader title={title} />
-
-      <Main>
+      <Main title={title}>
         <slot />
       </Main>
 

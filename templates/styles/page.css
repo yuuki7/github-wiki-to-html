@@ -22,7 +22,7 @@
      so an empty header contributes no frame */
   --header-margin-top: 0.5rlh;
 
-  /* Row gap of the document column */
+  /* Row gap of the document column and the article */
   --body-row-gap: 1rlh;
 
   --footer-margin-top: 1rlh;
@@ -31,12 +31,20 @@
      so an empty footer contributes no frame */
   --footer-margin-bottom: 0.5rlh;
 
-  /* Height of the header block above the article header.
+  /* Height of the header block.
      Declared explicitly per page type, not inferred from content:
      the nav is a single line on article pages, and the home page
      has no header at all. If the header ever grows, this is the
      one declaration to update */
   --header-block: calc(var(--header-margin-top) + var(--line-height));
+
+  /* Height of the article header row, i.e. the h1's line box.
+     Declared explicitly: the h1 keeps the UA default font size
+     (2em of the root), the line-height calc(1em + 0.3ex) set
+     below, and margin 0, so a single-line title is 2em + 0.6ex.
+     A wrapping title breaks this declaration — keep titles
+     short enough to stay on one line */
+  --article-header-row: calc(2em + 0.6ex);
 }
 
 /* The home page has no header */
@@ -45,8 +53,8 @@
 }
 
 /* Body: 3-column app-like layout.
-   The center column is the document scroller: header, article header,
-   article main and footer all live in it and scroll with it.
+   The main column wrapper is the document scroller: header, article
+   and footer all live in it and scroll with it.
    The side columns are immovable frames that scroll internally,
    so the sidebars never leave the viewport */
 body {
@@ -54,13 +62,13 @@ body {
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
   grid-template-rows: minmax(0, 1fr);
-  grid-template-areas: "left page right";
+  grid-template-areas: "left main-column-wrapper right";
   margin: 0 var(--body-margin-horizontal);
 }
 
-/* Document column: the one scroll container of the page */
-.page {
-  grid-area: page;
+/* Main column wrapper: the one scroll container of the page */
+.main-column-wrapper {
+  grid-area: main-column-wrapper;
   display: flex;
   flex-direction: column;
   gap: var(--body-row-gap);
@@ -80,14 +88,20 @@ body {
   margin-top: var(--header-margin-top);
 }
 
-/* Article header */
+/* Article */
+.article {
+  display: flex;
+  flex-direction: column;
+  gap: var(--body-row-gap);
+}
+
 .article-header {
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
 }
 
-/* Main cell of the document column */
+/* Main cell of the article */
 .article-main {
   display: flex;
   flex-direction: column;
@@ -103,12 +117,15 @@ body {
 }
 
 /* Sidebars: immovable frame columns, scrolling internally.
-   Their top edge is pushed down to the article header's top edge
-   by the declared header block plus the gap below it */
+   Their top edge is pushed down to the article main's top edge:
+   header block, gap, single-line article header row, gap */
 .left-sidebar {
   grid-area: left;
   justify-self: end;
-  margin-top: calc(var(--header-block) + var(--body-row-gap));
+  margin-top: calc(
+    var(--header-block) + var(--body-row-gap) + var(--article-header-row) +
+      var(--body-row-gap)
+  );
   width: fit-content;
   overflow-y: auto;
   max-width: var(--side-line-length);
@@ -118,20 +135,23 @@ body {
 .right-sidebar {
   grid-area: right;
   justify-self: start;
-  margin-top: calc(var(--header-block) + var(--body-row-gap));
+  margin-top: calc(
+    var(--header-block) + var(--body-row-gap) + var(--article-header-row) +
+      var(--body-row-gap)
+  );
   width: fit-content;
   overflow-y: auto;
   max-width: var(--side-line-length);
   line-height: var(--side-line-height);
 }
 
-/* First child owns no top margin, so sidebar starts flush with the h1 */
+/* First child owns no top margin, so sidebar starts flush with main */
 .left-sidebar > :first-child,
 .right-sidebar > :first-child {
   margin-top: 0;
 }
 
-/* Footer: flows at the end of the document column */
+/* Footer: flows at the end of the main column */
 .footer {
   width: 100%;
   max-width: var(--line-length);
