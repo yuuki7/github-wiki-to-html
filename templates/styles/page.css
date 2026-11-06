@@ -3,10 +3,10 @@
   font-family: "Palatino Linotype", Palatino, serif;
   font-size: 112.5%;
 
-  /* Side column size relative to main column */
+  /* Side column width relative to main column */
   --side-column-ratio: 0.5fr;
 
-  /* Max line length */
+  /* Maximum line lengths */
   --line-length: 66ch;
   --side-line-length: calc(var(--line-length) * 0.5);
 
@@ -16,47 +16,28 @@
 
   line-height: var(--line-height);
 
+  /* Horizontal page margin */
   --body-margin-horizontal: 2ch;
 
-  /* Top frame, owned by the header's first child
-     so an empty header contributes no frame */
+  /* Vertical frames and gaps; frames owned by header/footer children, so empty ones add none */
   --header-margin-top: 0.5rlh;
-
-  /* Row gap of the document column and the article */
   --body-row-gap: 1rlh;
-
   --footer-margin-top: 1rlh;
-
-  /* Bottom frame, owned by the footer's last child
-     so an empty footer contributes no frame */
   --footer-margin-bottom: 0.5rlh;
 
-  /* Height of the header block.
-     Declared explicitly per page type, not inferred from content:
-     the nav is a single line on article pages, and the home page
-     has no header at all. If the header ever grows, this is the
-     one declaration to update */
+  /* Declared block heights for sidebar alignment:
+     header height per page type; h1 line box height
+     (wrapped title shifts sidebars one line — accepted) */
   --header-block: calc(var(--header-margin-top) + var(--line-height));
-
-  /* Height of the article header row, i.e. the h1's line box.
-     Declared explicitly: the h1 keeps the UA default font size
-     (2em of the root), the line-height calc(1em + 0.3ex) set
-     below, and margin 0, so a single-line title is 2em + 0.6ex.
-     A wrapping title breaks this declaration — keep titles
-     short enough to stay on one line */
   --article-header-row: calc(2em + 0.6ex);
 }
 
-/* The home page has no header */
+/* No header on home page */
 .home {
   --header-block: 0px;
 }
 
-/* Body: 3-column app-like layout.
-   The main column wrapper is the document scroller: header, article
-   and footer all live in it and scroll with it.
-   The side columns are immovable frames that scroll internally,
-   so the sidebars never leave the viewport */
+/* Body: 3-column layout; main column scrolls, side columns fixed */
 body {
   height: 100dvh;
   display: grid;
@@ -66,7 +47,7 @@ body {
   margin: 0 var(--body-margin-horizontal);
 }
 
-/* Main column wrapper: the one scroll container of the page */
+/* Main column wrapper: page's only scroll container */
 .main-column-wrapper {
   grid-area: main-column-wrapper;
   display: flex;
@@ -82,8 +63,6 @@ body {
   margin-inline: auto;
 }
 
-/* Top frame owned by the first child,
-   so an empty header contributes no frame */
 .header > :first-child {
   margin-top: var(--header-margin-top);
 }
@@ -101,7 +80,6 @@ body {
   margin-inline: auto;
 }
 
-/* Main cell of the article */
 .article-main {
   display: flex;
   flex-direction: column;
@@ -111,14 +89,12 @@ body {
   margin-inline: auto;
 }
 
-/* Children own no margins; spacing belongs to the gap */
+/* Spacing via gap; children carry no margins */
 .article-main > * {
   margin: 0;
 }
 
-/* Sidebars: immovable frame columns, scrolling internally.
-   Their top edge is pushed down to the article main's top edge:
-   header block, gap, single-line article header row, gap */
+/* Sidebars: fixed columns, top-aligned with article main */
 .left-sidebar {
   grid-area: left;
   justify-self: end;
@@ -145,31 +121,26 @@ body {
   line-height: var(--side-line-height);
 }
 
-/* First child owns no top margin, so sidebar starts flush with main */
 .left-sidebar > :first-child,
 .right-sidebar > :first-child {
   margin-top: 0;
 }
 
-/* Footer: flows at the end of the main column */
+/* Footer */
 .footer {
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
 }
 
-/* Top margin owned by the first child, so empty footer stays flat */
 .footer > :first-child {
   margin-top: var(--footer-margin-top);
 }
 
-/* Bottom frame owned by the last child,
-   so an empty footer contributes no frame */
 .footer > :last-child {
   margin-bottom: var(--footer-margin-bottom);
 }
 
-/* Article */
 .article-header h1 {
   margin: 0;
   line-height: calc(1em + 0.3ex);
