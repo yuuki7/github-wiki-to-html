@@ -3,14 +3,14 @@ import Page from "../layouts/Page.astro";
 import allPages from "../../all-pages.json";
 import site from "../../site.json";
 
-const recentlyCreatedPages = [...allPages].sort((a, b) => {
-  return (
-    Temporal.Instant.from(b.creation_date).epochMilliseconds -
-    Temporal.Instant.from(a.creation_date).epochMilliseconds
-  );
-});
-
-const home = allPages.find((page) => page.slug === "Home");
+const recentlyCreatedPages = allPages
+  .filter((page) => page.listed)
+  .sort((a, b) => {
+    return (
+      Temporal.Instant.from(b.creation_date).epochMilliseconds -
+      Temporal.Instant.from(a.creation_date).epochMilliseconds
+    );
+  });
 ---
 
 <Page className="home" title={site.name}>
@@ -22,7 +22,7 @@ const home = allPages.find((page) => page.slug === "Home");
     ))}
   </ul>
 
-  <Fragment set:html={home.html} />
+  <Fragment set:html={site.home} />
 
   <Fragment slot="footer" set:html={site.footer} />
 </Page>
