@@ -19,45 +19,48 @@
   /* Horizontal page margin */
   --body-margin-horizontal: 2ch;
 
-  /* Vertical frames and gaps; frames owned by header/footer children, so empty ones add none */
+  /* Vertical spacing */
   --header-margin-top: 0.5rlh;
   --body-row-gap: 1rlh;
   --footer-margin-top: 1rlh;
   --footer-margin-bottom: 0.5rlh;
 
-  /* Declared block heights for sidebar alignment:
-     header height per page type; h1 line box height
-     (wrapped title shifts sidebars one line — accepted) */
+  /* Declared block heights the sidebar alignment depends on */
   --header-block: calc(var(--header-margin-top) + var(--line-height));
   --article-header-row: calc(2em + 0.6ex);
 }
 
-/* No header on home page */
+/* The home page has no header */
 .home {
   --header-block: 0px;
 }
 
-/* Body: 3-column layout; main column scrolls, side columns fixed */
+/* Body: 3-column grid; the document scrolls.
+   Offsets depending on the page type are declared on body,
+   so .home's --header-block override is taken into account. */
 body {
-  height: 100dvh;
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-areas: "left main-column-wrapper right";
+  grid-template-areas:
+    "header header header"
+    "left   main   right"
+    "footer footer footer";
+  row-gap: var(--body-row-gap);
   margin: 0 var(--body-margin-horizontal);
-}
 
-/* Main column wrapper: page's only scroll container */
-.main-column-wrapper {
-  grid-area: main-column-wrapper;
-  display: flex;
-  flex-direction: column;
-  gap: var(--body-row-gap);
-  overflow-y: auto;
+  /* Viewport offset at which sidebars are held fixed */
+  --sidebar-offset: calc(
+    var(--header-block) + var(--body-row-gap) + var(--article-header-row) +
+      var(--body-row-gap)
+  );
+
+  /* Sidebar offset within its grid row, which already starts below the header */
+  --sidebar-margin-top: calc(var(--article-header-row) + var(--body-row-gap));
 }
 
 /* Header */
 .header {
+  grid-area: header;
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
@@ -65,6 +68,11 @@ body {
 
 .header > :first-child {
   margin-top: var(--header-margin-top);
+}
+
+/* Main column */
+.main {
+  grid-area: main;
 }
 
 /* Article */
@@ -94,31 +102,29 @@ body {
   margin: 0;
 }
 
-/* Sidebars: fixed columns, top-aligned with article main */
-.left-sidebar {
-  grid-area: left;
-  justify-self: end;
-  margin-top: calc(
-    var(--header-block) + var(--body-row-gap) + var(--article-header-row) +
-      var(--body-row-gap)
-  );
+/* Sidebars: fixed from the first pixel of scrolling */
+.left-sidebar,
+.right-sidebar {
+  position: sticky;
+  top: var(--sidebar-offset);
+  margin-top: var(--sidebar-margin-top);
+  align-self: start;
   width: fit-content;
+  max-height: calc(100vh - var(--sidebar-offset));
   overflow-y: auto;
   max-width: var(--side-line-length);
   line-height: var(--side-line-height);
 }
 
+/* Align with the top of .article-main (exact when the title fits one line) */
+.left-sidebar {
+  grid-area: left;
+  justify-self: end;
+}
+
 .right-sidebar {
   grid-area: right;
   justify-self: start;
-  margin-top: calc(
-    var(--header-block) + var(--body-row-gap) + var(--article-header-row) +
-      var(--body-row-gap)
-  );
-  width: fit-content;
-  overflow-y: auto;
-  max-width: var(--side-line-length);
-  line-height: var(--side-line-height);
 }
 
 .left-sidebar > :first-child,
@@ -128,6 +134,7 @@ body {
 
 /* Footer */
 .footer {
+  grid-area: footer;
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;

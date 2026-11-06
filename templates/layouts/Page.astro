@@ -17,26 +17,24 @@ const { title, className } = Astro.props;
     <title>{title}</title>
   </head>
   <body class={className}>
+    <Header>
+      <slot name="header" />
+    </Header>
+
     <LeftSidebar>
       <slot name="left-sidebar" />
     </LeftSidebar>
 
-    <div class="main-column-wrapper">
-      <Header>
-        <slot name="header" />
-      </Header>
-
-      <Main title={title}>
-        <slot />
-      </Main>
-
-      <Footer>
-        <slot name="footer" />
-      </Footer>
-    </div>
+    <Main title={title}>
+      <slot />
+    </Main>
 
     <RightSidebar set:html="&lt;p&gt;aaa&lt;/p&gt;">
       <slot name="right-sidebar" />
     </RightSidebar>
+
+    <Footer>
+      <slot name="footer" />
+    </Footer>
   </body>
 </html>
