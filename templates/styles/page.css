@@ -22,7 +22,7 @@
      so an empty header contributes no frame */
   --header-margin-top: 0.5rlh;
 
-  /* Row gap of the body grid, uniform across all four rows */
+  /* Row gap of the document column */
   --body-row-gap: 1rlh;
 
   --footer-margin-top: 1rlh;
@@ -31,57 +31,47 @@
      so an empty footer contributes no frame */
   --footer-margin-bottom: 0.5rlh;
 
-  /* Height of the article-header row.
-     The h1 uses the UA default font-size (2em of the root)
-     with line-height calc(1em + 0.3ex), so in root units
-     its line box is 2em + 0.6ex */
-  --article-header-row: calc(2em + 0.6ex);
-
-  /* Viewport offset at which the sidebars are held fixed.
-     Must be greater than or equal to their flow offset
-     (top frame + single-line nav + gap + article-header row + gap),
-     so sticky never has to travel before sticking */
-  --sidebar-offset: calc(
-    var(--header-margin-top) + var(--line-height) + var(--body-row-gap) +
-      var(--article-header-row) + var(--body-row-gap)
-  );
+  /* Height of the header block above the article header.
+     Declared explicitly per page type, not inferred from content:
+     the nav is a single line on article pages, and the home page
+     has no header at all. If the header ever grows, this is the
+     one declaration to update */
+  --header-block: calc(var(--header-margin-top) + var(--line-height));
 }
 
-/* Body: 3-column, 4-row layout.
-   Row 3 is shared by the sidebars and the article main;
-   its top edge is exactly where the article main content starts,
-   so the sidebars align with it structurally, not by margins */
+/* The home page has no header */
+.home {
+  --header-block: 0px;
+}
+
+/* Body: 3-column app-like layout.
+   The center column is the document scroller: header, article header,
+   article main and footer all live in it and scroll with it.
+   The side columns are immovable frames that scroll internally,
+   so the sidebars never leave the viewport */
 body {
+  height: 100dvh;
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
-  grid-template-areas:
-    "header         header         header"
-    "article-header article-header article-header"
-    "left           main           right"
-    "footer         footer         footer";
-  row-gap: var(--body-row-gap);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "left page right";
   margin: 0 var(--body-margin-horizontal);
 }
 
-/* Center column components */
-.header,
-.footer,
-.article-header,
-.article-main {
-  width: 100%;
-  max-width: var(--line-length);
-  justify-self: center;
+/* Document column: the one scroll container of the page */
+.page {
+  grid-area: page;
+  display: flex;
+  flex-direction: column;
+  gap: var(--body-row-gap);
+  overflow-y: auto;
 }
 
 /* Header */
-.header-wrapper {
-  grid-area: header;
-  display: grid;
-  grid-template-columns: subgrid;
-}
-
 .header {
-  grid-column: 2;
+  width: 100%;
+  max-width: var(--line-length);
+  margin-inline: auto;
 }
 
 /* Top frame owned by the first child,
@@ -90,15 +80,62 @@ body {
   margin-top: var(--header-margin-top);
 }
 
-/* Footer */
-.footer-wrapper {
-  grid-area: footer;
-  display: grid;
-  grid-template-columns: subgrid;
+/* Article header */
+.article-header {
+  width: 100%;
+  max-width: var(--line-length);
+  margin-inline: auto;
 }
 
+/* Main cell of the document column */
+.article-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  width: 100%;
+  max-width: var(--line-length);
+  margin-inline: auto;
+}
+
+/* Children own no margins; spacing belongs to the gap */
+.article-main > * {
+  margin: 0;
+}
+
+/* Sidebars: immovable frame columns, scrolling internally.
+   Their top edge is pushed down to the article header's top edge
+   by the declared header block plus the gap below it */
+.left-sidebar {
+  grid-area: left;
+  justify-self: end;
+  margin-top: calc(var(--header-block) + var(--body-row-gap));
+  width: fit-content;
+  overflow-y: auto;
+  max-width: var(--side-line-length);
+  line-height: var(--side-line-height);
+}
+
+.right-sidebar {
+  grid-area: right;
+  justify-self: start;
+  margin-top: calc(var(--header-block) + var(--body-row-gap));
+  width: fit-content;
+  overflow-y: auto;
+  max-width: var(--side-line-length);
+  line-height: var(--side-line-height);
+}
+
+/* First child owns no top margin, so sidebar starts flush with the h1 */
+.left-sidebar > :first-child,
+.right-sidebar > :first-child {
+  margin-top: 0;
+}
+
+/* Footer: flows at the end of the document column */
 .footer {
-  grid-column: 2;
+  width: 100%;
+  max-width: var(--line-length);
+  margin-inline: auto;
 }
 
 /* Top margin owned by the first child, so empty footer stays flat */
@@ -112,100 +149,8 @@ body {
   margin-bottom: var(--footer-margin-bottom);
 }
 
-/* The semantic containers give up their boxes so that
-   .article-header-wrapper and .article-main-wrapper become
-   grid items of the body grid directly.
-   These two are irreducible: as long as <main> and <article>
-   keep their boxes, their children cannot join the body grid */
-.main,
-.article {
-  display: contents;
-}
-
-/* Article header row */
-.article-header-wrapper {
-  grid-area: article-header;
-  display: grid;
-  grid-template-columns: subgrid;
-}
-
-.article-header {
-  grid-column: 2;
-}
-
-/* Main cell of row 3 */
-.article-main-wrapper {
-  grid-area: main;
-  display: grid;
-  grid-template-columns: subgrid;
-}
-
-.article-main {
-  grid-column: 2;
-}
-
-/* Sidebars: grid items of row 3, so their top edge
-   coincides with the article main's top edge by construction */
-.left-sidebar-wrapper,
-.right-sidebar-wrapper {
-  grid-row: 3;
-  align-self: start;
-  position: sticky;
-  top: var(--sidebar-offset);
-  width: fit-content;
-
-  /* Keep the sticky element inside the viewport,
-     so the top inset is never given up
-     (overflowing content scrolls inside) */
-  max-height: calc(100vh - var(--sidebar-offset));
-  overflow: auto;
-}
-
-.left-sidebar-wrapper {
-  grid-column: 1;
-  justify-self: end;
-}
-
-.right-sidebar-wrapper {
-  grid-column: 3;
-  justify-self: start;
-}
-
-/* The home page's scrollable range is shorter than the sidebar,
-   so sticky would run out of room; sidebars stay in flow there */
-.home .left-sidebar-wrapper,
-.home .right-sidebar-wrapper {
-  position: static;
-  max-height: none;
-  overflow: visible;
-}
-
-.left-sidebar,
-.right-sidebar {
-  max-width: var(--side-line-length);
-  line-height: var(--side-line-height);
-}
-
-/* First child owns no top margin, so sidebar starts flush with main */
-.left-sidebar > :first-child,
-.right-sidebar > :first-child {
-  margin-top: 0;
-}
-
 /* Article */
 .article-header h1 {
   margin: 0;
   line-height: calc(1em + 0.3ex);
-}
-
-/* Uniform spacing between the article main's children */
-.article-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-
-/* Children own no margins; spacing belongs to the gap */
-.article-main > * {
-  margin: 0;
 }

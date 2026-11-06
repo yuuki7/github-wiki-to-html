@@ -1,10 +1,9 @@
 ---
 import Article from "./Article.astro";
-const { title } = Astro.props;
 ---
 
 <main class="main">
-  <Article title={title}>
+  <Article>
     <slot />
   </Article>
 </main>
