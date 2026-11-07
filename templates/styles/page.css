@@ -35,12 +35,13 @@ body {
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
   grid-template-rows: [header] auto [article-header] auto [article-main] auto [footer] auto;
   row-gap: var(--body-row-gap);
+  column-gap: var(--body-margin-horizontal);
   margin: 0 var(--body-margin-horizontal);
 }
 
 /* Header */
 .header {
-  grid-column: 1 / -1;
+  grid-column: 2;
   grid-row: header;
   width: 100%;
   max-width: var(--line-length);
@@ -132,7 +133,7 @@ body {
 
 /* Footer */
 .footer {
-  grid-column: 1 / -1;
+  grid-column: 2;
   grid-row: footer;
   width: 100%;
   max-width: var(--line-length);
