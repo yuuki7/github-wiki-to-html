@@ -4,10 +4,13 @@ import LeftSidebar from "../components/LeftSidebar.astro";
 import Main from "../components/Main.astro";
 import RightSidebar from "../components/RightSidebar.astro";
 import Footer from "../components/Footer.astro";
+import type { PageProps } from "../types";
 
 import "../styles/page.css";
 
-const { title, className } = Astro.props;
+type Props = PageProps;
+
+const { title, className, ...articleProps } = Astro.props;
 ---
 
 <!doctype html>
@@ -25,7 +28,7 @@ const { title, className } = Astro.props;
       <slot name="left-sidebar" />
     </LeftSidebar>
 
-    <Main title={title}>
+    <Main title={title} {...articleProps}>
       <slot />
     </Main>
 

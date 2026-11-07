@@ -13,7 +13,7 @@ const recentlyCreatedPages = allPages
   });
 ---
 
-<Page className="home" title={site.name}>
+<Page className="home" title={site.name} isHome>
   <ul slot="left-sidebar">
     {recentlyCreatedPages.map((page) => (
       <li>

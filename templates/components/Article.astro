@@ -1,13 +1,19 @@
 ---
-const { title } = Astro.props;
+import ArticleMeta from "./ArticleMeta.astro";
+import type { ArticleProps } from "../types";
+
+type Props = ArticleProps;
+
+const { title, isHome, meta } = Astro.props;
 ---
 
 <article class="article">
-  <header class="article-header">
-    <h1>{title}</h1>
+  <header class="article__header">
+    <h1 class="article__title">{title}</h1>
+    {!isHome && <ArticleMeta {...meta} />}
   </header>
 
-  <div class="article-main">
+  <div class="article__main">
     <slot />
   </div>
 </article>

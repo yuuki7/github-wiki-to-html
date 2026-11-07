@@ -5,7 +5,10 @@ require_relative '../lib/wikinder/github/wiki'
 require 'json'
 
 Dir.chdir(__dir__) do
-  wiki = Wikinder::GitHub::Wiki.new('../../yuukinder.wiki')
+  wiki = Wikinder::GitHub::Wiki.new(
+    '../../yuukinder.wiki',
+    url_base: 'https://github.com/yuuki7/yuukinder/wiki'
+  )
   File.write('../all-pages.json', "#{JSON.pretty_generate(wiki.pages_data)}\n")
   File.write('../site.json', "#{JSON.pretty_generate(wiki.site_data)}\n")
 end

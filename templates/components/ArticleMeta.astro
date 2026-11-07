@@ -1,0 +1,41 @@
+---
+import type { ArticleMetaProps } from "../types";
+
+interface Props extends ArticleMetaProps {}
+
+const { author, creationDate, modifiedDate } = Astro.props;
+
+const dateFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+const timeFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+const formatDate = (iso: string) =>
+  `${dateFmt.format(new Date(iso))} ${timeFmt.format(new Date(iso))} UTC`;
+---
+
+<p class="article__meta">
+  <span class="article__author">by {author}</span>
+  {" · "}
+  <time class="article__date article__date--created" datetime={creationDate}>
+    {formatDate(creationDate)}
+  </time>
+  {modifiedDate && modifiedDate !== creationDate && (
+    <>
+      {" · "}
+      <time
+        class="article__date article__date--modified"
+        datetime={modifiedDate}
+      >
+        {formatDate(modifiedDate)}
+      </time>
+    </>
+  )}
+</p>

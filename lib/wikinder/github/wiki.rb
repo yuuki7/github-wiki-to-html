@@ -3,13 +3,12 @@
 
 require 'commonmarker'
 require 'gollum-lib'
-require 'json'
 require 'nokogiri'
 require 'pathname'
 require 'uri'
 
-# @type var markdown_proc: ^(String) -> String
-markdown_proc = proc do |markdown|
+# @type var render_markdown: ^(String) -> String
+render_markdown = proc do |markdown|
   Commonmarker.to_html(
     markdown,
     options: {
@@ -30,27 +29,26 @@ markdown_proc = proc do |markdown|
   )
 end
 
-GitHub::Markup::Markdown::MARKDOWN_GEMS.clear
-GitHub::Markup::Markdown::MARKDOWN_GEMS['commonmarker'] = markdown_proc
+# Makes Commonmarker the only Markdown renderer for Gollum.
+GitHub::Markup::Markdown::MARKDOWN_GEMS.replace('commonmarker' => render_markdown)
 
 module Wikinder
   module GitHub
-    # Represents GitHub Wiki.
+    # Represents a GitHub Wiki.
     class Wiki
-      # Pages the site consumes itself and that get no generated page of their own.
-      UNGENERATED_PAGE_SLUGS = %w[Home README LICENSE META].freeze
+      # Pages that are not generated.
+      UNGENERATED_PAGE_SLUGS = %w[Home README LICENSE META].freeze #: Array[String]
 
-      # Pages that get a generated page, but are left out of the recently created pages
-      # list.
-      UNLISTED_PAGE_SLUGS = %w[Wikinder Wikinder-Japan].freeze
+      # Pages omitted from the list of recently created pages on the home page.
+      UNLISTED_PAGE_SLUGS = %w[Wikinder Wikinder-Japan].freeze #: Array[String]
 
       # @rbs @wiki: Gollum::Wiki
+      # @rbs @url_base: String
 
-      # Creates a new GitHub Wiki instance.
-      #
-      # @param path [String] The path to the GitHub Wiki repository.
-      #: (String) -> void
-      def initialize(path)
+      # @param path [String] Path to the wiki repository.
+      # @param url_base [String] Base URL for page links.
+      #: (String, url_base: String) -> void
+      def initialize(path, url_base:)
         @wiki = Gollum::Wiki.new(
           path,
           {
@@ -60,56 +58,68 @@ module Wikinder
             universal_toc: true
           }
         )
+        @url_base = url_base
       end
 
-      # Returns pages data.
-      #
-      # @return [Array] An array of page data.
-      #: () -> Array[{ title: String, slug: String, html: String, toc: String?, creation_date: String?, listed: bool }]
+      # Returns data for every generated page.
+      #: () -> Array[{ title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, wiki_url: String, listed: bool }]
       def pages_data
         @wiki.pages
-             .select { |p| p.format == :markdown }
-             .reject { |p| UNGENERATED_PAGE_SLUGS.include?(p.filename_stripped) }
-             .map do |page|
-          {
-            title: page.title.tr('-', ' '),
-            slug: page.filename_stripped,
-            html: postprocess_html(page.formatted_data),
-            toc: page.toc_data,
-            creation_date: page.versions.last&.authored_date&.iso8601,
-            listed: !UNLISTED_PAGE_SLUGS.include?(page.filename_stripped)
-          }
-        end
+             .select { |page| page.format == :markdown }
+             .reject { |page| UNGENERATED_PAGE_SLUGS.include?(page.filename_stripped) }
+             .map { |page| page_data(page) }
       end
 
-      # Returns site data.
-      #
-      # @return [Hash] A hash containing site-wide data.
-      #: () -> { name: String, home: String?, footer: String? }
+      # Returns site-wide data from the Home page.
+      #: () -> { name: String, home: String, footer: String }
       def site_data
         home = @wiki.page('Home')
         {
           name: 'Wikinder',
-          home: home ? postprocess_html(home.formatted_data) : nil,
-          footer: home&.footer&.formatted_data
+          home: postprocess_html(home.formatted_data),
+          footer: home.footer.formatted_data
         }
       end
 
       private
 
+      # Returns the data for a single page.
+      #: (Gollum::Page) -> { title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, wiki_url: String, listed: bool }
+      def page_data(page)
+        # Fetch the full history; versions are newest first.
+        versions = page.versions({ limit: 0, follow: true })
+        oldest = versions.last
+        newest = versions.first
+        slug = page.filename_stripped
+
+        {
+          title: page.title.tr('-', ' '),
+          slug: slug,
+          html: postprocess_html(page.formatted_data),
+          toc: page.toc_data,
+          creation_date: oldest.authored_date.utc.iso8601,
+          modified_date: newest.authored_date.utc.iso8601,
+          author: oldest.author.name,
+          wiki_url: "#{@url_base}/#{URI::DEFAULT_PARSER.escape(slug)}",
+          listed: !UNLISTED_PAGE_SLUGS.include?(slug)
+        }
+      end
+
+      # Rewrites internal wiki links to site paths.
       #: (String) -> String
       def postprocess_html(html)
         dom = Nokogiri::HTML5.fragment(html)
-        dom.css('a.internal').each do |a|
-          uri = URI(a['href'])
+        dom.css('a.internal').each do |anchor|
+          uri = URI(anchor['href'])
           uri.path = normalize_link_path(uri.path.to_s)
-          a['href'] = uri.to_s
+          anchor['href'] = uri.to_s
         end
         dom.to_html
       end
 
-      # Strips the file extension from a link path and un-escapes percent-encoded spaces
-      # to hyphens, matching the site's slugs.
+      # Strips the extension and converts encoded spaces to hyphens.
+      #
+      # The result matches the site's page slugs.
       #: (String) -> String
       def normalize_link_path(path)
         Pathname(path).sub_ext('').to_s.gsub('%20', '-')

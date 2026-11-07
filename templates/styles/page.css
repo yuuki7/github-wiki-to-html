@@ -3,10 +3,7 @@
   font-family: "Palatino Linotype", Palatino, serif;
   font-size: 112.5%;
 
-  /* Side column width relative to main column */
-  --side-column-ratio: 0.5fr;
-
-  /* Maximum line lengths */
+  /* Max line length */
   --line-length: 66ch;
   --side-line-length: calc(var(--line-length) * 0.5);
 
@@ -16,28 +13,34 @@
 
   line-height: var(--line-height);
 
-  /* Horizontal page margin */
-  --body-margin-horizontal: 2ch;
+  /* Sidebar width relative to main column */
+  --side-column-ratio: 0.5fr;
 
-  /* Vertical spacing */
-  --header-margin-top: 0.5rlh;
+  /* Page margins and row gaps */
+  --body-margin-horizontal: 2ch;
   --body-row-gap: 1rlh;
+
+  /* Header and footer spacing */
+  --header-margin-top: 0.5rlh;
   --footer-margin-top: 1rlh;
   --footer-margin-bottom: 0.5rlh;
 
-  /* Declared block heights the sidebar alignment depends on */
-  --header-block: calc(var(--header-margin-top) + var(--line-height));
-  --article-header-row: calc(2em + 0.6ex);
+  /* Header height, used by sidebar offsets */
+  --header-height: calc(var(--header-margin-top) + var(--line-height));
+
+  /* Article header: title line box plus metadata */
+  --article__meta-gap: 0.5rlh;
+  --article__meta-height: calc(var(--line-height) + var(--article__meta-gap));
+  --article__header-height: calc(2em + 0.6ex + var(--article__meta-height));
 }
 
-/* The home page has no header */
+/* Home page: no header, no article metadata */
 .home {
-  --header-block: 0px;
+  --header-height: 0px;
+  --article__header-height: calc(2em + 0.6ex);
 }
 
-/* Body: 3-column grid; the document scrolls.
-   Offsets depending on the page type are declared on body,
-   so .home's --header-block override is taken into account. */
+/* Page grid: three columns, scrolling document */
 body {
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
@@ -48,14 +51,16 @@ body {
   row-gap: var(--body-row-gap);
   margin: 0 var(--body-margin-horizontal);
 
-  /* Viewport offset at which sidebars are held fixed */
+  /* Sidebar offset: page header, article header, row gaps */
   --sidebar-offset: calc(
-    var(--header-block) + var(--body-row-gap) + var(--article-header-row) +
+    var(--header-height) + var(--body-row-gap) + var(--article__header-height) +
       var(--body-row-gap)
   );
 
-  /* Sidebar offset within its grid row, which already starts below the header */
-  --sidebar-margin-top: calc(var(--article-header-row) + var(--body-row-gap));
+  /* Sidebar offset within its grid row, below the header */
+  --sidebar-margin-top: calc(
+    var(--article__header-height) + var(--body-row-gap)
+  );
 }
 
 /* Header */
@@ -82,13 +87,28 @@ body {
   gap: var(--body-row-gap);
 }
 
-.article-header {
+.article__header {
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
 }
 
-.article-main {
+.article__title {
+  margin: 0;
+  line-height: calc(1em + 0.3ex);
+}
+
+.article__meta {
+  margin: var(--article__meta-gap) 0 0;
+  font-size: 95%;
+}
+
+.article__date--modified::before {
+  content: "✏️";
+  margin-inline-end: 0.25em;
+}
+
+.article__main {
   display: flex;
   flex-direction: column;
   gap: 1em;
@@ -97,12 +117,12 @@ body {
   margin-inline: auto;
 }
 
-/* Spacing via gap; children carry no margins */
-.article-main > * {
+/* Spacing via gap; children carry no margin */
+.article__main > * {
   margin: 0;
 }
 
-/* Sidebars: fixed from the first pixel of scrolling */
+/* Sidebars: sticky from first scroll pixel */
 .left-sidebar,
 .right-sidebar {
   position: sticky;
@@ -110,13 +130,12 @@ body {
   margin-top: var(--sidebar-margin-top);
   align-self: start;
   width: fit-content;
+  max-width: var(--side-line-length);
   max-height: calc(100vh - var(--sidebar-offset));
   overflow-y: auto;
-  max-width: var(--side-line-length);
   line-height: var(--side-line-height);
 }
 
-/* Align with the top of .article-main (exact when the title fits one line) */
 .left-sidebar {
   grid-area: left;
   justify-self: end;
@@ -146,9 +165,4 @@ body {
 
 .footer > :last-child {
   margin-bottom: var(--footer-margin-bottom);
-}
-
-.article-header h1 {
-  margin: 0;
-  line-height: calc(1em + 0.3ex);
 }

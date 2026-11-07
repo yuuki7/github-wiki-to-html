@@ -1,10 +1,12 @@
 ---
 import Article from "./Article.astro";
-const { title } = Astro.props;
+import type { ArticleProps } from "../types";
+
+type Props = ArticleProps;
 ---
 
 <main class="main">
-  <Article title={title}>
+  <Article {...Astro.props}>
     <slot />
   </Article>
 </main>
