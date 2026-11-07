@@ -25,47 +25,23 @@
   --footer-margin-top: 1rlh;
   --footer-margin-bottom: 0.5rlh;
 
-  /* Header height, used by sidebar offsets */
-  --header-height: calc(var(--header-margin-top) + var(--line-height));
-
-  /* Article header: title line box plus metadata */
+  /* Metadata gap */
   --article__meta-gap: 0.5rlh;
-  --article__meta-height: calc(var(--line-height) + var(--article__meta-gap));
-  --article__header-height: calc(2em + 0.6ex + var(--article__meta-height));
 }
 
-/* Home page: no header, no article metadata */
-.home {
-  --header-height: 0px;
-  --article__header-height: calc(2em + 0.6ex);
-}
-
-/* Page grid: three columns, scrolling document */
+/* Page grid */
 body {
   display: grid;
   grid-template-columns: var(--side-column-ratio) 1fr var(--side-column-ratio);
-  grid-template-areas:
-    "header header header"
-    "left   main   right"
-    "footer footer footer";
+  grid-template-rows: [header] auto [article-header] auto [article-main] auto [footer] auto;
   row-gap: var(--body-row-gap);
   margin: 0 var(--body-margin-horizontal);
-
-  /* Sidebar offset: page header, article header, row gaps */
-  --sidebar-offset: calc(
-    var(--header-height) + var(--body-row-gap) + var(--article__header-height) +
-      var(--body-row-gap)
-  );
-
-  /* Sidebar offset within its grid row, below the header */
-  --sidebar-margin-top: calc(
-    var(--article__header-height) + var(--body-row-gap)
-  );
 }
 
 /* Header */
 .header {
-  grid-area: header;
+  grid-column: 1 / -1;
+  grid-row: header;
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
@@ -75,19 +51,22 @@ body {
   margin-top: var(--header-margin-top);
 }
 
-/* Main column */
+/* Main column participates in the page grid */
 .main {
-  grid-area: main;
+  grid-column: 2;
+  grid-row: article-header / span 2;
+  display: grid;
+  grid-template-rows: subgrid;
 }
 
 /* Article */
 .article {
-  display: flex;
-  flex-direction: column;
-  gap: var(--body-row-gap);
+  display: contents;
 }
 
+/* Article header */
 .article__header {
+  grid-row: article-header;
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
@@ -108,7 +87,9 @@ body {
   margin-inline-end: 0.25em;
 }
 
+/* Article main */
 .article__main {
+  grid-row: article-main;
   display: flex;
   flex-direction: column;
   gap: 1em;
@@ -122,27 +103,25 @@ body {
   margin: 0;
 }
 
-/* Sidebars: sticky from first scroll pixel */
+/* Sidebars: share the article body row */
 .left-sidebar,
 .right-sidebar {
+  grid-row: article-main;
   position: sticky;
-  top: var(--sidebar-offset);
-  margin-top: var(--sidebar-margin-top);
+  top: var(--body-row-gap);
   align-self: start;
   width: fit-content;
   max-width: var(--side-line-length);
-  max-height: calc(100vh - var(--sidebar-offset));
-  overflow-y: auto;
   line-height: var(--side-line-height);
 }
 
 .left-sidebar {
-  grid-area: left;
+  grid-column: 1;
   justify-self: end;
 }
 
 .right-sidebar {
-  grid-area: right;
+  grid-column: 3;
   justify-self: start;
 }
 
@@ -153,7 +132,8 @@ body {
 
 /* Footer */
 .footer {
-  grid-area: footer;
+  grid-column: 1 / -1;
+  grid-row: footer;
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
