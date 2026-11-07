@@ -36,15 +36,17 @@ module Wikinder
   module GitHub
     # Represents a GitHub Wiki.
     class Wiki
-      # Pages that are not generated.
+      # Pages not generated.
       UNGENERATED_PAGE_SLUGS = %w[Home README LICENSE META].freeze #: Array[String]
 
-      # Pages omitted from the list of recently created pages on the home page.
+      # Pages not listed on the home page.
       UNLISTED_PAGE_SLUGS = %w[Wikinder Wikinder-Japan].freeze #: Array[String]
 
       # @rbs @wiki: Gollum::Wiki
       # @rbs @url_base: String
 
+      # Creates a new GitHub Wiki instance.
+      #
       # @param path [String] Path to the wiki repository.
       # @param url_base [String] Base URL for page links.
       #: (String, url_base: String) -> void
@@ -70,7 +72,7 @@ module Wikinder
              .map { |page| page_data(page) }
       end
 
-      # Returns site-wide data from the Home page.
+      # Returns site-wide data.
       #: () -> { name: String, home: String, footer: String }
       def site_data
         home = @wiki.page('Home')
@@ -105,7 +107,7 @@ module Wikinder
         }
       end
 
-      # Rewrites internal wiki links to site paths.
+      # Corrects internal links to match page URLs.
       #: (String) -> String
       def postprocess_html(html)
         dom = Nokogiri::HTML5.fragment(html)
@@ -117,9 +119,7 @@ module Wikinder
         dom.to_html
       end
 
-      # Strips the extension and converts encoded spaces to hyphens.
-      #
-      # The result matches the site's page slugs.
+      # Strips the extension and rewrites encoded spaces to hyphens.
       #: (String) -> String
       def normalize_link_path(path)
         Pathname(path).sub_ext('').to_s.gsub('%20', '-')
