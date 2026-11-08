@@ -625,7 +625,7 @@ Loads pages with Gollum and serves META as the source for authorship.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#site_data-instance_method" title="#site_data (instance method)">#<strong>site_data</strong>  &#x21d2; { name: String, home: String, footer: String, head_id: String, language: String } </a>
+      <a href="#site_data-instance_method" title="#site_data (instance method)">#<strong>site_data</strong>  &#x21d2; { name: String, home: String, footer: String, head: String, language: String } </a>
     
 
     
@@ -839,8 +839,8 @@ Loads pages with Gollum and serves META as the source for authorship.</p>
   <span class='ivar'>@wiki_path</span> <span class='op'>=</span> <span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span>
   <span class='ivar'>@wiki</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Gollum.html" title="Gollum (module)">Gollum</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Gollum/Wiki.html" title="Gollum::Wiki (class)">Wiki</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Gollum/Wiki.html#initialize-instance_method" title="Gollum::Wiki#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@wiki_path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#GOLLUM_OPTIONS-constant" title="Wikinder::GitHub::Wiki::GOLLUM_OPTIONS (constant)">GOLLUM_OPTIONS</a></span></span><span class='rparen'>)</span>
   <span class='ivar'>@wiki_url</span> <span class='op'>=</span> <span class='const'>URI</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:wiki_url</span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='ivar'>@prev_head_id</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:prev_head_id</span><span class='rbracket'>]</span>
-  <span class='ivar'>@head_id</span> <span class='op'>=</span> <span class='ivar'>@wiki</span><span class='period'>.</span><span class='id identifier rubyid_repo'>repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span>
+  <span class='ivar'>@prev_head</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:prev_head</span><span class='rbracket'>]</span>
+  <span class='ivar'>@head</span> <span class='op'>=</span> <span class='ivar'>@wiki</span><span class='period'>.</span><span class='id identifier rubyid_repo'>repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span>
   <span class='ivar'>@meta_path</span> <span class='op'>=</span> <span class='ivar'>@wiki_path</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>META.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='ivar'>@ignore_meta</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:ignore_meta</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
   <span class='ivar'>@meta_rows</span> <span class='op'>=</span> <span class='id identifier rubyid_parse_meta'>parse_meta</span>
@@ -1132,11 +1132,11 @@ Compares blob SHAs from both tree listings.
       <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 214</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_changed_paths'>changed_paths</span>
-  <span class='id identifier rubyid_prev_head_id'>prev_head_id</span> <span class='op'>=</span> <span class='ivar'>@prev_head_id</span> <span class='kw'>or</span> <span class='kw'>return</span>
-  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_prev_head_id'>prev_head_id</span> <span class='op'>==</span> <span class='ivar'>@head_id</span>
+  <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>=</span> <span class='ivar'>@prev_head</span> <span class='kw'>or</span> <span class='kw'>return</span>
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>==</span> <span class='ivar'>@head</span>
 
-  <span class='id identifier rubyid_prev_map'>prev_map</span> <span class='op'>=</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='id identifier rubyid_prev_head_id'>prev_head_id</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_head_map'>head_map</span> <span class='op'>=</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='ivar'>@head_id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_prev_map'>prev_map</span> <span class='op'>=</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='id identifier rubyid_prev_head'>prev_head</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_head_map'>head_map</span> <span class='op'>=</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='ivar'>@head</span><span class='rparen'>)</span>
   <span class='lparen'>(</span><span class='id identifier rubyid_prev_map'>prev_map</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span> <span class='op'>|</span> <span class='id identifier rubyid_head_map'>head_map</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_prev_map'>prev_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_it'>it</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='id identifier rubyid_head_map'>head_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_it'>it</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1839,7 +1839,7 @@ Each entry holds its slug and display title.
       <div class="method_details ">
   <h3 class="signature " id="site_data-instance_method">
   
-    #<strong>site_data</strong>  &#x21d2; <tt>{ name: String, home: String, footer: String, head_id: String, language: String }</tt> 
+    #<strong>site_data</strong>  &#x21d2; <tt>{ name: String, home: String, footer: String, head: String, language: String }</tt> 
   
 
   
@@ -1849,7 +1849,7 @@ Each entry holds its slug and display title.
   <div class="discussion">
     <p>Returns site-wide data.
 Exposes head so the next run can update incrementally.
-: () -&gt; { name: String, home: String, footer: String, head_id: String, language: String }</p>
+: () -&gt; { name: String, home: String, footer: String, head: String, language: String }</p>
 
   </div>
 </div>
@@ -1861,7 +1861,7 @@ Exposes head so the next run can update incrementally.
     <li>
       
       
-        <span class='type'>(<tt>{ name: String, home: String, footer: String, head_id: String, language: String }</tt>)</span>
+        <span class='type'>(<tt>{ name: String, home: String, footer: String, head: String, language: String }</tt>)</span>
       
       
       
@@ -1899,7 +1899,7 @@ Exposes head so the next run can update incrementally.
     <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Wikinder</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
     <span class='label'>home:</span> <span class='id identifier rubyid_postprocess_html'>postprocess_html</span><span class='lparen'>(</span><span class='id identifier rubyid_home'>home</span><span class='period'>.</span><span class='id identifier rubyid_formatted_data'>formatted_data</span><span class='rparen'>)</span><span class='comma'>,</span>
     <span class='label'>footer:</span> <span class='id identifier rubyid_footer'>footer</span><span class='period'>.</span><span class='id identifier rubyid_formatted_data'>formatted_data</span><span class='comma'>,</span>
-    <span class='label'>head_id:</span> <span class='ivar'>@head_id</span><span class='comma'>,</span>
+    <span class='label'>head:</span> <span class='ivar'>@head</span><span class='comma'>,</span>
     <span class='label'>language:</span> <span class='id identifier rubyid_detect_language'>detect_language</span><span class='lparen'>(</span><span class='id identifier rubyid_home'>home</span><span class='period'>.</span><span class='id identifier rubyid_text_data'>text_data</span><span class='rparen'>)</span>
   <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>

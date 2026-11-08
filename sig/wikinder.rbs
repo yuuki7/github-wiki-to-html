@@ -29,7 +29,7 @@ type redirect_entry = {
 
 type wiki_options = {
   wiki_url: String,
-  ?prev_head_id: String?,
+  ?prev_head: String?,
   ?ignore_meta: bool
 }
 

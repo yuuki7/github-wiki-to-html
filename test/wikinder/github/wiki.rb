@@ -35,7 +35,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     # Head is the incremental watermark, so it must be a commit SHA.
     it 'returns a site head as a commit SHA' do
       data = wiki.site_data
-      expect(data[:head_id]).to match(/\A[0-9a-f]{40}\z/)
+      expect(data[:head]).to match(/\A[0-9a-f]{40}\z/)
     end
   end
 end

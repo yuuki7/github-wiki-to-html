@@ -69,8 +69,8 @@ module Wikinder
 
       # @rbs @wiki: Gollum::Wiki
       # @rbs @wiki_url: URI::Generic
-      # @rbs @prev_head_id: String?
-      # @rbs @head_id: String
+      # @rbs @prev_head: String?
+      # @rbs @head: String
       # @rbs @wiki_path: Pathname
       # @rbs @meta_path: Pathname
       # @rbs @ignore_meta: bool
@@ -86,8 +86,8 @@ module Wikinder
         @wiki_path = Pathname(path).expand_path
         @wiki = Gollum::Wiki.new(@wiki_path.to_s, GOLLUM_OPTIONS)
         @wiki_url = URI(options.fetch(:wiki_url))
-        @prev_head_id = options[:prev_head_id]
-        @head_id = @wiki.repo.head.commit.id
+        @prev_head = options[:prev_head]
+        @head = @wiki.repo.head.commit.id
         @meta_path = @wiki_path.join('META.md')
         @ignore_meta = options[:ignore_meta] || false
         @meta_rows = parse_meta
@@ -106,7 +106,7 @@ module Wikinder
 
       # Returns site-wide data.
       # Exposes head so the next run can update incrementally.
-      #: () -> { name: String, home: String, footer: String, head_id: String, language: String }
+      #: () -> { name: String, home: String, footer: String, head: String, language: String }
       def site_data
         home = @wiki.page('Home') or raise 'Home page is missing'
         footer = home.footer or raise 'Footer page is missing'
@@ -115,7 +115,7 @@ module Wikinder
           name: 'Wikinder',
           home: postprocess_html(home.formatted_data),
           footer: footer.formatted_data,
-          head_id: @head_id,
+          head: @head,
           language: detect_language(home.text_data)
         }
       end
@@ -212,11 +212,11 @@ module Wikinder
       # Compares blob SHAs from both tree listings.
       #: () -> Array[String]?
       def changed_paths
-        prev_head_id = @prev_head_id or return
-        return [] if prev_head_id == @head_id
+        prev_head = @prev_head or return
+        return [] if prev_head == @head
 
-        prev_map = blob_sha_map(prev_head_id)
-        head_map = blob_sha_map(@head_id)
+        prev_map = blob_sha_map(prev_head)
+        head_map = blob_sha_map(@head)
         (prev_map.keys | head_map.keys).reject { prev_map[it] == head_map[it] }
       end
 
