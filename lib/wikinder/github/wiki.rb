@@ -87,25 +87,27 @@ module Wikinder
 
       # Returns data for every generated page.
       # Syncs META first so each page reads stable authorship.
-      #: () -> Array[{ title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: String, listed: bool }]
+      #: () -> Array[{ title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: String, listed: bool } | { slug: String, title: String, redirect: bool, target_slug: String }]
       def pages_data
         pages = @wiki.pages
                      .select { |page| page.format == :markdown }
                      .reject { |page| UNGENERATED_PAGE_SLUGS.include?(page.filename_stripped) }
         sync_meta(pages)
-        pages.map { |page| page_data(page) }
+        canonical = pages.map { |page| page_data(page) }
+        canonical + redirect_entries(pages)
       end
 
       # Returns site-wide data.
       # Exposes head so the next run can update incrementally.
-      #: () -> { name: String, home: String, footer: String, head: String }
+      #: () -> { name: String, home: String, footer: String, head: String, language: String }
       def site_data
         home = @wiki.page('Home')
         {
           name: 'Wikinder',
           home: postprocess_html(home.formatted_data),
           footer: home.footer.formatted_data,
-          head: @head_sha.to_s
+          head: @head_sha.to_s,
+          language: detect_language(home.text_data)
         }
       end
 
@@ -302,6 +304,27 @@ module Wikinder
         end
 
         write_meta
+      end
+
+      # Returns redirect entries mixed with pages.
+      # Each entry holds its slug and display title.
+      #: (Array[Gollum::Page]) -> Array[{ slug: String, title: String, redirect: bool, target_slug: String }]
+      def redirect_entries(pages)
+        used = {}
+        pages.each { |page| used[page.filename_stripped.downcase] = true }
+        items = []
+        pages.each do |page|
+          slug = page.filename_stripped
+          row = @meta_rows[slug]
+          row[:aliases].each do |alias_text|
+            alias_slug = alias_text.gsub(' ', '-')
+            next if alias_slug.empty? || used[alias_slug.downcase]
+
+            used[alias_slug.downcase] = true
+            items << { slug: alias_slug, title: alias_text, redirect: true, target_slug: slug }
+          end
+        end
+        items
       end
 
       # Writes META rows sorted by creation date.

@@ -1,61 +1,30 @@
 ---
 import Page from "../layouts/Page.astro";
+import RedirectPage from "../components/RedirectPage.astro";
 import allPages from "../../all-pages.json";
 import site from "../../site.json";
 
 export async function getStaticPaths() {
-  const paths = [];
-  const used = new Set();
-  for (const page of allPages) {
-    used.add(page.slug);
-    paths.push({
-      params: { slug: page.slug },
-      props: { page },
-    });
-  }
-  for (const page of allPages) {
-    for (const alias of page.aliases) {
-      const aliasSlug = alias.replace(/ /g, "-");
-      if (used.has(aliasSlug)) {
-        continue;
-      }
-      used.add(aliasSlug);
-      paths.push({
-        params: { slug: aliasSlug },
-        props: { page, redirect: true },
-      });
-    }
-  }
-  return paths;
+  return allPages.map((item) => ({
+    params: { slug: item.slug },
+    props: { item },
+  }));
 }
 
-const { page, redirect } = Astro.props;
-const redirectTarget = `/${encodeURIComponent(page.slug)}`;
+const { item } = Astro.props;
 ---
 
-{redirect ? (
-  <html lang={page.language}>
-    <head>
-      <meta charset="utf-8" />
-      <meta http-equiv="refresh" content={`0; url=${redirectTarget}`} />
-      <link rel="canonical" href={redirectTarget} />
-      <title>{page.title}</title>
-    </head>
-    <body>
-      <p>
-        <a href={redirectTarget}>Redirect to {page.title}</a>
-      </p>
-    </body>
-  </html>
+{item.redirect ? (
+  <RedirectPage title={item.title} targetSlug={item.target_slug} />
 ) : (
   <Page
     className="individual"
-    title={page.title}
-    language={page.language}
+    title={item.title}
+    language={item.language}
     meta={{
-      author: page.author,
-      creationDate: page.creation_date,
-      modifiedDate: page.modified_date,
+      author: item.author,
+      creationDate: item.creation_date,
+      modifiedDate: item.modified_date,
     }}
   >
     <Fragment slot="header">
@@ -64,13 +33,13 @@ const redirectTarget = `/${encodeURIComponent(page.slug)}`;
       </nav>
     </Fragment>
 
-    <Fragment slot="left-sidebar" set:html={page.toc} />
+    <Fragment slot="left-sidebar" set:html={item.toc} />
 
-    <Fragment set:html={page.html} />
+    <Fragment set:html={item.html} />
 
     <Fragment slot="footer">
       <Fragment set:html={site.footer} />
-      <a href={page.wiki_url}>Edit this page on GitHub Wiki</a>
+      <a href={item.wiki_url}>Edit this page on GitHub Wiki</a>
     </Fragment>
   </Page>
 )}
