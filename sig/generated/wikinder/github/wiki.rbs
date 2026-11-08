@@ -11,6 +11,9 @@ module Wikinder
       # Column labels for the META table.
       META_HEADERS: Array[String]
 
+      # Precomputed header and separator rows for the META table.
+      META_TABLE_HEADER: Array[String]
+
       # Separator between aliases in a META cell.
       ALIAS_SEPARATOR: String
 
@@ -25,9 +28,9 @@ module Wikinder
 
       @meta_rows: Hash[String, meta_row]
 
-      @meta_path: String
+      @meta_path: Pathname
 
-      @wiki_path: String
+      @wiki_path: Pathname
 
       @head_sha: String
 

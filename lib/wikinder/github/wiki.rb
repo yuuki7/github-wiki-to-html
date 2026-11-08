@@ -44,6 +44,12 @@ module Wikinder
         'Title', 'Author', 'Creation date', 'Modified date', 'Language', 'Aliases'
       ].freeze #: Array[String]
 
+      # Precomputed header and separator rows for the META table.
+      META_TABLE_HEADER = [
+        "| #{META_HEADERS.join(' | ')} |",
+        "| #{Array.new(META_HEADERS.size, '---').join(' | ')} |"
+      ].freeze #: Array[String]
+
       # Separator between aliases in a META cell.
       ALIAS_SEPARATOR = '<br>' #: String
 
@@ -65,8 +71,8 @@ module Wikinder
       # @rbs @url_base: String
       # @rbs @prev_head: String?
       # @rbs @head_sha: String
-      # @rbs @wiki_path: String
-      # @rbs @meta_path: String
+      # @rbs @wiki_path: Pathname
+      # @rbs @meta_path: Pathname
       # @rbs @meta_rows: Hash[String, meta_row]
 
       # Creates a new GitHub Wiki instance.
@@ -77,12 +83,12 @@ module Wikinder
       # Loads META rows and resolves the current head at start.
       #: (String, url_base: String, ?prev_head: String?) -> void
       def initialize(path, url_base:, prev_head: nil)
-        @wiki_path = File.expand_path(path)
-        @wiki = Gollum::Wiki.new(@wiki_path, GOLLUM_OPTIONS)
+        @wiki_path = Pathname(path).expand_path
+        @wiki = Gollum::Wiki.new(@wiki_path.to_s, GOLLUM_OPTIONS)
         @url_base = url_base
         @prev_head = prev_head
         @head_sha = @wiki.repo.head.commit.id
-        @meta_path = File.join(@wiki_path, 'META.md')
+        @meta_path = @wiki_path.join('META.md')
         @meta_rows = parse_meta
       end
 
@@ -94,7 +100,7 @@ module Wikinder
                      .select { |page| page.format == :markdown && !UNGENERATED_PAGES.include?(page.filename_stripped) }
         sync_meta(pages)
 
-        pages.map { |page| page_data(page) } + redirect_entries(pages)
+        pages.map { page_data(it) } + redirect_entries(pages)
       end
 
       # Returns site-wide data.
@@ -264,7 +270,7 @@ module Wikinder
       # Each entry holds its slug and display title.
       #: (Array[Gollum::Page]) -> Array[redirect_entry]
       def redirect_entries(pages)
-        used = pages.to_set { |page| page.filename_stripped.downcase }
+        used = pages.to_set { it.filename_stripped.downcase }
 
         pages.flat_map do |page|
           target_slug = page.filename_stripped
@@ -285,8 +291,6 @@ module Wikinder
           (row_b[:creation_date] <=> row_a[:creation_date]).nonzero? || (slug_a <=> slug_b)
         end
 
-        header = "| #{META_HEADERS.join(' | ')} |"
-        separator = "| #{Array.new(META_HEADERS.size, '---').join(' | ')} |"
         rows = sorted.map do |slug, row|
           title = slug_to_title(slug)
           aliases_str = row[:aliases].join(ALIAS_SEPARATOR)
@@ -294,8 +298,8 @@ module Wikinder
           "| #{cells.join(' | ')} |"
         end
 
-        content = [header, separator, *rows].join("\n") << "\n"
-        File.write(@meta_path, content) unless File.exist?(@meta_path) && File.read(@meta_path) == content
+        content = [*META_TABLE_HEADER, *rows].join("\n") << "\n"
+        @meta_path.write(content) unless @meta_path.exist? && @meta_path.read == content
       end
     end
   end
