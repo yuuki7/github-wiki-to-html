@@ -1,0 +1,3 @@
+module WhatLanguage
+  def self.language_iso: (String?) -> Symbol?
+end

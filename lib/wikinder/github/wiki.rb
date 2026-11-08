@@ -4,7 +4,6 @@
 require 'commonmarker'
 require 'gollum-lib'
 require 'nokogiri'
-require 'pathname'
 require 'uri'
 require 'whatlanguage'
 
@@ -41,7 +40,9 @@ module Wikinder
     # Loads pages with Gollum and serves META as the source for authorship.
     class Wiki
       # Column labels for the META table.
-      META_HEADERS = ['Title', 'Author', 'Creation date', 'Modified date', 'Language', 'Aliases'].freeze #: Array[String]
+      META_HEADERS = [
+        'Title', 'Author', 'Creation date', 'Modified date', 'Language', 'Aliases'
+      ].freeze #: Array[String]
 
       # Separator between aliases in a META cell.
       ALIAS_SEPARATOR = '<br>' #: String
@@ -58,7 +59,7 @@ module Wikinder
       # @rbs @head_sha: String
       # @rbs @wiki_path: String
       # @rbs @meta_path: String
-      # @rbs @meta_rows: Hash[String, { author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String] }]
+      # @rbs @meta_rows: Hash[String, meta_row]
 
       # Creates a new GitHub Wiki instance.
       #
@@ -87,7 +88,7 @@ module Wikinder
 
       # Returns data for every generated page.
       # Syncs META first so each page reads stable authorship.
-      #: () -> Array[{ title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: String, listed: bool } | { slug: String, title: String, redirect: bool, target_slug: String }]
+      #: () -> Array[page_entry | redirect_entry]
       def pages_data
         pages = @wiki.pages
                      .select { |page| page.format == :markdown && !UNGENERATED_PAGES.include?(page.filename_stripped) }
@@ -100,11 +101,13 @@ module Wikinder
       # Exposes head so the next run can update incrementally.
       #: () -> { name: String, home: String, footer: String, head: String, language: String }
       def site_data
-        home = @wiki.page('Home')
+        home = @wiki.page('Home') or raise 'Home page is missing'
+        footer = home.footer or raise 'Footer page is missing'
+
         {
           name: 'Wikinder',
           home: postprocess_html(home.formatted_data),
-          footer: home.footer.formatted_data,
+          footer: footer.formatted_data,
           head: @head_sha,
           language: detect_language(home.text_data)
         }
@@ -114,7 +117,7 @@ module Wikinder
 
       # Returns the data for a single page.
       # Reads authorship from META rather than recomputing from history.
-      #: (Gollum::Page) -> { title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: String, listed: bool }
+      #: (Gollum::Page) -> page_entry
       def page_data(page)
         slug = page.filename_stripped
         meta = @meta_rows.fetch(slug)
@@ -148,7 +151,7 @@ module Wikinder
       # Drops leading slash and extension after decoding.
       #: (String) -> String
       def slug_from_href(href)
-        path = URI::DEFAULT_PARSER.unescape(URI(href).path)
+        path = URI::DEFAULT_PARSER.unescape(URI(href).path.to_s)
         Pathname(path).sub_ext('').to_s.delete_prefix('/')
       end
 
@@ -159,7 +162,7 @@ module Wikinder
         dom = Nokogiri::HTML5.fragment(html)
         dom.css('a.internal').each do |anchor|
           uri = URI(anchor['href'])
-          uri.path = normalize_link_path(uri.path)
+          uri.path = normalize_link_path(uri.path.to_s)
           anchor['href'] = uri.to_s
         end
         dom.to_html
@@ -177,11 +180,12 @@ module Wikinder
 
       # Parses the META table into rows keyed by slug.
       # Reads the committed page through Gollum.
-      #: () -> Hash[String, { author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String] }]
+      #: () -> Hash[String, meta_row]
       def parse_meta
         page = @wiki.page('META') or return {}
 
         dom = Nokogiri::HTML5.fragment(page.formatted_data)
+        # @type var rows: Hash[String, meta_row]
         rows = {}
         dom.css('tbody tr').each do |row|
           title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
@@ -205,10 +209,10 @@ module Wikinder
       # Compares blob SHAs from both tree listings.
       #: () -> Array[String]?
       def changed_paths
-        return unless @prev_head
-        return [] if @prev_head == @head_sha
+        prev_head = @prev_head or return
+        return [] if prev_head == @head_sha
 
-        prev_map = blob_sha_map(@prev_head)
+        prev_map = blob_sha_map(prev_head)
         head_map = blob_sha_map(@head_sha)
         (prev_map.keys | head_map.keys).reject { |path| prev_map[path] == head_map[path] }
       end
@@ -231,7 +235,7 @@ module Wikinder
       # Drops deleted pages and adds new pages with history heuristics.
       #: (Array[Gollum::Page]) -> void
       def sync_meta(pages)
-        current_slugs = pages.map(&:filename_stripped).to_set
+        current_slugs = pages.to_set(&:filename_stripped)
         @meta_rows.select! { |slug, _row| current_slugs.include?(slug) }
 
         changed = changed_paths
@@ -250,7 +254,7 @@ module Wikinder
 
       # Builds a new META row from Git history and content.
       # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
-      #: (Gollum::Page) -> { author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String] }
+      #: (Gollum::Page) -> meta_row
       def build_meta_row(page)
         versions = page.versions(limit: 0, follow: true)
         {
@@ -270,9 +274,9 @@ module Wikinder
 
       # Returns redirect entries mixed with pages.
       # Each entry holds its slug and display title.
-      #: (Array[Gollum::Page]) -> Array[{ slug: String, title: String, redirect: bool, target_slug: String }]
+      #: (Array[Gollum::Page]) -> Array[redirect_entry]
       def redirect_entries(pages)
-        used = pages.map { |page| page.filename_stripped.downcase }.to_set
+        used = pages.to_set { |page| page.filename_stripped.downcase }
 
         pages.flat_map do |page|
           target_slug = page.filename_stripped

@@ -2,37 +2,129 @@
 
 module Wikinder
   module GitHub
-    # Represents GitHub Wiki.
+    # Represents a GitHub Wiki.
+    # Loads pages with Gollum and serves META as the source for authorship.
     class Wiki
+      # Column labels for the META table.
+      META_HEADERS: Array[String]
+
+      # Separator between aliases in a META cell.
+      ALIAS_SEPARATOR: String
+
+      # Pages not generated.
+      UNGENERATED_PAGES: Set[String]
+
+      # Pages not listed on the home page.
+      UNLISTED_PAGES: Set[String]
+
+      @meta_rows: Hash[String, meta_row]
+
+      @meta_path: String
+
+      @wiki_path: String
+
+      @head_sha: String
+
+      @prev_head: String?
+
+      @url_base: String
+
       @wiki: Gollum::Wiki
 
       # Creates a new GitHub Wiki instance.
       #
-      # @param path [String] The path to the GitHub Wiki repository.
-      # : (String) -> void
-      def initialize: (String) -> void
+      # @param path [String] Path to the wiki repository.
+      # @param url_base [String] Base URL for page links.
+      # @param prev_head [String, nil] Previous head SHA for incremental update.
+      # Loads META rows and resolves the current head at start.
+      # : (String, url_base: String, ?prev_head: String?) -> void
+      def initialize: (String, url_base: String, ?prev_head: String?) -> void
 
-      # Returns all pages data.
-      #
-      # @return [Array] An array of page data.
-      # : () -> Array[{ title: String, slug: String, html: String, toc: String?, creation_date: String? }]
-      def pages_data: () -> Array[{ title: String, slug: String, html: String, toc: String?, creation_date: String? }]
+      # Returns data for every generated page.
+      # Syncs META first so each page reads stable authorship.
+      # : () -> Array[page_entry | redirect_entry]
+      def pages_data: () -> Array[page_entry | redirect_entry]
 
-      # Returns site data.
-      #
-      # @return [Hash] A hash containing site-wide data.
-      # : () -> { name: String, footer: String? }
-      def site_data: () -> { name: String, footer: String? }
+      # Returns site-wide data.
+      # Exposes head so the next run can update incrementally.
+      # : () -> { name: String, home: String, footer: String, head: String, language: String }
+      def site_data: () -> { name: String, home: String, footer: String, head: String, language: String }
 
       private
 
+      # Returns the data for a single page.
+      # Reads authorship from META rather than recomputing from history.
+      # : (Gollum::Page) -> page_entry
+      def page_data: (Gollum::Page) -> page_entry
+
+      # Returns a display title from a slug.
+      # Turns ASCII hyphens into spaces.
+      # : (String) -> String
+      def slug_to_title: (String) -> String
+
+      # Strips the extension and rewrites encoded spaces to hyphens.
+      # Keeps page URLs stable across wiki and site encodings.
+      # : (String) -> String
+      def normalize_link_path: (String) -> String
+
+      # Returns slug from a wiki link href.
+      # Drops leading slash and extension after decoding.
+      # : (String) -> String
+      def slug_from_href: (String) -> String
+
+      # Corrects internal links to match page URLs.
+      # Rewrites wiki internal links under the site base.
       # : (String) -> String
       def postprocess_html: (String) -> String
 
-      # Strips the file extension from a link path and un-escapes
-      # percent-encoded spaces to hyphens, matching the site's slugs.
-      # : (String) -> String
-      def normalize_link_path: (String) -> String
+      # Returns aliases inside a table cell.
+      # Treats break tags as separators between aliases.
+      # : (Nokogiri::XML::Node) -> Array[String]
+      def aliases_from_cell: (Nokogiri::XML::Node) -> Array[String]
+
+      # Parses the META table into rows keyed by slug.
+      # Reads the committed page through Gollum.
+      # : () -> Hash[String, meta_row]
+      def parse_meta: () -> Hash[String, meta_row]
+
+      # Returns paths changed between previous head and head.
+      # Compares blob SHAs from both tree listings.
+      # : () -> Array[String]?
+      def changed_paths: () -> Array[String]?
+
+      # Returns blob SHAs keyed by path for a ref.
+      # Works for the incremental comparison.
+      # : (String) -> Hash[String, String]
+      def blob_sha_map: (String) -> Hash[String, String]
+
+      # Detects language from text.
+      # Returns an ISO code for new META rows.
+      # : (String?) -> String
+      def detect_language: (String?) -> String
+
+      # Syncs META rows with current pages and writes the file.
+      # Drops deleted pages and adds new pages with history heuristics.
+      # : (Array[Gollum::Page]) -> void
+      def sync_meta: (Array[Gollum::Page]) -> void
+
+      # Builds a new META row from Git history and content.
+      # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
+      # : (Gollum::Page) -> meta_row
+      def build_meta_row: (Gollum::Page) -> meta_row
+
+      # Returns the latest author date in ISO 8601 for a page.
+      # : (Gollum::Page) -> String
+      def latest_modified_date: (Gollum::Page) -> String
+
+      # Returns redirect entries mixed with pages.
+      # Each entry holds its slug and display title.
+      # : (Array[Gollum::Page]) -> Array[redirect_entry]
+      def redirect_entries: (Array[Gollum::Page]) -> Array[redirect_entry]
+
+      # Writes META rows sorted by creation date.
+      # Newest articles stay at the top for editors.
+      # : () -> void
+      def write_meta: () -> void
     end
   end
 end

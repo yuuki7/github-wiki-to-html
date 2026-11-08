@@ -7,23 +7,55 @@ type gollum_wiki_options = {
 }
 
 module Gollum
+  class BlobEntry
+    def path: () -> String
+    def sha: () -> String
+  end
+
   class Page
     def filename_stripped: () -> String
     def footer: () -> Page?
     def format: () -> Symbol
     def formatted_data: () -> String
+    def path: () -> String
+    def text_data: () -> String
     def title: () -> String
     def toc_data: () -> String
-    def versions: () -> Array[Version]
+    def versions: (?Hash[Symbol, untyped]) -> Array[Version]
   end
 
   class Version
+    def author: () -> Git::Actor
     def authored_date: () -> Time
   end
 
+  module Git
+    class Actor
+      def name: () -> String
+    end
+
+    class Commit
+      def commit: () -> untyped
+      def id: () -> String
+    end
+
+    class Ref
+      def commit: () -> Commit
+    end
+
+    class Repo
+      def commit: (String) -> Commit?
+      def head: () -> Ref
+    end
+  end
+
   class Wiki
+    attr_reader repo: Git::Repo
+    attr_reader ref: String
     def initialize: (String, ?gollum_wiki_options) -> void
+    def commit_for: (String) -> Git::Commit?
     def page: (String) -> Page?
     def pages: () -> Array[Page]
+    def tree_map_for: (String, ?bool) -> Array[BlobEntry]
   end
 end

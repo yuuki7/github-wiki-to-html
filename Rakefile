@@ -12,7 +12,7 @@ end
 
 desc 'Run linter and type checks'
 task :check do
-  sh 'rubocop --config .config/.rubocop.yaml'
+  sh 'rubocop --config .config/.rubocop.yaml --fail-level error'
   sh 'rbs-inline --output sig lib'
   sh 'rbs validate'
   sh 'steep check --steepfile .config/Steepfile'

@@ -1,0 +1,11 @@
+module Commonmarker
+  class Node
+    def type: () -> Symbol
+    def each: () { (Node) -> void } -> untyped
+    def walk: () { (Node) -> void } -> untyped
+    def string_content: () -> String
+    def literal: () -> String
+  end
+
+  def self.parse: (String, options: untyped) -> Node
+end
