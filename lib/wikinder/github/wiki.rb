@@ -44,13 +44,13 @@ module Wikinder
       META_HEADERS = ['Title', 'Author', 'Creation date', 'Modified date', 'Language', 'Aliases'].freeze #: Array[String]
 
       # Separator between aliases in a META cell.
-      ALIAS_SEPARATOR = '<br>'.freeze #: String
+      ALIAS_SEPARATOR = '<br>' #: String
 
       # Pages not generated.
-      UNGENERATED_PAGE_SLUGS = %w[Home README LICENSE META].freeze #: Array[String]
+      UNGENERATED_PAGES = Set['Home', 'README', 'LICENSE', 'META'].freeze #: Set[String]
 
       # Pages not listed on the home page.
-      UNLISTED_PAGE_SLUGS = %w[Wikinder Wikinder-Japan].freeze #: Array[String]
+      UNLISTED_PAGES = Set['Wikinder', 'Wikinder-Japan'].freeze #: Set[String]
 
       # @rbs @wiki: Gollum::Wiki
       # @rbs @url_base: String
@@ -80,7 +80,7 @@ module Wikinder
         )
         @url_base = url_base
         @prev_head = prev_head
-        @head_sha = current_head_sha
+        @head_sha = @wiki.repo.head.commit.id
         @meta_path = File.join(@wiki_path, 'META.md')
         @meta_rows = parse_meta
       end
@@ -90,11 +90,10 @@ module Wikinder
       #: () -> Array[{ title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: String, listed: bool } | { slug: String, title: String, redirect: bool, target_slug: String }]
       def pages_data
         pages = @wiki.pages
-                     .select { |page| page.format == :markdown }
-                     .reject { |page| UNGENERATED_PAGE_SLUGS.include?(page.filename_stripped) }
+                     .select { |page| page.format == :markdown && !UNGENERATED_PAGES.include?(page.filename_stripped) }
         sync_meta(pages)
-        canonical = pages.map { |page| page_data(page) }
-        canonical + redirect_entries(pages)
+
+        pages.map { |page| page_data(page) } + redirect_entries(pages)
       end
 
       # Returns site-wide data.
@@ -106,7 +105,7 @@ module Wikinder
           name: 'Wikinder',
           home: postprocess_html(home.formatted_data),
           footer: home.footer.formatted_data,
-          head: @head_sha.to_s,
+          head: @head_sha,
           language: detect_language(home.text_data)
         }
       end
@@ -118,7 +117,7 @@ module Wikinder
       #: (Gollum::Page) -> { title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: String, listed: bool }
       def page_data(page)
         slug = page.filename_stripped
-        meta = @meta_rows[slug]
+        meta = @meta_rows.fetch(slug)
 
         {
           title: slug_to_title(slug),
@@ -131,22 +130,26 @@ module Wikinder
           language: meta[:language],
           aliases: meta[:aliases],
           wiki_url: "#{@url_base}/#{URI::DEFAULT_PARSER.escape(slug)}",
-          listed: !UNLISTED_PAGE_SLUGS.include?(slug)
+          listed: !UNLISTED_PAGES.include?(slug)
         }
       end
 
       # Returns a display title from a slug.
       # Turns ASCII hyphens into spaces.
       #: (String) -> String
-      def slug_to_title(slug)
-        slug.tr('-', ' ')
-      end
+      def slug_to_title(slug) = slug.tr('-', ' ')
 
-      # Returns a path without its extension.
-      # Used when resolving wiki and site URLs.
+      # Strips the extension and rewrites encoded spaces to hyphens.
+      # Keeps page URLs stable across wiki and site encodings.
       #: (String) -> String
-      def strip_extension(path)
-        Pathname(path).sub_ext('').to_s
+      def normalize_link_path(path) = Pathname(path).sub_ext('').to_s.gsub('%20', '-')
+
+      # Returns slug from a wiki link href.
+      # Drops leading slash and extension after decoding.
+      #: (String) -> String
+      def slug_from_href(href)
+        path = URI::DEFAULT_PARSER.unescape(URI(href).path)
+        Pathname(path).sub_ext('').to_s.delete_prefix('/')
       end
 
       # Corrects internal links to match page URLs.
@@ -156,72 +159,36 @@ module Wikinder
         dom = Nokogiri::HTML5.fragment(html)
         dom.css('a.internal').each do |anchor|
           uri = URI(anchor['href'])
-          uri.path = normalize_link_path(uri.path.to_s)
+          uri.path = normalize_link_path(uri.path)
           anchor['href'] = uri.to_s
         end
         dom.to_html
       end
 
-      # Strips the extension and rewrites encoded spaces to hyphens.
-      # Keeps page URLs stable across wiki and site encodings.
-      #: (String) -> String
-      def normalize_link_path(path)
-        strip_extension(path).gsub('%20', '-')
-      end
-
-      # Returns the current head SHA.
-      # HEAD defines the wiki snapshot for this build.
-      #: () -> String
-      def current_head_sha
-        @wiki.repo.head.commit.id
-      end
-
-      # Returns slug from a wiki link href.
-      # Drops leading slash and extension after decoding.
-      #: (String) -> String
-      def slug_from_href(href)
-        path = URI::DEFAULT_PARSER.unescape(URI(href).path.to_s)
-        strip_extension(path).sub(%r{\A/+}, '')
-      end
-
       # Returns aliases inside a table cell.
       # Treats break tags as separators between aliases.
-      #: (untyped) -> Array[String]
+      #: (Nokogiri::XML::Node) -> Array[String]
       def aliases_from_cell(cell)
-        items = []
-        current = +''
-        cell.children.each do |child|
-          if child.name == 'br'
-            items << current.strip
-            current = +''
-          elsif child.text?
-            current << child.text
-          end
-        end
-        items << current.strip
-        items.reject(&:empty?)
+        cell.children
+            .slice_after { |node| node.name == 'br' }
+            .map { |group| group.select(&:text?).map(&:text).join.strip }
+            .reject(&:empty?)
       end
 
       # Parses the META table into rows keyed by slug.
       # Reads the committed page through Gollum.
       #: () -> Hash[String, { author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String] }]
       def parse_meta
-        page = @wiki.page('META')
-        return {} unless page
+        page = @wiki.page('META') or return {}
 
         dom = Nokogiri::HTML5.fragment(page.formatted_data)
         rows = {}
         dom.css('tbody tr').each do |row|
-          cells = row.css('td')
-          next if cells.size < META_HEADERS.size
-
-          title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = cells[0, META_HEADERS.size]
+          title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
 
           link = title_cell.css('a').first
-          next unless link
 
-          slug = slug_from_href(link['href'].to_s)
-          next if slug.empty?
+          slug = slug_from_href(link['href'])
 
           rows[slug] = {
             author: author_cell.text.strip,
@@ -238,33 +205,25 @@ module Wikinder
       # Compares blob SHAs from both tree listings.
       #: () -> Array[String]?
       def changed_paths
-        return nil if @prev_head.nil?
+        return unless @prev_head
         return [] if @prev_head == @head_sha
-
-        prev_commit = @wiki.commit_for(@prev_head)
-        head_commit = @wiki.commit_for(@head_sha)
-        return nil if prev_commit.nil? || head_commit.nil?
 
         prev_map = blob_sha_map(@prev_head)
         head_map = blob_sha_map(@head_sha)
-        (head_map.keys + prev_map.keys).uniq.select { |path| prev_map[path] != head_map[path] }
+        (prev_map.keys | head_map.keys).reject { |path| prev_map[path] == head_map[path] }
       end
 
       # Returns blob SHAs keyed by path for a ref.
       # Works for the incremental comparison.
       #: (String) -> Hash[String, String]
       def blob_sha_map(ref)
-        map = {}
-        @wiki.tree_map_for(ref).each { |entry| map[entry.path] = entry.sha }
-        map
+        @wiki.tree_map_for(ref).to_h { |entry| [entry.path, entry.sha] }
       end
 
       # Detects language from text.
       # Returns an ISO code for new META rows.
       #: (String?) -> String
       def detect_language(text)
-        return 'en' if text.nil? || text.empty?
-
         WhatLanguage.language_iso(text)&.to_s || 'en'
       end
 
@@ -272,59 +231,58 @@ module Wikinder
       # Drops deleted pages and adds new pages with history heuristics.
       #: (Array[Gollum::Page]) -> void
       def sync_meta(pages)
-        current = {}
-        pages.each { |page| current[page.filename_stripped] = page }
-        @meta_rows.select! { |slug, _row| current.key?(slug) }
+        current_slugs = pages.map(&:filename_stripped).to_set
+        @meta_rows.select! { |slug, _row| current_slugs.include?(slug) }
 
         changed = changed_paths
 
         pages.each do |page|
           slug = page.filename_stripped
-          row = @meta_rows[slug]
-
-          if row.nil?
-            versions = page.versions({ limit: 0, follow: true })
-            oldest = versions.last
-            newest = versions.first
-            author = oldest.author.name
-            creation = oldest.authored_date.utc.iso8601
-            modified = newest.authored_date.utc.iso8601
-            language = detect_language(page.text_data)
-            @meta_rows[slug] = {
-              author: author,
-              creation_date: creation,
-              modified_date: modified,
-              language: language,
-              aliases: []
-            }
-          elsif changed.nil? || changed.include?(page.path)
-            newest = page.versions({ limit: 1, follow: true }).first
-            row[:modified_date] = newest.authored_date.utc.iso8601
+          if (row = @meta_rows[slug])
+            row[:modified_date] = latest_modified_date(page) if changed.nil? || changed.include?(page.path)
+          else
+            @meta_rows[slug] = build_meta_row(page)
           end
         end
 
         write_meta
       end
 
+      # Builds a new META row from Git history and content.
+      # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
+      #: (Gollum::Page) -> { author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String] }
+      def build_meta_row(page)
+        versions = page.versions(limit: 0, follow: true)
+        {
+          author: versions.last.author.name,
+          creation_date: versions.last.authored_date.utc.iso8601,
+          modified_date: versions.first.authored_date.utc.iso8601,
+          language: detect_language(page.text_data),
+          aliases: []
+        }
+      end
+
+      # Returns the latest author date in ISO 8601 for a page.
+      #: (Gollum::Page) -> String
+      def latest_modified_date(page)
+        page.versions(limit: 1, follow: true).first.authored_date.utc.iso8601
+      end
+
       # Returns redirect entries mixed with pages.
       # Each entry holds its slug and display title.
       #: (Array[Gollum::Page]) -> Array[{ slug: String, title: String, redirect: bool, target_slug: String }]
       def redirect_entries(pages)
-        used = {}
-        pages.each { |page| used[page.filename_stripped.downcase] = true }
-        items = []
-        pages.each do |page|
-          slug = page.filename_stripped
-          row = @meta_rows[slug]
-          row[:aliases].each do |alias_text|
-            alias_slug = alias_text.gsub(' ', '-')
-            next if alias_slug.empty? || used[alias_slug.downcase]
+        used = pages.map { |page| page.filename_stripped.downcase }.to_set
 
-            used[alias_slug.downcase] = true
-            items << { slug: alias_slug, title: alias_text, redirect: true, target_slug: slug }
+        pages.flat_map do |page|
+          target_slug = page.filename_stripped
+          @meta_rows.fetch(target_slug)[:aliases].filter_map do |title|
+            slug = title.tr(' ', '-')
+            next if slug.empty? || !used.add?(slug.downcase)
+
+            { slug: slug, title: title, redirect: true, target_slug: target_slug }
           end
         end
-        items
       end
 
       # Writes META rows sorted by creation date.
@@ -332,8 +290,7 @@ module Wikinder
       #: () -> void
       def write_meta
         sorted = @meta_rows.sort do |(slug_a, row_a), (slug_b, row_b)|
-          cmp = row_b[:creation_date] <=> row_a[:creation_date]
-          cmp.nil? || cmp.zero? ? (slug_a <=> slug_b) : cmp
+          (row_b[:creation_date] <=> row_a[:creation_date]).nonzero? || (slug_a <=> slug_b)
         end
 
         lines = ["| #{META_HEADERS.join(' | ')} |", "| #{Array.new(META_HEADERS.size, '---').join(' | ')} |"]
@@ -345,8 +302,7 @@ module Wikinder
         end
 
         content = "#{lines.join("\n")}\n"
-        old = File.exist?(@meta_path) ? File.read(@meta_path) : ''
-        File.write(@meta_path, content) if content != old
+        File.write(@meta_path, content) unless File.exist?(@meta_path) && File.read(@meta_path) == content
       end
     end
   end
