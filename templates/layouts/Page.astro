@@ -10,11 +10,11 @@ import "../styles/page.css";
 
 type Props = PageProps;
 
-const { title, className, ...articleProps } = Astro.props;
+const { title, className, language, ...articleProps } = Astro.props;
 ---
 
 <!doctype html>
-<html>
+<html lang={language ?? "en"}>
   <head>
     <meta charset="utf-8" />
     <title>{title}</title>

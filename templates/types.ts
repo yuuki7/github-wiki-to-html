@@ -8,4 +8,4 @@ export type ArticleProps =
   | { title: string; isHome: true; meta?: undefined }
   | { title: string; isHome?: false; meta: ArticleMetaProps };
 
-export type PageProps = ArticleProps & { className?: string };
+export type PageProps = ArticleProps & { className?: string; language?: string };

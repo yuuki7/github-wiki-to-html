@@ -8,6 +8,7 @@ gem 'gollum-lib', '~> 6.1.0'
 gem 'nokogiri', '~> 1.19'
 gem 'ostruct', '~> 0.6.3'
 gem 'rdoc', '~> 8.1.0'
+gem 'whatlanguage', '~> 3.0'
 
 group :development do
   gem 'rake', '~> 13.4.2'
