@@ -68,7 +68,7 @@ module Wikinder
       }.freeze #: gollum_wiki_options
 
       # @rbs @wiki: Gollum::Wiki
-      # @rbs @url_base: String
+      # @rbs @url_base: URI::Generic
       # @rbs @prev_head: String?
       # @rbs @head_sha: String
       # @rbs @wiki_path: Pathname
@@ -78,10 +78,10 @@ module Wikinder
       # Creates a new GitHub Wiki instance.
       #
       # @param path [String] Path to the wiki repository.
-      # @param url_base [String] Base URL for page links.
+      # @param url_base [URI] Base URL for page links.
       # @param prev_head [String, nil] Previous head SHA for incremental update.
       # Loads META rows and resolves the current head at start.
-      #: (String, url_base: String, ?prev_head: String?) -> void
+      #: (String, url_base: URI::Generic, ?prev_head: String?) -> void
       def initialize(path, url_base:, prev_head: nil)
         @wiki_path = Pathname(path).expand_path
         @wiki = Gollum::Wiki.new(@wiki_path.to_s, GOLLUM_OPTIONS)
@@ -134,7 +134,7 @@ module Wikinder
           html: postprocess_html(page.formatted_data),
           toc: page.toc_data,
           **meta,
-          wiki_url: "#{@url_base}/#{URI.encode_uri_component(slug)}",
+          wiki_url: URI("#{@url_base}/#{URI.encode_uri_component(slug)}"),
           listed: !UNLISTED_PAGES.include?(slug)
         } # : page_entry
       end
@@ -151,9 +151,9 @@ module Wikinder
 
       # Returns slug from a wiki link href.
       # Drops leading slash and extension after decoding.
-      #: (String) -> String
+      #: (URI::Generic) -> String
       def slug_from_href(href)
-        path = URI.decode_uri_component(URI(href).path.to_s)
+        path = URI.decode_uri_component(href.path.to_s)
         Pathname(path).sub_ext('').to_s.delete_prefix('/')
       end
 
@@ -190,7 +190,7 @@ module Wikinder
         dom.css('tbody tr').to_h do |row|
           title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
           link = title_cell.at_css('a')
-          slug = slug_from_href(link['href'])
+          slug = slug_from_href(URI(link['href']))
 
           [
             slug,

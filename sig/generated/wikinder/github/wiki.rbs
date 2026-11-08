@@ -36,18 +36,18 @@ module Wikinder
 
       @prev_head: String?
 
-      @url_base: String
+      @url_base: URI::Generic
 
       @wiki: Gollum::Wiki
 
       # Creates a new GitHub Wiki instance.
       #
       # @param path [String] Path to the wiki repository.
-      # @param url_base [String] Base URL for page links.
+      # @param url_base [URI] Base URL for page links.
       # @param prev_head [String, nil] Previous head SHA for incremental update.
       # Loads META rows and resolves the current head at start.
-      # : (String, url_base: String, ?prev_head: String?) -> void
-      def initialize: (String, url_base: String, ?prev_head: String?) -> void
+      # : (String, url_base: URI::Generic, ?prev_head: String?) -> void
+      def initialize: (String, url_base: URI::Generic, ?prev_head: String?) -> void
 
       # Returns data for every generated page.
       # Syncs META first so each page reads stable authorship.
@@ -78,8 +78,8 @@ module Wikinder
 
       # Returns slug from a wiki link href.
       # Drops leading slash and extension after decoding.
-      # : (String) -> String
-      def slug_from_href: (String) -> String
+      # : (URI::Generic) -> String
+      def slug_from_href: (URI::Generic) -> String
 
       # Corrects internal links to match page URLs.
       # Rewrites wiki internal links under the site base.
