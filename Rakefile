@@ -18,21 +18,16 @@ task :check do
   sh 'steep check --steepfile .config/Steepfile'
 end
 
+RSpec::Core::RakeTask.new(:test) do |t|
+  t.rspec_opts = '--options .config/.rspec'
+  t.pattern = 'test/**/*.rb'
+end
+
 desc 'Generate HTML from Markdown'
 task :build do
   sh 'ruby bin/convert.rb'
   sh 'npm run build'
   sh 'npm run format'
-end
-
-desc 'Start the preview server'
-task :server do
-  sh 'npm run preview -- --background'
-end
-
-RSpec::Core::RakeTask.new(:test) do |t|
-  t.rspec_opts = '--options .config/.rspec'
-  t.pattern = 'test/**/*.rb'
 end
 
 namespace :docs do
@@ -49,8 +44,12 @@ namespace :docs do
     sh 'yard server --yardopts .config/.yardopts --reload'
   end
 end
-
 desc 'Generate documentation'
 task docs: 'docs:build'
+
+desc 'Start the preview server'
+task :server do
+  sh 'npm run preview -- --background'
+end
 
 task default: :setup

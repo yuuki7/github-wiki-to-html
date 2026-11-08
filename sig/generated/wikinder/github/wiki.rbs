@@ -43,11 +43,11 @@ module Wikinder
       # Creates a new GitHub Wiki instance.
       #
       # @param path [String] Path to the wiki repository.
-      # @param url_base [URI] Base URL for page links.
+      # @param url_base [String] Base URL for page links.
       # @param prev_head [String, nil] Previous head SHA for incremental update.
       # Loads META rows and resolves the current head at start.
-      # : (String, url_base: URI::Generic, ?prev_head: String?) -> void
-      def initialize: (String, url_base: URI::Generic, ?prev_head: String?) -> void
+      # : (String, url_base: String, ?prev_head: String?) -> void
+      def initialize: (String, url_base: String, ?prev_head: String?) -> void
 
       # Returns data for every generated page.
       # Syncs META first so each page reads stable authorship.

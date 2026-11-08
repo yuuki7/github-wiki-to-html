@@ -78,14 +78,14 @@ module Wikinder
       # Creates a new GitHub Wiki instance.
       #
       # @param path [String] Path to the wiki repository.
-      # @param url_base [URI] Base URL for page links.
+      # @param url_base [String] Base URL for page links.
       # @param prev_head [String, nil] Previous head SHA for incremental update.
       # Loads META rows and resolves the current head at start.
-      #: (String, url_base: URI::Generic, ?prev_head: String?) -> void
+      #: (String, url_base: String, ?prev_head: String?) -> void
       def initialize(path, url_base:, prev_head: nil)
         @wiki_path = Pathname(path).expand_path
         @wiki = Gollum::Wiki.new(@wiki_path.to_s, GOLLUM_OPTIONS)
-        @url_base = url_base
+        @url_base = URI(url_base)
         @prev_head = prev_head
         @head_sha = @wiki.repo.head.commit.id
         @meta_path = @wiki_path.join('META.md')

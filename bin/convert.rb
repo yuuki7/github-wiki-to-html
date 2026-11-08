@@ -17,7 +17,7 @@ Dir.chdir(__dir__) do
 
   wiki = Wikinder::GitHub::Wiki.new(
     '../../yuukinder.wiki',
-    url_base: URI('https://github.com/yuuki7/yuukinder/wiki'),
+    url_base: 'https://github.com/yuuki7/yuukinder/wiki',
     prev_head: prev_head
   )
   File.write('../all-pages.json', "#{JSON.pretty_generate(wiki.pages_data)}\n")

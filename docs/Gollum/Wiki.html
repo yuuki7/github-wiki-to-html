@@ -106,6 +106,65 @@
 
 
 
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#ref-instance_method" title="#ref (instance method)">#<strong>ref</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute ref.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#repo-instance_method" title="#repo (instance method)">#<strong>repo</strong>  &#x21d2; Git::Repo </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute repo.</p></div></span>
+  
+</li>
+
+    
+  </ul>
+
 
 
 
@@ -116,6 +175,28 @@
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#commit_for-instance_method" title="#commit_for (instance method)">#<strong>commit_for</strong>  &#x21d2; Git::Commit<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
       
         <li class="public ">
   <span class="summary_signature">
@@ -167,6 +248,28 @@
   <span class="summary_signature">
     
       <a href="#pages-instance_method" title="#pages (instance method)">#<strong>pages</strong>  &#x21d2; Array[Page] </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tree_map_for-instance_method" title="#tree_map_for (instance method)">#<strong>tree_map_for</strong>  &#x21d2; Array[BlobEntry] </a>
     
 
     
@@ -242,10 +345,10 @@
       <pre class="lines">
 
 
-25</pre>
+55</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 25</span>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 55</span>
 
 def initialize: (String, ?gollum_wiki_options) -&gt; void</pre>
     </td>
@@ -255,13 +358,189 @@ def initialize: (String, ?gollum_wiki_options) -&gt; void</pre>
   
 </div>
 
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="ref-instance_method">
+  
+    #<strong>ref</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute ref.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+54
+55
+56</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 54</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_ref'>ref</span>
+  <span class='ivar'>@ref</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="repo-instance_method">
+  
+    #<strong>repo</strong>  &#x21d2; <tt><span class='object_link'><a href="Git/Repo.html" title="Gollum::Git::Repo (class)">Git::Repo</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute repo.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Git/Repo.html" title="Gollum::Git::Repo (class)">Git::Repo</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+53
+54
+55</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 53</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_repo'>repo</span>
+  <span class='ivar'>@repo</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="page-instance_method">
+  <h3 class="signature first" id="commit_for-instance_method">
+  
+    #<strong>commit_for</strong>  &#x21d2; <tt><span class='object_link'><a href="Git/Commit.html" title="Gollum::Git::Commit (class)">Git::Commit</a></span></tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Git/Commit.html" title="Gollum::Git::Commit (class)">Git::Commit</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+56</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 56</span>
+
+def commit_for: (String) -&gt; Git::Commit?</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="page-instance_method">
   
     #<strong>page</strong>  &#x21d2; <tt><span class='object_link'><a href="Page.html" title="Gollum::Page (class)">Page</a></span></tt><sup>?</sup> 
   
@@ -312,10 +591,10 @@ def initialize: (String, ?gollum_wiki_options) -&gt; void</pre>
       <pre class="lines">
 
 
-26</pre>
+57</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 26</span>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 57</span>
 
 def page: (String) -&gt; Page?</pre>
     </td>
@@ -360,12 +639,86 @@ def page: (String) -&gt; Page?</pre>
       <pre class="lines">
 
 
-27</pre>
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 27</span>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 58</span>
 
 def pages: () -&gt; Array[Page]</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="tree_map_for-instance_method">
+  
+    #<strong>tree_map_for</strong>  &#x21d2; <tt>Array[<span class='object_link'><a href="BlobEntry.html" title="Gollum::BlobEntry (class)">BlobEntry</a></span>]</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[<span class='object_link'><a href="BlobEntry.html" title="Gollum::BlobEntry (class)">BlobEntry</a></span>]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+59</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'sig/gollum-lib.rbs', line 59</span>
+
+def tree_map_for: (String, ?bool) -&gt; Array[BlobEntry]</pre>
     </td>
   </tr>
 </table>
