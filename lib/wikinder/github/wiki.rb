@@ -295,7 +295,8 @@ module Wikinder
           title = slug_to_title(slug)
           aliases_str = row[:aliases].join(ALIAS_SEPARATOR)
           cells = ["[[#{title}]]", row[:author], row[:creation_date], row[:modified_date], row[:language], aliases_str]
-          "| #{cells.join(' | ')} |"
+          inner = cells.map { |cell| cell.empty? ? ' ' : " #{cell} " }.join('|')
+          "|#{inner}|"
         end
 
         content = [*META_TABLE_HEADER, *rows].join("\n") << "\n"
