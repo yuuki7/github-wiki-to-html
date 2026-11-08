@@ -28,26 +28,27 @@ module Wikinder
 
       @meta_rows: Hash[String, meta_row]
 
+      @ignore_meta: bool
+
       @meta_path: Pathname
 
       @wiki_path: Pathname
 
-      @head_sha: String
+      @head_id: String
 
-      @prev_head: String?
+      @prev_head_id: String?
 
-      @url_base: URI::Generic
+      @wiki_url: URI::Generic
 
       @wiki: Gollum::Wiki
 
       # Creates a new GitHub Wiki instance.
       #
       # @param path [String] Path to the wiki repository.
-      # @param url_base [String] Base URL for page links.
-      # @param prev_head [String, nil] Previous head SHA for incremental update.
+      # @param options [Hash] Options for the wiki.
       # Loads META rows and resolves the current head at start.
-      # : (String, url_base: String, ?prev_head: String?) -> void
-      def initialize: (String, url_base: String, ?prev_head: String?) -> void
+      # : (String, ?wiki_options) -> void
+      def initialize: (String, ?wiki_options) -> void
 
       # Returns data for every generated page.
       # Syncs META first so each page reads stable authorship.
@@ -56,8 +57,8 @@ module Wikinder
 
       # Returns site-wide data.
       # Exposes head so the next run can update incrementally.
-      # : () -> { name: String, home: String, footer: String, head: String, language: String }
-      def site_data: () -> { name: String, home: String, footer: String, head: String, language: String }
+      # : () -> { name: String, home: String, footer: String, head_id: String, language: String }
+      def site_data: () -> { name: String, home: String, footer: String, head_id: String, language: String }
 
       private
 
@@ -120,6 +121,10 @@ module Wikinder
       # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
       # : (Gollum::Page) -> meta_row
       def build_meta_row: (Gollum::Page) -> meta_row
+
+      # Returns old titles found in rename history.
+      # : (Array[Gollum::Version], String) -> Array[String]
+      def old_titles: (Array[Gollum::Version], String) -> Array[String]
 
       # Returns the latest author date in ISO 8601 for a page.
       # : (Gollum::Page) -> String

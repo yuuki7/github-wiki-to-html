@@ -1,7 +1,50 @@
-type meta_row = { author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String] }
+type meta_row = {
+  author: String,
+  creation_date: String,
+  modified_date: String,
+  language: String,
+  aliases: Array[String]
+}
 
-type page_entry = { title: String, slug: String, html: String, toc: String, creation_date: String, modified_date: String, author: String, language: String, aliases: Array[String], wiki_url: URI::Generic, listed: bool }
+type page_entry = {
+  title: String,
+  slug: String,
+  html: String,
+  toc: String,
+  creation_date: String,
+  modified_date: String,
+  author: String,
+  language: String,
+  aliases: Array[String],
+  url_on_wiki: URI::Generic,
+  listed: bool
+}
 
-type redirect_entry = { slug: String, title: String, redirect: bool, target_slug: String }
+type redirect_entry = {
+  slug: String,
+  title: String,
+  redirect: bool,
+  target_slug: String
+}
 
-type commonmarker_options = { ?render: { ?unsafe: bool }, ?extension: { ?autolink: bool, ?footnotes: bool, ?math_code: bool, ?math_dollars: bool, ?strikethrough: bool, ?table: bool, ?tagfilter: bool, ?tasklist: bool } }
+type wiki_options = {
+  wiki_url: String,
+  ?prev_head_id: String?,
+  ?ignore_meta: bool
+}
+
+type commonmarker_options = {
+  ?render: {
+    ?unsafe: bool
+  },
+  ?extension: {
+    ?autolink: bool,
+    ?footnotes: bool,
+    ?math_code: bool,
+    ?math_dollars: bool,
+    ?strikethrough: bool,
+    ?table: bool,
+    ?tagfilter: bool,
+    ?tasklist: bool
+  }
+}

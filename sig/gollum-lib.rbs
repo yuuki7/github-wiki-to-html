@@ -27,6 +27,7 @@ module Gollum
   class Version
     def author: () -> Git::Actor
     def authored_date: () -> Time
+    def tracked_pathname: () -> String?
   end
 
   module Git

@@ -6,8 +6,8 @@
 
 RSpec.describe Wikinder::GitHub::Wiki do
   let(:path) { File.expand_path('../../../../yuukinder.wiki', __dir__) }
-  let(:url_base) { 'https://github.com/yuuki7/yuukinder/wiki' }
-  let(:wiki) { described_class.new(path, url_base: url_base) }
+  let(:wiki_url) { 'https://github.com/yuuki7/yuukinder/wiki' }
+  let(:wiki) { described_class.new(path, { wiki_url: }) }
 
   describe '#pages_data' do
     # Slugs are catalogue keys, so a duplicate would collide on the site.
@@ -35,7 +35,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     # Head is the incremental watermark, so it must be a commit SHA.
     it 'returns a site head as a commit SHA' do
       data = wiki.site_data
-      expect(data[:head]).to match(/\A[0-9a-f]{40}\z/)
+      expect(data[:head_id]).to match(/\A[0-9a-f]{40}\z/)
     end
   end
 end

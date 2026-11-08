@@ -68,27 +68,28 @@ module Wikinder
       }.freeze #: gollum_wiki_options
 
       # @rbs @wiki: Gollum::Wiki
-      # @rbs @url_base: URI::Generic
-      # @rbs @prev_head: String?
-      # @rbs @head_sha: String
+      # @rbs @wiki_url: URI::Generic
+      # @rbs @prev_head_id: String?
+      # @rbs @head_id: String
       # @rbs @wiki_path: Pathname
       # @rbs @meta_path: Pathname
+      # @rbs @ignore_meta: bool
       # @rbs @meta_rows: Hash[String, meta_row]
 
       # Creates a new GitHub Wiki instance.
       #
       # @param path [String] Path to the wiki repository.
-      # @param url_base [String] Base URL for page links.
-      # @param prev_head [String, nil] Previous head SHA for incremental update.
+      # @param options [Hash] Options for the wiki.
       # Loads META rows and resolves the current head at start.
-      #: (String, url_base: String, ?prev_head: String?) -> void
-      def initialize(path, url_base:, prev_head: nil)
+      #: (String, ?wiki_options) -> void
+      def initialize(path, options = {})
         @wiki_path = Pathname(path).expand_path
         @wiki = Gollum::Wiki.new(@wiki_path.to_s, GOLLUM_OPTIONS)
-        @url_base = URI(url_base)
-        @prev_head = prev_head
-        @head_sha = @wiki.repo.head.commit.id
+        @wiki_url = URI(options.fetch(:wiki_url))
+        @prev_head_id = options[:prev_head_id]
+        @head_id = @wiki.repo.head.commit.id
         @meta_path = @wiki_path.join('META.md')
+        @ignore_meta = options[:ignore_meta] || false
         @meta_rows = parse_meta
       end
 
@@ -105,7 +106,7 @@ module Wikinder
 
       # Returns site-wide data.
       # Exposes head so the next run can update incrementally.
-      #: () -> { name: String, home: String, footer: String, head: String, language: String }
+      #: () -> { name: String, home: String, footer: String, head_id: String, language: String }
       def site_data
         home = @wiki.page('Home') or raise 'Home page is missing'
         footer = home.footer or raise 'Footer page is missing'
@@ -114,7 +115,7 @@ module Wikinder
           name: 'Wikinder',
           home: postprocess_html(home.formatted_data),
           footer: footer.formatted_data,
-          head: @head_sha,
+          head_id: @head_id,
           language: detect_language(home.text_data)
         }
       end
@@ -134,7 +135,7 @@ module Wikinder
           html: postprocess_html(page.formatted_data),
           toc: page.toc_data,
           **meta,
-          wiki_url: URI("#{@url_base}/#{URI.encode_uri_component(slug)}"),
+          url_on_wiki: URI("#{@wiki_url}/#{URI.encode_uri_component(slug)}"),
           listed: !UNLISTED_PAGES.include?(slug)
         } # : page_entry
       end
@@ -184,6 +185,8 @@ module Wikinder
       # Reads the committed page through Gollum.
       #: () -> Hash[String, meta_row]
       def parse_meta
+        return {} if @ignore_meta
+
         page = @wiki.page('META') or return {}
 
         dom = Nokogiri::HTML5.fragment(page.formatted_data)
@@ -209,11 +212,11 @@ module Wikinder
       # Compares blob SHAs from both tree listings.
       #: () -> Array[String]?
       def changed_paths
-        prev_head = @prev_head or return
-        return [] if prev_head == @head_sha
+        prev_head_id = @prev_head_id or return
+        return [] if prev_head_id == @head_id
 
-        prev_map = blob_sha_map(prev_head)
-        head_map = blob_sha_map(@head_sha)
+        prev_map = blob_sha_map(prev_head_id)
+        head_map = blob_sha_map(@head_id)
         (prev_map.keys | head_map.keys).reject { prev_map[it] == head_map[it] }
       end
 
@@ -239,7 +242,13 @@ module Wikinder
         pages.each do |page|
           slug = page.filename_stripped
           if (row = @meta_rows[slug])
-            row[:modified_date] = latest_modified_date(page) if changed.nil? || changed.include?(page.path)
+            if changed.nil? || changed.include?(page.path)
+              row[:modified_date] = latest_modified_date(page)
+              versions = page.versions({ limit: 0, follow: true })
+              old_titles(versions, page.path).each do |title|
+                row[:aliases] << title unless row[:aliases].include?(title)
+              end
+            end
           else
             @meta_rows[slug] = build_meta_row(page)
           end
@@ -258,8 +267,15 @@ module Wikinder
           creation_date: versions.last.authored_date.utc.iso8601,
           modified_date: versions.first.authored_date.utc.iso8601,
           language: detect_language(page.text_data),
-          aliases: []
+          aliases: old_titles(versions, page.path)
         }
+      end
+
+      # Returns old titles found in rename history.
+      #: (Array[Gollum::Version], String) -> Array[String]
+      def old_titles(versions, current_path)
+        paths = versions.map(&:tracked_pathname).compact.uniq - [current_path]
+        paths.map { |tracked| slug_to_title(Pathname(tracked).sub_ext('').basename.to_s) }
       end
 
       # Returns the latest author date in ISO 8601 for a page.
