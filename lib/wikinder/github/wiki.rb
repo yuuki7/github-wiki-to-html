@@ -122,8 +122,7 @@ module Wikinder
         slug = page.filename_stripped
         meta = @meta_rows.fetch(slug)
 
-        # @type var result: page_entry
-        result = {
+        {
           title: slug_to_title(slug),
           slug:,
           html: postprocess_html(page.formatted_data),
@@ -131,8 +130,7 @@ module Wikinder
           **meta,
           wiki_url: "#{@url_base}/#{URI.encode_uri_component(slug)}",
           listed: !UNLISTED_PAGES.include?(slug)
-        }
-        result
+        } # : page_entry
       end
 
       # Returns a display title from a slug.
