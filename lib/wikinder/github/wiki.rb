@@ -7,27 +7,27 @@ require 'nokogiri'
 require 'uri'
 require 'whatlanguage'
 
+# CommonMarker options for rendering wiki markdown.
+COMMONMARKER_OPTIONS = {
+  render: {
+    unsafe: true
+  },
+  extension: {
+    autolink: true,
+    footnotes: true,
+    math_code: true,
+    math_dollars: true,
+    strikethrough: true,
+    table: true,
+    tagfilter: false,
+    tasklist: true
+  }
+}.freeze #: commonmarker_options
+
 # @type var render_markdown: ^(String) -> String
 # Renders wiki markdown with CommonMarker options.
 render_markdown = proc do |markdown|
-  Commonmarker.to_html(
-    markdown,
-    options: {
-      render: {
-        unsafe: true
-      },
-      extension: {
-        autolink: true,
-        footnotes: true,
-        math_code: true,
-        math_dollars: true,
-        strikethrough: true,
-        table: true,
-        tagfilter: false,
-        tasklist: true
-      }
-    }
-  )
+  Commonmarker.to_html(markdown, options: COMMONMARKER_OPTIONS)
 end
 
 # Makes CommonMarker the only renderer for Gollum.
@@ -53,6 +53,14 @@ module Wikinder
       # Pages not listed on the home page.
       UNLISTED_PAGES = Set['Wikinder', 'Wikinder-Japan'].freeze #: Set[String]
 
+      # Gollum wiki configuration options.
+      GOLLUM_OPTIONS = {
+        allow_editing: false,
+        filter_chain: %i[Tags TOC Render],
+        hyphened_tag_lookup: true,
+        universal_toc: true
+      }.freeze #: gollum_wiki_options
+
       # @rbs @wiki: Gollum::Wiki
       # @rbs @url_base: String
       # @rbs @prev_head: String?
@@ -70,15 +78,7 @@ module Wikinder
       #: (String, url_base: String, ?prev_head: String?) -> void
       def initialize(path, url_base:, prev_head: nil)
         @wiki_path = File.expand_path(path)
-        @wiki = Gollum::Wiki.new(
-          @wiki_path,
-          {
-            allow_editing: false,
-            filter_chain: %i[Tags TOC Render],
-            hyphened_tag_lookup: true,
-            universal_toc: true
-          }
-        )
+        @wiki = Gollum::Wiki.new(@wiki_path, GOLLUM_OPTIONS)
         @url_base = url_base
         @prev_head = prev_head
         @head_sha = @wiki.repo.head.commit.id
@@ -122,19 +122,17 @@ module Wikinder
         slug = page.filename_stripped
         meta = @meta_rows.fetch(slug)
 
-        {
+        # @type var result: page_entry
+        result = {
           title: slug_to_title(slug),
-          slug: slug,
+          slug:,
           html: postprocess_html(page.formatted_data),
           toc: page.toc_data,
-          creation_date: meta[:creation_date],
-          modified_date: meta[:modified_date],
-          author: meta[:author],
-          language: meta[:language],
-          aliases: meta[:aliases],
-          wiki_url: "#{@url_base}/#{URI::DEFAULT_PARSER.escape(slug)}",
+          **meta,
+          wiki_url: "#{@url_base}/#{URI.encode_uri_component(slug)}",
           listed: !UNLISTED_PAGES.include?(slug)
         }
+        result
       end
 
       # Returns a display title from a slug.
@@ -151,7 +149,7 @@ module Wikinder
       # Drops leading slash and extension after decoding.
       #: (String) -> String
       def slug_from_href(href)
-        path = URI::DEFAULT_PARSER.unescape(URI(href).path.to_s)
+        path = URI.decode_uri_component(URI(href).path.to_s)
         Pathname(path).sub_ext('').to_s.delete_prefix('/')
       end
 
@@ -173,7 +171,7 @@ module Wikinder
       #: (Nokogiri::XML::Node) -> Array[String]
       def aliases_from_cell(cell)
         cell.children
-            .slice_after { |node| node.name == 'br' }
+            .slice_after { it.name == 'br' }
             .map { |group| group.select(&:text?).map(&:text).join.strip }
             .reject(&:empty?)
       end
@@ -185,24 +183,22 @@ module Wikinder
         page = @wiki.page('META') or return {}
 
         dom = Nokogiri::HTML5.fragment(page.formatted_data)
-        # @type var rows: Hash[String, meta_row]
-        rows = {}
-        dom.css('tbody tr').each do |row|
+        dom.css('tbody tr').to_h do |row|
           title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
-
-          link = title_cell.css('a').first
-
+          link = title_cell.at_css('a')
           slug = slug_from_href(link['href'])
 
-          rows[slug] = {
-            author: author_cell.text.strip,
-            creation_date: creation_cell.text.strip,
-            modified_date: modified_cell.text.strip,
-            language: language_cell.text.strip,
-            aliases: aliases_from_cell(aliases_cell)
-          }
+          [
+            slug,
+            {
+              author: author_cell.text.strip,
+              creation_date: creation_cell.text.strip,
+              modified_date: modified_cell.text.strip,
+              language: language_cell.text.strip,
+              aliases: aliases_from_cell(aliases_cell)
+            }
+          ]
         end
-        rows
       end
 
       # Returns paths changed between previous head and head.
@@ -214,22 +210,18 @@ module Wikinder
 
         prev_map = blob_sha_map(prev_head)
         head_map = blob_sha_map(@head_sha)
-        (prev_map.keys | head_map.keys).reject { |path| prev_map[path] == head_map[path] }
+        (prev_map.keys | head_map.keys).reject { prev_map[it] == head_map[it] }
       end
 
       # Returns blob SHAs keyed by path for a ref.
       # Works for the incremental comparison.
       #: (String) -> Hash[String, String]
-      def blob_sha_map(ref)
-        @wiki.tree_map_for(ref).to_h { |entry| [entry.path, entry.sha] }
-      end
+      def blob_sha_map(ref) = @wiki.tree_map_for(ref).to_h { [it.path, it.sha] }
 
       # Detects language from text.
       # Returns an ISO code for new META rows.
       #: (String?) -> String
-      def detect_language(text)
-        WhatLanguage.language_iso(text)&.to_s || 'en'
-      end
+      def detect_language(text) = WhatLanguage.language_iso(text)&.to_s || 'en'
 
       # Syncs META rows with current pages and writes the file.
       # Drops deleted pages and adds new pages with history heuristics.
@@ -238,7 +230,7 @@ module Wikinder
         current_slugs = pages.to_set(&:filename_stripped)
         @meta_rows.select! { |slug, _row| current_slugs.include?(slug) }
 
-        changed = changed_paths
+        changed = changed_paths&.to_set
 
         pages.each do |page|
           slug = page.filename_stripped
@@ -268,9 +260,7 @@ module Wikinder
 
       # Returns the latest author date in ISO 8601 for a page.
       #: (Gollum::Page) -> String
-      def latest_modified_date(page)
-        page.versions(limit: 1, follow: true).first.authored_date.utc.iso8601
-      end
+      def latest_modified_date(page) = page.versions(limit: 1, follow: true).first.authored_date.utc.iso8601
 
       # Returns redirect entries mixed with pages.
       # Each entry holds its slug and display title.
@@ -284,7 +274,7 @@ module Wikinder
             slug = title.tr(' ', '-')
             next if slug.empty? || !used.add?(slug.downcase)
 
-            { slug: slug, title: title, redirect: true, target_slug: target_slug }
+            { slug:, title:, redirect: true, target_slug: }
           end
         end
       end
@@ -297,15 +287,16 @@ module Wikinder
           (row_b[:creation_date] <=> row_a[:creation_date]).nonzero? || (slug_a <=> slug_b)
         end
 
-        lines = ["| #{META_HEADERS.join(' | ')} |", "| #{Array.new(META_HEADERS.size, '---').join(' | ')} |"]
-        sorted.each do |slug, row|
+        header = "| #{META_HEADERS.join(' | ')} |"
+        separator = "| #{Array.new(META_HEADERS.size, '---').join(' | ')} |"
+        rows = sorted.map do |slug, row|
           title = slug_to_title(slug)
           aliases_str = row[:aliases].join(ALIAS_SEPARATOR)
           cells = ["[[#{title}]]", row[:author], row[:creation_date], row[:modified_date], row[:language], aliases_str]
-          lines << "| #{cells.join(' | ')} |"
+          "| #{cells.join(' | ')} |"
         end
 
-        content = "#{lines.join("\n")}\n"
+        content = [header, separator, *rows].join("\n") << "\n"
         File.write(@meta_path, content) unless File.exist?(@meta_path) && File.read(@meta_path) == content
       end
     end

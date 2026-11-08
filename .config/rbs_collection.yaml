@@ -19,3 +19,4 @@ gems:
   - name: gollum-lib
   - name: nokogiri
   - name: strscan
+  - name: whatlanguage

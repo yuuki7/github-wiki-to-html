@@ -1,5 +1,8 @@
 # Generated from lib/wikinder/github/wiki.rb with RBS::Inline
 
+# CommonMarker options for rendering wiki markdown.
+COMMONMARKER_OPTIONS: commonmarker_options
+
 module Wikinder
   module GitHub
     # Represents a GitHub Wiki.
@@ -16,6 +19,9 @@ module Wikinder
 
       # Pages not listed on the home page.
       UNLISTED_PAGES: Set[String]
+
+      # Gollum wiki configuration options.
+      GOLLUM_OPTIONS: gollum_wiki_options
 
       @meta_rows: Hash[String, meta_row]
 
