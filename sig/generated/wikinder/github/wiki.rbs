@@ -1,46 +1,25 @@
 # Generated from lib/wikinder/github/wiki.rb with RBS::Inline
 
-# CommonMarker options for rendering wiki markdown.
-COMMONMARKER_OPTIONS: commonmarker_options
-
 module Wikinder
   module GitHub
     # Represents a GitHub Wiki.
     # Loads pages with Gollum and serves META as the source for authorship.
     class Wiki
-      # Column labels for the META table.
-      META_HEADERS: Array[String]
-
-      # Precomputed header and separator rows for the META table.
-      META_TABLE_HEADER: Array[String]
-
-      # Separator between aliases in a META cell.
-      ALIAS_SEPARATOR: String
-
       # Pages not generated.
       UNGENERATED_PAGES: Set[String]
 
       # Pages not listed on the home page.
       UNLISTED_PAGES: Set[String]
 
-      # Gollum wiki configuration options.
-      GOLLUM_OPTIONS: gollum_wiki_options
-
-      @meta_rows: Hash[String, meta_row]
-
-      @ignore_meta: bool
-
-      @meta_path: Pathname
-
-      @wiki_path: Pathname
-
-      @head: String
-
-      @prev_head: String?
+      @wiki: Gollum::Wiki
 
       @wiki_url: URI::Generic
 
-      @wiki: Gollum::Wiki
+      @head: String
+
+      @wiki_path: Pathname
+
+      @meta: Meta
 
       # Creates a new GitHub Wiki instance.
       #
@@ -59,86 +38,6 @@ module Wikinder
       # Exposes head so the next run can update incrementally.
       # : () -> { name: String, home: String, footer: String, head: String, language: String }
       def site_data: () -> { name: String, home: String, footer: String, head: String, language: String }
-
-      private
-
-      # Returns the data for a single page.
-      # Reads authorship from META rather than recomputing from history.
-      # : (Gollum::Page) -> page_entry
-      def page_data: (Gollum::Page) -> page_entry
-
-      # Returns a display title from a slug.
-      # Turns ASCII hyphens into spaces.
-      # : (String) -> String
-      def slug_to_title: (String) -> String
-
-      # Strips the extension and rewrites encoded spaces to hyphens.
-      # Keeps page URLs stable across wiki and site encodings.
-      # : (String) -> String
-      def normalize_link_path: (String) -> String
-
-      # Returns slug from a wiki link href.
-      # Drops leading slash and extension after decoding.
-      # : (URI::Generic) -> String
-      def slug_from_href: (URI::Generic) -> String
-
-      # Corrects internal links to match page URLs.
-      # Rewrites wiki internal links under the site base.
-      # : (String) -> String
-      def postprocess_html: (String) -> String
-
-      # Returns aliases inside a table cell.
-      # Treats break tags as separators between aliases.
-      # : (Nokogiri::XML::Node) -> Array[String]
-      def aliases_from_cell: (Nokogiri::XML::Node) -> Array[String]
-
-      # Parses the META table into rows keyed by slug.
-      # Reads the committed page through Gollum.
-      # : () -> Hash[String, meta_row]
-      def parse_meta: () -> Hash[String, meta_row]
-
-      # Returns paths changed between previous head and head.
-      # Compares blob SHAs from both tree listings.
-      # : () -> Array[String]?
-      def changed_paths: () -> Array[String]?
-
-      # Returns blob SHAs keyed by path for a ref.
-      # Works for the incremental comparison.
-      # : (String) -> Hash[String, String]
-      def blob_sha_map: (String) -> Hash[String, String]
-
-      # Detects language from text.
-      # Returns an ISO code for new META rows.
-      # : (String?) -> String
-      def detect_language: (String?) -> String
-
-      # Syncs META rows with current pages and writes the file.
-      # Drops deleted pages and adds new pages with history heuristics.
-      # : (Array[Gollum::Page]) -> void
-      def sync_meta: (Array[Gollum::Page]) -> void
-
-      # Builds a new META row from Git history and content.
-      # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
-      # : (Gollum::Page) -> meta_row
-      def build_meta_row: (Gollum::Page) -> meta_row
-
-      # Returns old titles found in rename history.
-      # : (Array[Gollum::Version], String) -> Array[String]
-      def old_titles: (Array[Gollum::Version], String) -> Array[String]
-
-      # Returns the latest author date in ISO 8601 for a page.
-      # : (Gollum::Page) -> String
-      def latest_modified_date: (Gollum::Page) -> String
-
-      # Returns redirect entries mixed with pages.
-      # Each entry holds its slug and display title.
-      # : (Array[Gollum::Page]) -> Array[redirect_entry]
-      def redirect_entries: (Array[Gollum::Page]) -> Array[redirect_entry]
-
-      # Writes META rows sorted by creation date.
-      # Newest articles stay at the top for editors.
-      # : () -> void
-      def write_meta: () -> void
     end
   end
 end

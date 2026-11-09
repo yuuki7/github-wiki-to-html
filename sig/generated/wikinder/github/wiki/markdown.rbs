@@ -1,0 +1,31 @@
+# Generated from lib/wikinder/github/wiki/markdown.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Renders wiki markdown and rewrites internal links.
+      module Markdown
+        # CommonMarker options for rendering wiki markdown.
+        OPTIONS: commonmarker_options
+
+        # Gollum wiki configuration options.
+        GOLLUM_OPTIONS: gollum_wiki_options
+
+        # Makes CommonMarker the only renderer for Gollum.
+        # Replaces defaults so wiki and rendered HTML stay consistent.
+        # : () -> void
+        def self.install!: () -> void
+
+        # Corrects internal links to match page URLs.
+        # Rewrites wiki internal links under the site base.
+        # : (String) -> String
+        def self.postprocess_html: (String) -> String
+
+        # Strips the extension and rewrites encoded spaces to hyphens.
+        # Keeps page URLs stable across wiki and site encodings.
+        # : (String) -> String
+        def self.normalize_link_path: (String) -> String
+      end
+    end
+  end
+end

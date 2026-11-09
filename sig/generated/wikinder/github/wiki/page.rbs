@@ -1,0 +1,20 @@
+# Generated from lib/wikinder/github/wiki/page.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Represents one generated page.
+      class Page
+        # Returns a display title from a slug.
+        # Turns ASCII hyphens into spaces.
+        # : (String) -> String
+        def self.title: (String) -> String
+
+        # Returns the data for a single page.
+        # Reads authorship from META rather than recomputing from history.
+        # : (page: Gollum::Page, meta: Meta::Row, wiki_url: URI::Generic, unlisted_pages: Set[String]) -> page_entry
+        def self.build: (page: Gollum::Page, meta: Meta::Row, wiki_url: URI::Generic, unlisted_pages: Set[String]) -> page_entry
+      end
+    end
+  end
+end

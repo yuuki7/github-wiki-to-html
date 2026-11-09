@@ -1,0 +1,15 @@
+# Generated from lib/wikinder/github/wiki/redirect.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Builds redirect entries from aliased page names.
+      class Redirect
+        # Returns redirect entries mixed with pages.
+        # Each entry holds its slug and display title.
+        # : (Array[Gollum::Page], Hash[String, Meta::Row]) -> Array[redirect_entry]
+        def self.entries: (Array[Gollum::Page], Hash[String, Meta::Row]) -> Array[redirect_entry]
+      end
+    end
+  end
+end
