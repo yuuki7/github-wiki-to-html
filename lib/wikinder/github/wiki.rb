@@ -24,6 +24,9 @@ module Wikinder
       # @rbs @meta: Meta
 
       # Creates a new instance for a wiki repository.
+      #
+      # @param path [String] Path to the wiki repository.
+      # @param options [wiki_options] Options for the wiki.
       # Installs the renderer and loads META rows at start.
       #: (String, ?wiki_options) -> void
       def initialize(path, options = {})
