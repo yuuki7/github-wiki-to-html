@@ -97,7 +97,7 @@
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/wikinder/github/wiki.rb<span class="defines">,<br>
-  lib/wikinder/github/wiki/meta.rb,<br> lib/wikinder/github/wiki/page.rb,<br> lib/wikinder/github/wiki/markdown.rb,<br> lib/wikinder/github/wiki/redirect.rb,<br> sig/generated/wikinder/github/wiki.rbs,<br> sig/generated/wikinder/github/wiki/meta.rbs,<br> sig/generated/wikinder/github/wiki/page.rbs,<br> sig/generated/wikinder/github/wiki/markdown.rbs,<br> sig/generated/wikinder/github/wiki/redirect.rbs</span>
+  lib/wikinder/github/wiki/meta.rb,<br> lib/wikinder/github/wiki/page.rb,<br> lib/wikinder/github/wiki/markdown.rb,<br> lib/wikinder/github/wiki/meta/row.rb,<br> lib/wikinder/github/wiki/redirect.rb,<br> sig/generated/wikinder/github/wiki.rbs,<br> sig/generated/wikinder/github/wiki/meta.rbs,<br> sig/generated/wikinder/github/wiki/page.rbs,<br> sig/generated/wikinder/github/wiki/markdown.rbs,<br> sig/generated/wikinder/github/wiki/meta/row.rbs,<br> sig/generated/wikinder/github/wiki/redirect.rbs</span>
 
 </dd>
   </dl>
@@ -363,7 +363,6 @@ Loads pages with Gollum and serves META as the source for authorship.</p>
       <pre class="lines">
 
 
-32
 33
 34
 35
@@ -376,10 +375,11 @@ Loads pages with Gollum and serves META as the source for authorship.</p>
 42
 43
 44
-45</pre>
+45
+46</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 33</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@wiki_path</span> <span class='op'>=</span> <span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span>
@@ -446,7 +446,6 @@ Syncs META first so each page reads stable authorship.
       <pre class="lines">
 
 
-50
 51
 52
 53
@@ -462,10 +461,11 @@ Syncs META first so each page reads stable authorship.
 63
 64
 65
-66</pre>
+66
+67</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 50</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 51</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_pages_data'>pages_data</span>
   <span class='comment'># Collect the visible markdown pages, then merge in the redirects.
@@ -528,7 +528,6 @@ Exposes head so the next run can update incrementally.
       <pre class="lines">
 
 
-71
 72
 73
 74
@@ -539,10 +538,11 @@ Exposes head so the next run can update incrementally.
 79
 80
 81
-82</pre>
+82
+83</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 71</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 72</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_site_data'>site_data</span>
   <span class='id identifier rubyid_home'>home</span> <span class='op'>=</span> <span class='ivar'>@wiki</span><span class='period'>.</span><span class='id identifier rubyid_page'>page</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Home</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='kw'>or</span> <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Home page is missing</span><span class='tstring_end'>&#39;</span></span>

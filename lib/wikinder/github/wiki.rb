@@ -4,6 +4,7 @@
 require_relative 'wiki/markdown'
 require_relative 'wiki/page'
 require_relative 'wiki/redirect'
+require_relative 'wiki/meta/row'
 require_relative 'wiki/meta'
 
 module Wikinder

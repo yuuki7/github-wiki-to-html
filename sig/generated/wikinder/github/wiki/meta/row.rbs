@@ -1,0 +1,28 @@
+# Generated from lib/wikinder/github/wiki/meta/row.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      class Meta
+        # Represents one row of the META table.
+        class Row
+          attr_accessor author: String
+
+          attr_accessor creation_date: String
+
+          attr_accessor modified_date: String
+
+          attr_accessor language: String
+
+          attr_accessor aliases: Array[String]
+
+          # : (meta_row) -> void
+          def initialize: (meta_row) -> void
+
+          # : () -> meta_row
+          def to_h: () -> meta_row
+        end
+      end
+    end
+  end
+end
