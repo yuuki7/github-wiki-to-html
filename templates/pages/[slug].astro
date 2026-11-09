@@ -1,5 +1,5 @@
 ---
-import Individual from "../layouts/Individual.astro";
+import IndividualPage from "../layouts/IndividualPage.astro";
 import Redirect from "../layouts/Redirect.astro";
 import allPages from "../../all-pages.json";
 import site from "../../site.json";
@@ -22,7 +22,7 @@ const { language } = site;
     targetSlug={item.target_slug}
   />
 ) : (
-  <Individual
+  <IndividualPage
     title={item.title}
     language={item.language}
     meta={{
@@ -45,5 +45,5 @@ const { language } = site;
       <Fragment set:html={site.footer} />
       <a href={item.url_on_wiki}>Edit this page on GitHub Wiki</a>
     </Fragment>
-  </Individual>
+  </IndividualPage>
 )}

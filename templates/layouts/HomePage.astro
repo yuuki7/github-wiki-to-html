@@ -1,0 +1,15 @@
+---
+import Page from "./Page.astro";
+import type { HomeProps } from "../types";
+
+type Props = HomeProps;
+
+const props = Astro.props;
+---
+
+<Page {...props} isHome>
+  <slot name="header" slot="header" />
+  <slot name="left-sidebar" slot="left-sidebar" />
+  <slot />
+  <slot name="footer" slot="footer" />
+</Page>

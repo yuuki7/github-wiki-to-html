@@ -1,0 +1,15 @@
+---
+import Page from "./Page.astro";
+import type { ArticleProps } from "../types";
+
+type Props = ArticleProps;
+
+const props = Astro.props;
+---
+
+<Page {...props} className="individual" isHome={false} meta={props.meta}>
+  <slot name="header" slot="header" />
+  <slot name="left-sidebar" slot="left-sidebar" />
+  <slot />
+  <slot name="footer" slot="footer" />
+</Page>

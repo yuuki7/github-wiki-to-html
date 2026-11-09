@@ -21,7 +21,7 @@ const { title, isHome, meta, language, className } = Astro.props;
     <slot name="left-sidebar" />
   </LeftSidebar>
 
-  <Main title={title} isHome={false} meta={meta}>
+  <Main title={title} isHome={isHome} meta={meta}>
     <slot />
   </Main>
 

@@ -1,5 +1,5 @@
 ---
-import Home from "../layouts/Home.astro";
+import HomePage from "../layouts/HomePage.astro";
 import allPages from "../../all-pages.json";
 import site from "../../site.json";
 
@@ -13,7 +13,7 @@ const recentlyCreatedPages = allPages
   });
 ---
 
-<Home className="home" title={site.name} isHome language={site.language}>
+<HomePage className="home" title={site.name} language={site.language} isHome>
   <ul slot="left-sidebar">
     {recentlyCreatedPages.map((page) => (
       <li>
@@ -25,4 +25,4 @@ const recentlyCreatedPages = allPages
   <Fragment set:html={site.home} />
 
   <Fragment slot="footer" set:html={site.footer} />
-</Home>
+</HomePage>
