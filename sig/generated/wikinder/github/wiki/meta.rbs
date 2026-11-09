@@ -16,24 +16,22 @@ module Wikinder
 
         # Represents one row of the META table.
         class Row
-          attr_accessor author: untyped
+          attr_accessor author: String
 
-          attr_accessor creation_date: untyped
+          attr_accessor creation_date: String
 
-          attr_accessor modified_date: untyped
+          attr_accessor modified_date: String
 
-          attr_accessor language: untyped
+          attr_accessor language: String
 
-          attr_accessor aliases: untyped
+          attr_accessor aliases: Array[String]
 
-          # : (author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String]) -> void
-          def initialize: (author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String]) -> void
+          # : (meta_row) -> void
+          def initialize: (meta_row) -> void
 
           # : () -> meta_row
           def to_h: () -> meta_row
         end
-
-        @rows: Hash[String, Row]
 
         @ignore_meta: bool?
 
@@ -56,8 +54,7 @@ module Wikinder
         def initialize: (wiki: Gollum::Wiki, meta_path: Pathname, head: String, ?prev_head: String?, ?ignore_meta: bool) -> void
 
         # Returns rows keyed by slug.
-        # : () -> Hash[String, Row]
-        attr_reader rows: untyped
+        attr_reader rows: Hash[String, Row]
 
         # Syncs META rows with current pages and writes the file.
         # Drops deleted pages and adds new pages with history heuristics.

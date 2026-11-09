@@ -3,7 +3,6 @@
 
 require 'gollum-lib'
 require 'nokogiri'
-require 'pathname'
 require 'uri'
 require 'whatlanguage'
 
@@ -28,15 +27,19 @@ module Wikinder
 
         # Represents one row of the META table.
         class Row
-          attr_accessor :author, :creation_date, :modified_date, :language, :aliases
+          attr_accessor :author #: String
+          attr_accessor :creation_date #: String
+          attr_accessor :modified_date #: String
+          attr_accessor :language #: String
+          attr_accessor :aliases #: Array[String]
 
-          #: (author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String]) -> void
-          def initialize(author:, creation_date:, modified_date:, language:, aliases:)
-            @author = author
-            @creation_date = creation_date
-            @modified_date = modified_date
-            @language = language
-            @aliases = aliases
+          #: (meta_row) -> void
+          def initialize(new_row)
+            @author = new_row[:author]
+            @creation_date = new_row[:creation_date]
+            @modified_date = new_row[:modified_date]
+            @language = new_row[:language]
+            @aliases = new_row[:aliases]
           end
 
           #: () -> meta_row
@@ -56,7 +59,6 @@ module Wikinder
         # @rbs @prev_head: String?
         # @rbs @head: String
         # @rbs @ignore_meta: bool?
-        # @rbs @rows: Hash[String, Row]
 
         # Creates a new Meta instance.
         #
@@ -76,18 +78,19 @@ module Wikinder
         end
 
         # Returns rows keyed by slug.
-        #: () -> Hash[String, Row]
-        attr_reader :rows
+        attr_reader :rows #: Hash[String, Row]
 
         # Syncs META rows with current pages and writes the file.
         # Drops deleted pages and adds new pages with history heuristics.
         #: (Array[Gollum::Page]) -> void
         def sync!(pages)
+          # Drop rows for pages removed since the last sync.
           current_slugs = pages.to_set(&:filename_stripped)
           @rows.select! { |slug, _row| current_slugs.include?(slug) }
 
           changed = changed_paths&.to_set
 
+          # Refresh changed entries or create rows for new pages.
           pages.each do |page|
             slug = page.filename_stripped
             if (row = @rows[slug])
@@ -121,6 +124,7 @@ module Wikinder
 
           page = @wiki.page('META') or return {}
 
+          # Walk the table cells and rebuild rows from the committed page.
           dom = Nokogiri::HTML5.fragment(page.formatted_data)
           dom.css('tbody tr').to_h do |row|
             title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
@@ -130,11 +134,13 @@ module Wikinder
             [
               slug,
               Row.new(
-                author: author_cell.text.strip,
-                creation_date: creation_cell.text.strip,
-                modified_date: modified_cell.text.strip,
-                language: language_cell.text.strip,
-                aliases: aliases_from_cell(aliases_cell)
+                {
+                  author: author_cell.text.strip,
+                  creation_date: creation_cell.text.strip,
+                  modified_date: modified_cell.text.strip,
+                  language: language_cell.text.strip,
+                  aliases: aliases_from_cell(aliases_cell)
+                }
               )
             ]
           end
@@ -163,11 +169,13 @@ module Wikinder
         def build_row(page)
           versions = page.versions(limit: 0, follow: true)
           Row.new(
-            author: versions.last.author.name,
-            creation_date: versions.last.authored_date.utc.iso8601,
-            modified_date: versions.first.authored_date.utc.iso8601,
-            language: detect_language(page.text_data),
-            aliases: old_titles(versions, page.path)
+            {
+              author: versions.last.author.name,
+              creation_date: versions.last.authored_date.utc.iso8601,
+              modified_date: versions.first.authored_date.utc.iso8601,
+              language: detect_language(page.text_data),
+              aliases: old_titles(versions, page.path)
+            }
           )
         end
 
@@ -212,6 +220,8 @@ module Wikinder
           sorted = @rows.sort do |(slug_a, row_a), (slug_b, row_b)|
             (row_b.creation_date <=> row_a.creation_date).nonzero? || (slug_a <=> slug_b)
           end
+
+          # Render each row into its markdown table line.
           rows = sorted.map do |slug, row|
             title = slug_to_title(slug)
             aliases_str = row.aliases.join(ALIAS_SEPARATOR)
@@ -220,6 +230,7 @@ module Wikinder
             "|#{inner}|"
           end
 
+          # Write only when content differs.
           content = [*META_TABLE_HEADER, *rows].join("\n") << "\n"
           @meta_path.write(content) unless @meta_path.exist? && @meta_path.read == content
         end

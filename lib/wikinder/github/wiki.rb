@@ -23,11 +23,8 @@ module Wikinder
       # @rbs @wiki_path: Pathname
       # @rbs @meta: Meta
 
-      # Creates a new GitHub Wiki instance.
-      #
-      # @param path [String] Path to the wiki repository.
-      # @param options [Hash] Options for the wiki.
-      # Loads META rows and resolves the current head at start.
+      # Creates a new instance for a wiki repository.
+      # Installs the renderer and loads META rows at start.
       #: (String, ?wiki_options) -> void
       def initialize(path, options = {})
         @wiki_path = Pathname(path).expand_path
@@ -48,10 +45,12 @@ module Wikinder
       # Syncs META first so each page reads stable authorship.
       #: () -> Array[page_entry | redirect_entry]
       def pages_data
+        # Collect the visible markdown pages, then merge in the redirects.
         pages = @wiki.pages
                      .select { |page| page.format == :markdown && !UNGENERATED_PAGES.include?(page.filename_stripped) }
         @meta.sync!(pages)
 
+        # Assemble full entries from the freshly synced META rows.
         canonical = pages.map do |page|
           Page.build(
             page:,

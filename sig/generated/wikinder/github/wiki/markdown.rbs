@@ -3,8 +3,10 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Renders wiki markdown and rewrites internal links.
+      # Controls the Markdown renderer shared by pages.
       module Markdown
+        self.@installed: bool
+
         # CommonMarker options for rendering wiki markdown.
         OPTIONS: commonmarker_options
 

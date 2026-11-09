@@ -20,8 +20,8 @@ module Wikinder
         def self.build(page:, meta:, wiki_url:, unlisted_pages:)
           slug = page.filename_stripped
 
-          # @type var result: page_entry
-          result = {
+          # Package Gollum data and META row into one entry.
+          {
             title: title(slug),
             slug:,
             html: Markdown.postprocess_html(page.formatted_data),
@@ -29,8 +29,7 @@ module Wikinder
             **meta.to_h,
             url_on_wiki: URI("#{wiki_url}/#{URI.encode_uri_component(slug)}"),
             listed: !unlisted_pages.include?(slug)
-          }
-          result
+          } # : page_entry
         end
       end
     end

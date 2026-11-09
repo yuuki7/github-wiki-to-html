@@ -17,6 +17,7 @@ SITE_DATA_PATH = '../site.json'
 # Path to the pages data file.
 PAGES_DATA_PATH = '../all-pages.json'
 
+# Parse the flag that forces rebuilding META from scratch.
 options = { ignore_meta: false }
 OptionParser.new do |opts|
   opts.on('--ignore-meta', 'Ignore committed META and recreate it') do
@@ -25,6 +26,7 @@ OptionParser.new do |opts|
 end.parse!
 
 Dir.chdir(__dir__) do
+  # Read the previous run's head for an incremental update.
   prev_head = nil
   if File.exist?(SITE_DATA_PATH)
     begin
@@ -35,6 +37,7 @@ Dir.chdir(__dir__) do
     end
   end
 
+  # Build both JSON files together from one wiki instance.
   wiki = Wikinder::GitHub::Wiki.new(
     WIKI_PATH,
     {

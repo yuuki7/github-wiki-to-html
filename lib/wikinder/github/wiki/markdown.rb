@@ -2,16 +2,16 @@
 # rbs_inline: enabled
 
 require 'commonmarker'
-require 'gollum-lib'
 require 'nokogiri'
-require 'pathname'
 require 'uri'
 
 module Wikinder
   module GitHub
     class Wiki
-      # Renders wiki markdown and rewrites internal links.
+      # Controls the Markdown renderer shared by pages.
       module Markdown
+        # @rbs self.@installed: bool
+
         # CommonMarker options for rendering wiki markdown.
         OPTIONS = {
           render: {
@@ -43,6 +43,7 @@ module Wikinder
         def self.install!
           return if @installed
 
+          # Wrap CommonMarker with the project's GFM options.
           # @type var render_markdown: ^(String) -> String
           render_markdown = proc do |markdown|
             Commonmarker.to_html(markdown, options: OPTIONS)
@@ -57,6 +58,8 @@ module Wikinder
         #: (String) -> String
         def self.postprocess_html(html)
           dom = Nokogiri::HTML5.fragment(html)
+
+          # Normalize internal links for the site build.
           dom.css('a.internal').each do |anchor|
             uri = URI(anchor['href'])
             uri.path = normalize_link_path(uri.path.to_s)

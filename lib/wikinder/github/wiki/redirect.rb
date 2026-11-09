@@ -15,6 +15,7 @@ module Wikinder
           pages.flat_map do |page|
             target_slug = page.filename_stripped
             meta_rows.fetch(target_slug).aliases.filter_map do |title|
+              # Redirects match the slug shape used by canonical pages.
               slug = title.tr(' ', '-')
               next if slug.empty? || !used.add?(slug.downcase)
 

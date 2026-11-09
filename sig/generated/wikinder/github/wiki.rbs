@@ -21,11 +21,8 @@ module Wikinder
 
       @meta: Meta
 
-      # Creates a new GitHub Wiki instance.
-      #
-      # @param path [String] Path to the wiki repository.
-      # @param options [Hash] Options for the wiki.
-      # Loads META rows and resolves the current head at start.
+      # Creates a new instance for a wiki repository.
+      # Installs the renderer and loads META rows at start.
       # : (String, ?wiki_options) -> void
       def initialize: (String, ?wiki_options) -> void
 
