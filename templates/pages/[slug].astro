@@ -1,6 +1,6 @@
 ---
-import Page from "../layouts/Page.astro";
-import RedirectPage from "../components/RedirectPage.astro";
+import Individual from "../layouts/Individual.astro";
+import Redirect from "../layouts/Redirect.astro";
 import allPages from "../../all-pages.json";
 import site from "../../site.json";
 
@@ -12,13 +12,17 @@ export async function getStaticPaths() {
 }
 
 const { item } = Astro.props;
+const { language } = site;
 ---
 
 {item.redirect ? (
-  <RedirectPage title={item.title} targetSlug={item.target_slug} />
+  <Redirect
+    title={item.title}
+    language={language}
+    targetSlug={item.target_slug}
+  />
 ) : (
-  <Page
-    className="individual"
+  <Individual
     title={item.title}
     language={item.language}
     meta={{
@@ -41,5 +45,5 @@ const { item } = Astro.props;
       <Fragment set:html={site.footer} />
       <a href={item.url_on_wiki}>Edit this page on GitHub Wiki</a>
     </Fragment>
-  </Page>
+  </Individual>
 )}

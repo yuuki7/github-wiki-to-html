@@ -1,0 +1,35 @@
+---
+import Base from "./Base.astro";
+import Header from "../components/Header.astro";
+import LeftSidebar from "../components/LeftSidebar.astro";
+import Main from "../components/Main.astro";
+import RightSidebar from "../components/RightSidebar.astro";
+import Footer from "../components/Footer.astro";
+import type { ArticleProps } from "../types";
+
+type Props = ArticleProps;
+
+const { title, isHome, meta, language, className } = Astro.props;
+---
+
+<Base title={title} language={language} className={className}>
+  <Header>
+    <slot name="header" />
+  </Header>
+
+  <LeftSidebar>
+    <slot name="left-sidebar" />
+  </LeftSidebar>
+
+  <Main title={title} isHome={false} meta={meta}>
+    <slot />
+  </Main>
+
+  <RightSidebar set:html="&lt;p&gt;aaa&lt;/p&gt;">
+    <slot name="right-sidebar" />
+  </RightSidebar>
+
+  <Footer>
+    <slot name="footer" />
+  </Footer>
+</Base>

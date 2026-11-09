@@ -1,0 +1,19 @@
+---
+import Base from "./Base.astro";
+import type { RedirectProps } from "../types";
+
+type Props = RedirectProps;
+
+const { title, language, className, targetSlug } = Astro.props;
+const target = `/${encodeURIComponent(targetSlug)}`;
+---
+
+<Base title={title} language={language} className={className}>
+  <Fragment slot="head">
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+  </Fragment>
+
+  <p>
+    <a href={target}>Redirect</a>
+  </p>
+</Base>

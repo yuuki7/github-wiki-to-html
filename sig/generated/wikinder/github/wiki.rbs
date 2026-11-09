@@ -26,7 +26,8 @@ module Wikinder
 
       # Creates a new wiki instance.
       #
-      # Installs the Markdown renderer and loads META rows at start.
+      # Configures the Markdown renderer to match GitHub Wiki. It also reads
+      # the authorship metadata that is kept in the wiki's META.md page.
       #
       # @param path [String] Path to the wiki repository.
       # @param options [wiki_options] Options for the wiki.

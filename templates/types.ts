@@ -4,8 +4,21 @@ export interface ArticleMetaProps {
   modifiedDate?: string;
 }
 
-export type ArticleProps =
-  | { title: string; isHome: true; meta?: undefined }
-  | { title: string; isHome?: false; meta: ArticleMetaProps };
+export interface BaseProps {
+  title: string;
+  language: string;
+  className?: string;
+}
 
-export type PageProps = ArticleProps & { className?: string; language: string };
+export type ArticleProps = BaseProps & {
+  isHome?: false;
+  meta: ArticleMetaProps;
+};
+
+export type HomeProps = BaseProps & {
+  isHome: true;
+};
+
+export type RedirectProps = BaseProps & {
+  targetSlug: string;
+};
