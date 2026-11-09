@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Wikinder::GitHub::Wiki::Meta
+  
+    &mdash; Documentation by YARD 0.9.45
+  
+</title>
+
+  <link rel="stylesheet" href="../../../css/style.css" type="text/css">
+
+  <link rel="stylesheet" href="../../../css/common.css" type="text/css">
+
+<script type="text/javascript">
+  pathId = "Wikinder::GitHub::Wiki::Meta";
+  relpath = '../../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div id="main_progress" aria-hidden="true"></div>
+
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../../_index.html">Index (M)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../../Wikinder.html" title="Wikinder (module)">Wikinder</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../GitHub.html" title="Wikinder::GitHub (module)">GitHub</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Wiki.html" title="Wikinder::GitHub::Wiki (class)">Wiki</a></span></span>
+     &raquo; 
+    <span class="title">Meta</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Wikinder::GitHub::Wiki::Meta
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Wikinder::GitHub::Wiki::Meta</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/wikinder/github/wiki/meta.rb<span class="defines">,<br>
+  sig/generated/wikinder/github/wiki/meta.rbs</span>
+
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Reads and writes the META page, syncing rows with git history.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span>
+    
+  
+</p>
+
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="META_HEADERS-constant" class="">META_HEADERS =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Column labels for the META table.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[String]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbracket'>[</span>
+  <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Title</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Author</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Creation date</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Modified date</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Language</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Aliases</span><span class='tstring_end'>&#39;</span></span>
+<span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="META_TABLE_HEADER-constant" class="">META_TABLE_HEADER =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Precomputed header and separator rows for the META table.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[String]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbracket'>[</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>| </span><span class='embexpr_beg'>#{</span><span class='const'><span class='object_link'><a href="#META_HEADERS-constant" title="Wikinder::GitHub::Wiki::Meta::META_HEADERS (constant)">META_HEADERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> | </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> |</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>| </span><span class='embexpr_beg'>#{</span><span class='const'>Array</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#META_HEADERS-constant" title="Wikinder::GitHub::Wiki::Meta::META_HEADERS (constant)">META_HEADERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>---</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> | </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> |</span><span class='tstring_end'>&quot;</span></span>
+<span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="ALIAS_SEPARATOR-constant" class="">ALIAS_SEPARATOR =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Separator between aliases in a META cell.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>&lt;br&gt;</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#rows-instance_method" title="#rows (instance method)">#<strong>rows</strong>  &#x21d2; Hash[String, Row] </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns rows keyed by slug.</p></div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#aliases_from_cell-instance_method" title="#aliases_from_cell (instance method)">#<strong>aliases_from_cell</strong>(cell)  &#x21d2; Array[String] </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns aliases inside a table cell.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#blob_sha_map-instance_method" title="#blob_sha_map (instance method)">#<strong>blob_sha_map</strong>(ref)  &#x21d2; Hash[String, String] </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns blob SHAs keyed by path for a ref.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#build_row-instance_method" title="#build_row (instance method)">#<strong>build_row</strong>(page)  &#x21d2; Row </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Builds a new META row from Git history and content.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#changed_paths-instance_method" title="#changed_paths (instance method)">#<strong>changed_paths</strong>  &#x21d2; Array[String]<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns paths changed between previous head and head.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#detect_language-instance_method" title="#detect_language (instance method)">#<strong>detect_language</strong>(text)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Detects language from text.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(wiki:, meta_path:, head:, prev_head: nil, ignore_meta: false)  &#x21d2; Meta </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates a new Meta instance.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#latest_modified_date-instance_method" title="#latest_modified_date (instance method)">#<strong>latest_modified_date</strong>(page)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the latest author date in ISO 8601 for a page.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#old_titles-instance_method" title="#old_titles (instance method)">#<strong>old_titles</strong>(versions, current_path)  &#x21d2; Array[String] </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns old titles found in rename history.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parse-instance_method" title="#parse (instance method)">#<strong>parse</strong>  &#x21d2; Hash[String, Row] </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Parses the META table into rows keyed by slug.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#slug_from_href-instance_method" title="#slug_from_href (instance method)">#<strong>slug_from_href</strong>(href)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns slug from a wiki link href.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#slug_to_title-instance_method" title="#slug_to_title (instance method)">#<strong>slug_to_title</strong>(slug)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a display title from a slug.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#sync!-instance_method" title="#sync! (instance method)">#<strong>sync!</strong>(pages)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Syncs META rows with current pages and writes the file.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#write!-instance_method" title="#write! (instance method)">#<strong>write!</strong>  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Writes META rows sorted by creation date.</p></div></span>
+  
+</li>
+
+      
+    </ul>
+    
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(wiki:, meta_path:, head:, prev_head: nil, ignore_meta: false)  &#x21d2; <tt><span class='object_link'><a href="" title="Wikinder::GitHub::Wiki::Meta (class)">Meta</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Creates a new Meta instance.</p>
+<p>: (wiki: Gollum::Wiki, meta_path: Pathname, head: String, ?prev_head: String?, ?ignore_meta: bool) -&gt; void</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>wiki</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../../Gollum/Wiki.html" title="Gollum::Wiki (class)">Gollum::Wiki</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The wiki instance to read from.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>meta_path</span>
+      
+      
+        <span class='type'>(<tt>Pathname</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Path to the META.md file.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>head</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Current head SHA.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>prev_head</span>
+      
+      
+        <span class='type'>(<tt>String?</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Previous head SHA for incremental update.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>ignore_meta</span>
+      
+      
+        <span class='type'>(<tt>bool?</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Ignore committed META and recreate it.</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>wiki:</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../../Gollum/Wiki.html" title="Gollum::Wiki (class)">Gollum::Wiki</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>meta_path:</span>
+      
+      
+        <span class='type'>(<tt>Pathname</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>head:</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>prev_head:</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>ignore_meta:</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+71
+72
+73
+74
+75
+76
+77
+78</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 71</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>wiki:</span><span class='comma'>,</span> <span class='label'>meta_path:</span><span class='comma'>,</span> <span class='label'>head:</span><span class='comma'>,</span> <span class='label'>prev_head:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>ignore_meta:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='ivar'>@wiki</span> <span class='op'>=</span> <span class='id identifier rubyid_wiki'>wiki</span>
+  <span class='ivar'>@meta_path</span> <span class='op'>=</span> <span class='id identifier rubyid_meta_path'>meta_path</span>
+  <span class='ivar'>@prev_head</span> <span class='op'>=</span> <span class='id identifier rubyid_prev_head'>prev_head</span>
+  <span class='ivar'>@head</span> <span class='op'>=</span> <span class='id identifier rubyid_head'>head</span>
+  <span class='ivar'>@ignore_meta</span> <span class='op'>=</span> <span class='id identifier rubyid_ignore_meta'>ignore_meta</span>
+  <span class='ivar'>@rows</span> <span class='op'>=</span> <span class='id identifier rubyid_parse'>parse</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="rows-instance_method">
+  
+    #<strong>rows</strong>  &#x21d2; <tt>Hash[String, <span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span>]</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns rows keyed by slug.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash[String, <span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span>]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+81
+82
+83</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 81</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_rows'>rows</span>
+  <span class='ivar'>@rows</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="aliases_from_cell-instance_method">
+  
+    #<strong>aliases_from_cell</strong>(cell)  &#x21d2; <tt>Array[String]</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns aliases inside a table cell.
+Treats break tags as separators between aliases.
+: (Nokogiri::XML::Node) -&gt; <a href="String">Array</a></p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>Nokogiri::XML::Node</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[String]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+204
+205
+206
+207
+208
+209</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 204</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_aliases_from_cell'>aliases_from_cell</span><span class='lparen'>(</span><span class='id identifier rubyid_cell'>cell</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cell'>cell</span><span class='period'>.</span><span class='id identifier rubyid_children'>children</span>
+      <span class='period'>.</span><span class='id identifier rubyid_slice_after'>slice_after</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_it'>it</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>br</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span>
+      <span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_group'>group</span><span class='op'>|</span> <span class='id identifier rubyid_group'>group</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:text?</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:text</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span> <span class='rbrace'>}</span>
+      <span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:empty?</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="blob_sha_map-instance_method">
+  
+    #<strong>blob_sha_map</strong>(ref)  &#x21d2; <tt>Hash[String, String]</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns blob SHAs keyed by path for a ref.
+Works for the incremental comparison.
+: (String) -&gt; Hash[String, String]</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash[String, String]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+164</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 164</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='ivar'>@wiki</span><span class='period'>.</span><span class='id identifier rubyid_tree_map_for'>tree_map_for</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span> <span class='lbrace'>{</span> <span class='lbracket'>[</span><span class='id identifier rubyid_it'>it</span><span class='period'>.</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_it'>it</span><span class='period'>.</span><span class='id identifier rubyid_sha'>sha</span><span class='rbracket'>]</span> <span class='rbrace'>}</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="build_row-instance_method">
+  
+    #<strong>build_row</strong>(page)  &#x21d2; <tt><span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Builds a new META row from Git history and content.
+Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
+: (Gollum::Page) -&gt; Row</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../../Gollum/Page.html" title="Gollum::Page (class)">Gollum::Page</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 169</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_build_row'>build_row</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_versions'>versions</span> <span class='op'>=</span> <span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_versions'>versions</span><span class='lparen'>(</span><span class='label'>limit:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='label'>follow:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Meta/Row.html#initialize-instance_method" title="Wikinder::GitHub::Wiki::Meta::Row#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+    <span class='lbrace'>{</span>
+      <span class='label'>author:</span> <span class='id identifier rubyid_versions'>versions</span><span class='period'>.</span><span class='id identifier rubyid_last'>last</span><span class='period'>.</span><span class='id identifier rubyid_author'>author</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+      <span class='label'>creation_date:</span> <span class='id identifier rubyid_versions'>versions</span><span class='period'>.</span><span class='id identifier rubyid_last'>last</span><span class='period'>.</span><span class='id identifier rubyid_authored_date'>authored_date</span><span class='period'>.</span><span class='id identifier rubyid_utc'>utc</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
+      <span class='label'>modified_date:</span> <span class='id identifier rubyid_versions'>versions</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='period'>.</span><span class='id identifier rubyid_authored_date'>authored_date</span><span class='period'>.</span><span class='id identifier rubyid_utc'>utc</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
+      <span class='label'>language:</span> <span class='id identifier rubyid_detect_language'>detect_language</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_text_data'>text_data</span><span class='rparen'>)</span><span class='comma'>,</span>
+      <span class='label'>aliases:</span> <span class='id identifier rubyid_old_titles'>old_titles</span><span class='lparen'>(</span><span class='id identifier rubyid_versions'>versions</span><span class='comma'>,</span> <span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+    <span class='rbrace'>}</span>
+  <span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="changed_paths-instance_method">
+  
+    #<strong>changed_paths</strong>  &#x21d2; <tt>Array[String]</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns paths changed between previous head and head.
+Compares blob SHAs from both tree listings.
+: () -&gt; <a href="String">Array</a>?</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[String]</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+152
+153
+154
+155
+156
+157
+158
+159</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 152</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_changed_paths'>changed_paths</span>
+  <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>=</span> <span class='ivar'>@prev_head</span> <span class='kw'>or</span> <span class='kw'>return</span>
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>==</span> <span class='ivar'>@head</span>
+
+  <span class='id identifier rubyid_prev_map'>prev_map</span> <span class='op'>=</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='id identifier rubyid_prev_head'>prev_head</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_head_map'>head_map</span> <span class='op'>=</span> <span class='id identifier rubyid_blob_sha_map'>blob_sha_map</span><span class='lparen'>(</span><span class='ivar'>@head</span><span class='rparen'>)</span>
+  <span class='lparen'>(</span><span class='id identifier rubyid_prev_map'>prev_map</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span> <span class='op'>|</span> <span class='id identifier rubyid_head_map'>head_map</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_prev_map'>prev_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_it'>it</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='id identifier rubyid_head_map'>head_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_it'>it</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="detect_language-instance_method">
+  
+    #<strong>detect_language</strong>(text)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Detects language from text.
+Returns an ISO code for new META rows.
+: (String?) -&gt; String</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+115</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 115</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_detect_language'>detect_language</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../WhatLanguage.html" title="WhatLanguage (module)">WhatLanguage</a></span></span><span class='period'>.</span><span class='id identifier rubyid_language_iso'><span class='object_link'><a href="../../../WhatLanguage.html#language_iso-class_method" title="WhatLanguage.language_iso (method)">language_iso</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>en</span><span class='tstring_end'>&#39;</span></span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="latest_modified_date-instance_method">
+  
+    #<strong>latest_modified_date</strong>(page)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the latest author date in ISO 8601 for a page.
+: (Gollum::Page) -&gt; String</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../../Gollum/Page.html" title="Gollum::Page (class)">Gollum::Page</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+191</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 191</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_latest_modified_date'>latest_modified_date</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_versions'>versions</span><span class='lparen'>(</span><span class='label'>limit:</span> <span class='int'>1</span><span class='comma'>,</span> <span class='label'>follow:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='period'>.</span><span class='id identifier rubyid_authored_date'>authored_date</span><span class='period'>.</span><span class='id identifier rubyid_utc'>utc</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="old_titles-instance_method">
+  
+    #<strong>old_titles</strong>(versions, current_path)  &#x21d2; <tt>Array[String]</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns old titles found in rename history.
+: (<a href="Gollum::Version">Array</a>, String) -&gt; <a href="String">Array</a></p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>Array[<span class='object_link'><a href="../../../Gollum/Version.html" title="Gollum::Version (class)">Gollum::Version</a></span>]</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[String]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+184
+185
+186
+187</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 184</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_old_titles'>old_titles</span><span class='lparen'>(</span><span class='id identifier rubyid_versions'>versions</span><span class='comma'>,</span> <span class='id identifier rubyid_current_path'>current_path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_paths'>paths</span> <span class='op'>=</span> <span class='id identifier rubyid_versions'>versions</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:tracked_pathname</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span> <span class='op'>-</span> <span class='lbracket'>[</span><span class='id identifier rubyid_current_path'>current_path</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_tracked'>tracked</span><span class='op'>|</span> <span class='id identifier rubyid_slug_to_title'>slug_to_title</span><span class='lparen'>(</span><span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_tracked'>tracked</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_sub_ext'>sub_ext</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parse-instance_method">
+  
+    #<strong>parse</strong>  &#x21d2; <tt>Hash[String, <span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span>]</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Parses the META table into rows keyed by slug.
+Reads the committed page through Gollum.
+: () -&gt; Hash[String, Row]</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash[String, <span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span>]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 122</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parse'>parse</span>
+  <span class='kw'>return</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='kw'>if</span> <span class='ivar'>@ignore_meta</span>
+
+  <span class='id identifier rubyid_page'>page</span> <span class='op'>=</span> <span class='ivar'>@wiki</span><span class='period'>.</span><span class='id identifier rubyid_page'>page</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>META</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='kw'>or</span> <span class='kw'>return</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+
+  <span class='comment'># Walk the table cells and rebuild rows from the committed page.
+</span>  <span class='id identifier rubyid_dom'>dom</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Nokogiri.html" title="Nokogiri (module)">Nokogiri</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../Nokogiri/HTML5.html" title="Nokogiri::HTML5 (module)">HTML5</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fragment'><span class='object_link'><a href="../../../Nokogiri/HTML5.html#fragment-class_method" title="Nokogiri::HTML5.fragment (method)">fragment</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_formatted_data'>formatted_data</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_dom'>dom</span><span class='period'>.</span><span class='id identifier rubyid_css'>css</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tbody tr</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_row'>row</span><span class='op'>|</span>
+    <span class='id identifier rubyid_title_cell'>title_cell</span><span class='comma'>,</span> <span class='id identifier rubyid_author_cell'>author_cell</span><span class='comma'>,</span> <span class='id identifier rubyid_creation_cell'>creation_cell</span><span class='comma'>,</span> <span class='id identifier rubyid_modified_cell'>modified_cell</span><span class='comma'>,</span> <span class='id identifier rubyid_language_cell'>language_cell</span><span class='comma'>,</span> <span class='id identifier rubyid_aliases_cell'>aliases_cell</span> <span class='op'>=</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_css'>css</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>td</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_link'>link</span> <span class='op'>=</span> <span class='id identifier rubyid_title_cell'>title_cell</span><span class='period'>.</span><span class='id identifier rubyid_at_css'>at_css</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>a</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='id identifier rubyid_slug_from_href'>slug_from_href</span><span class='lparen'>(</span><span class='const'>URI</span><span class='lparen'>(</span><span class='id identifier rubyid_link'>link</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>href</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='rparen'>)</span>
+
+    <span class='lbracket'>[</span>
+      <span class='id identifier rubyid_slug'>slug</span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="Meta/Row.html" title="Wikinder::GitHub::Wiki::Meta::Row (class)">Row</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Meta/Row.html#initialize-instance_method" title="Wikinder::GitHub::Wiki::Meta::Row#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+        <span class='lbrace'>{</span>
+          <span class='label'>author:</span> <span class='id identifier rubyid_author_cell'>author_cell</span><span class='period'>.</span><span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span><span class='comma'>,</span>
+          <span class='label'>creation_date:</span> <span class='id identifier rubyid_creation_cell'>creation_cell</span><span class='period'>.</span><span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span><span class='comma'>,</span>
+          <span class='label'>modified_date:</span> <span class='id identifier rubyid_modified_cell'>modified_cell</span><span class='period'>.</span><span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span><span class='comma'>,</span>
+          <span class='label'>language:</span> <span class='id identifier rubyid_language_cell'>language_cell</span><span class='period'>.</span><span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span><span class='comma'>,</span>
+          <span class='label'>aliases:</span> <span class='id identifier rubyid_aliases_from_cell'>aliases_from_cell</span><span class='lparen'>(</span><span class='id identifier rubyid_aliases_cell'>aliases_cell</span><span class='rparen'>)</span>
+        <span class='rbrace'>}</span>
+      <span class='rparen'>)</span>
+    <span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="slug_from_href-instance_method">
+  
+    #<strong>slug_from_href</strong>(href)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns slug from a wiki link href.
+Drops leading slash and extension after decoding.
+: (URI::Generic) -&gt; String</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>URI::Generic</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+196
+197
+198
+199</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 196</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_slug_from_href'>slug_from_href</span><span class='lparen'>(</span><span class='id identifier rubyid_href'>href</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='const'>URI</span><span class='period'>.</span><span class='id identifier rubyid_decode_uri_component'>decode_uri_component</span><span class='lparen'>(</span><span class='id identifier rubyid_href'>href</span><span class='period'>.</span><span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+  <span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_sub_ext'>sub_ext</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_delete_prefix'>delete_prefix</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="slug_to_title-instance_method">
+  
+    #<strong>slug_to_title</strong>(slug)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a display title from a slug.
+Turns ASCII hyphens into spaces.
+: (String) -&gt; String</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+214</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 214</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_slug_to_title'>slug_to_title</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_tr'>tr</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>-</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="sync!-instance_method">
+  
+    #<strong>sync!</strong>(pages)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Syncs META rows with current pages and writes the file.
+Drops deleted pages and adds new pages with history heuristics.
+: (<a href="Gollum::Page">Array</a>) -&gt; void</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt>Array[<span class='object_link'><a href="../../../Gollum/Page.html" title="Gollum::Page (class)">Gollum::Page</a></span>]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 86</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sync!'>sync!</span><span class='lparen'>(</span><span class='id identifier rubyid_pages'>pages</span><span class='rparen'>)</span>
+  <span class='comment'># Drop rows for pages removed since the last sync.
+</span>  <span class='id identifier rubyid_current_slugs'>current_slugs</span> <span class='op'>=</span> <span class='id identifier rubyid_pages'>pages</span><span class='period'>.</span><span class='id identifier rubyid_to_set'>to_set</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:filename_stripped</span><span class='rparen'>)</span>
+  <span class='ivar'>@rows</span><span class='period'>.</span><span class='id identifier rubyid_select!'>select!</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_slug'>slug</span><span class='comma'>,</span> <span class='id identifier rubyid__row'>_row</span><span class='op'>|</span> <span class='id identifier rubyid_current_slugs'>current_slugs</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+
+  <span class='id identifier rubyid_changed'>changed</span> <span class='op'>=</span> <span class='id identifier rubyid_changed_paths'>changed_paths</span><span class='op'>&amp;.</span><span class='id identifier rubyid_to_set'>to_set</span>
+
+  <span class='comment'># Refresh changed entries or create rows for new pages.
+</span>  <span class='id identifier rubyid_pages'>pages</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_page'>page</span><span class='op'>|</span>
+    <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_filename_stripped'>filename_stripped</span>
+    <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_row'>row</span> <span class='op'>=</span> <span class='ivar'>@rows</span><span class='lbracket'>[</span><span class='id identifier rubyid_slug'>slug</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+      <span class='kw'>if</span> <span class='id identifier rubyid_changed'>changed</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_changed'>changed</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_modified_date'>modified_date</span> <span class='op'>=</span> <span class='id identifier rubyid_latest_modified_date'>latest_modified_date</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_versions'>versions</span> <span class='op'>=</span> <span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_versions'>versions</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>limit:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='label'>follow:</span> <span class='kw'>true</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_old_titles'>old_titles</span><span class='lparen'>(</span><span class='id identifier rubyid_versions'>versions</span><span class='comma'>,</span> <span class='id identifier rubyid_page'>page</span><span class='period'>.</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_title'>title</span><span class='op'>|</span>
+          <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_aliases'>aliases</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_title'>title</span> <span class='kw'>unless</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_aliases'>aliases</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_title'>title</span><span class='rparen'>)</span>
+        <span class='kw'>end</span>
+      <span class='kw'>end</span>
+    <span class='kw'>else</span>
+      <span class='ivar'>@rows</span><span class='lbracket'>[</span><span class='id identifier rubyid_slug'>slug</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_build_row'>build_row</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_write!'>write!</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="write!-instance_method">
+  
+    #<strong>write!</strong>  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Writes META rows sorted by creation date.
+Newest articles stay at the top for editors.
+: () -&gt; void</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 219</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_write!'>write!</span>
+  <span class='id identifier rubyid_sorted'>sorted</span> <span class='op'>=</span> <span class='ivar'>@rows</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span> <span class='kw'>do</span> <span class='op'>|</span><span class='lparen'>(</span><span class='id identifier rubyid_slug_a'>slug_a</span><span class='comma'>,</span> <span class='id identifier rubyid_row_a'>row_a</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='lparen'>(</span><span class='id identifier rubyid_slug_b'>slug_b</span><span class='comma'>,</span> <span class='id identifier rubyid_row_b'>row_b</span><span class='rparen'>)</span><span class='op'>|</span>
+    <span class='lparen'>(</span><span class='id identifier rubyid_row_b'>row_b</span><span class='period'>.</span><span class='id identifier rubyid_creation_date'>creation_date</span> <span class='op'>&lt;=&gt;</span> <span class='id identifier rubyid_row_a'>row_a</span><span class='period'>.</span><span class='id identifier rubyid_creation_date'>creation_date</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_nonzero?'>nonzero?</span> <span class='op'>||</span> <span class='lparen'>(</span><span class='id identifier rubyid_slug_a'>slug_a</span> <span class='op'>&lt;=&gt;</span> <span class='id identifier rubyid_slug_b'>slug_b</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Render each row into its markdown table line.
+</span>  <span class='id identifier rubyid_rows'>rows</span> <span class='op'>=</span> <span class='id identifier rubyid_sorted'>sorted</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_slug'>slug</span><span class='comma'>,</span> <span class='id identifier rubyid_row'>row</span><span class='op'>|</span>
+    <span class='id identifier rubyid_title'>title</span> <span class='op'>=</span> <span class='id identifier rubyid_slug_to_title'>slug_to_title</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_aliases_str'>aliases_str</span> <span class='op'>=</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_aliases'>aliases</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#ALIAS_SEPARATOR-constant" title="Wikinder::GitHub::Wiki::Meta::ALIAS_SEPARATOR (constant)">ALIAS_SEPARATOR</a></span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_cells'>cells</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[[</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_title'>title</span><span class='embexpr_end'>}</span><span class='tstring_content'>]]</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_author'>author</span><span class='comma'>,</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_creation_date'>creation_date</span><span class='comma'>,</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_modified_date'>modified_date</span><span class='comma'>,</span> <span class='id identifier rubyid_row'>row</span><span class='period'>.</span><span class='id identifier rubyid_language'>language</span><span class='comma'>,</span> <span class='id identifier rubyid_aliases_str'>aliases_str</span><span class='rbracket'>]</span>
+    <span class='id identifier rubyid_inner'>inner</span> <span class='op'>=</span> <span class='id identifier rubyid_cells'>cells</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_cell'>cell</span><span class='op'>|</span> <span class='id identifier rubyid_cell'>cell</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_cell'>cell</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>|</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>|</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_inner'>inner</span><span class='embexpr_end'>}</span><span class='tstring_content'>|</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Write only when content differs.
+</span>  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='op'>*</span><span class='const'><span class='object_link'><a href="#META_TABLE_HEADER-constant" title="Wikinder::GitHub::Wiki::Meta::META_TABLE_HEADER (constant)">META_TABLE_HEADER</a></span></span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_rows'>rows</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span>
+  <span class='ivar'>@meta_path</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='ivar'>@meta_path</span><span class='period'>.</span><span class='id identifier rubyid_exist?'>exist?</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@meta_path</span><span class='period'>.</span><span class='id identifier rubyid_read'>read</span> <span class='op'>==</span> <span class='id identifier rubyid_content'>content</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.45 (ruby-4.0.9).
+</div>
+
+    </div>
+  </body>
+</html>
