@@ -9,8 +9,11 @@ require_relative 'wiki/meta'
 
 module Wikinder
   module GitHub
-    # Represents a GitHub Wiki.
-    # Loads pages with Gollum and serves META as the source for authorship.
+    # Represents the Wikinder GitHub Wiki.
+    #
+    # Wraps Gollum::Wiki to give access to the wiki's pages and metadata.
+    # It can export the wiki data as JSON for turning the wiki into a
+    # static HTML site.
     class Wiki
       # Pages not generated.
       UNGENERATED_PAGES = Set['Home', 'README', 'LICENSE', 'META'].freeze #: Set[String]
@@ -24,11 +27,13 @@ module Wikinder
       # @rbs @wiki_path: Pathname
       # @rbs @meta: Meta
 
-      # Creates a new instance for a wiki repository.
+      # Creates a new wiki instance.
+      #
+      # Configures the Markdown renderer to match GitHub Wiki. It also reads
+      # the authorship metadata that is kept in the wiki's META.md page.
       #
       # @param path [String] Path to the wiki repository.
       # @param options [wiki_options] Options for the wiki.
-      # Installs the renderer and loads META rows at start.
       #: (String, ?wiki_options) -> void
       def initialize(path, options = {})
         @wiki_path = Pathname(path).expand_path
