@@ -2,17 +2,15 @@
 
 module Gollum
   class Filter
-    # Gollum tag extraction restricted to non-code regions.
-    # Gollum itself skips tags inside <code> elements after it has rendered
-    # to HTML; since the passthrough renderer does not render, code regions
-    # must be recognized here instead.
+    # Resolves wiki markup by emitting standard GFM Markdown, not
+    # HTML. Gollum keeps running in its own domain (page lookup, link
+    # kinds, anchor handling); only the output shape changes.
+    #
+    # Tags outside code regions have already been withdrawn by the
+    # filters before this one; the rest of the substitution stays a
+    # string operation, since an HTML-tree walk would mangle Markdown.
     class AstTags < Tags
-      # : (String) -> String
-      def extract: (String) -> String
-
-      # String-based replacement; keeps the document byte-identical
-      # apart from placeholders (gollum's HTML-tree walk would mangle it).
-      # Tags outside code are resolved; inside code they stay literal.
+      # Substitutes tag placeholders with their resolved forms.
       # : (String) -> String
       def process: (String) -> String
 
@@ -27,13 +25,10 @@ module Gollum
       def generate_image: (String, Hash[Symbol, untyped]?) -> String
 
       # Generates a normalized site href for wiki paths.
-      # Strips .md extensions and encodes spaces as hyphens.
-      # : (String, String?) -> String
-      def generate_href_for_path: (String, String?) -> String
-
-      # Replaces placeholders with resolved tags, or literal text when code.
-      # : (String, bool) -> String
-      def substitute: (String, bool) -> String
+      # Strips .md extensions, decodes path slashes, and encodes
+      # spaces as hyphens. Anchor-only links come through untouched.
+      # : (String?, String?) -> String
+      def generate_href_for_path: (String?, String?) -> String
     end
   end
 end

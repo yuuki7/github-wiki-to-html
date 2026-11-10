@@ -64,35 +64,54 @@ module Wikinder
         def absorb_aliases: (Row, String, Array[Gollum::Version]) -> void
 
         # Returns paths changed between previous head and head.
-        # Compares blob SHAs from both tree listings.
+        # Uses libgit2's tree diff, one pass over the diff only.
         # : () -> Array[String]?
         def changed_paths: () -> Array[String]?
 
-        # Returns blob SHAs keyed by path for a ref.
-        # Works for the incremental comparison.
-        # : (String) -> Hash[String, String]
-        def blob_sha_map: (String) -> Hash[String, String]
+        # Returns paths of files changed between two refs.
+        # Uses libgit2's native tree diff, not hand-rolled blob maps.
+        # : (String, String) -> Array[String]
+        def diff_paths: (String, String) -> Array[String]
 
         # Parses the META table into rows keyed by slug.
-        # Reads the committed page through Gollum.
+        # Reads the committed page and walks its table AST.
         # : () -> Hash[String, Row]
         def parse: () -> Hash[String, Row]
 
-        # Builds one row hash from the rendered META table.
+        # Builds one row from each data row of the META table.
         # : (Gollum::Page) -> Hash[String, Row]
         def parse_page: (Gollum::Page) -> Hash[String, Row]
 
-        # Builds one row from a META table row.
-        # : (Nokogiri::XML::Element) -> [String, Row]
-        def parse_table_row: (Nokogiri::XML::Element) -> [ String, Row ]
+        # Returns the cells of every data row of the first table.
+        # The header row is dropped; its contents are constants.
+        # : (String) -> Array[Array[Commonmarker::Node]]
+        def parse_table: (String) -> Array[Array[Commonmarker::Node]]
 
-        # Extracts the wiki href from a title cell.
-        # : (Nokogiri::XML::Element) -> URI::Generic
-        def extract_slug_href: (Nokogiri::XML::Element) -> URI::Generic
+        # Collects the cells of one table row, in order.
+        # : (Commonmarker::Node) -> Array[Commonmarker::Node]
+        def table_row_cells: (Commonmarker::Node) -> Array[Commonmarker::Node]
 
-        # Assembles the row payload from the parsed cells.
-        # : (xml_element, xml_element, xml_element, xml_element, xml_element) -> meta_row
-        def build_row_hash: (xml_element, xml_element, xml_element, xml_element, xml_element) -> meta_row
+        # Builds a slug and a row from one data row.
+        # Returns nil for malformed rows, e.g. header rows without links.
+        # : (Array[Commonmarker::Node]) -> [String, Row]?
+        def row_from_cells: (Array[Commonmarker::Node]) -> [ String, Row ]?
+
+        # Returns the URL of the first link in a cell.
+        # : (Commonmarker::Node) -> String?
+        def cell_link_url: (Commonmarker::Node) -> String?
+
+        # Returns the flattened text of a cell, separating nothing.
+        # Code spans contribute their text; break tags are spaced out.
+        # : (Commonmarker::Node) -> String
+        def cell_text: (Commonmarker::Node) -> String
+
+        # Splits an aliases cell into its aliases at break tags.
+        # : (Array[[Symbol, String]]) -> Array[String]
+        def cell_aliases: (Array[[ Symbol, String ]]) -> Array[String]
+
+        # Flattens a cell into text and break-tag tokens.
+        # : (Commonmarker::Node) -> Array[[Symbol, String]]
+        def cell_pieces: (Commonmarker::Node) -> Array[[ Symbol, String ]]
 
         # Builds a new META row from Git history and content.
         # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
@@ -105,18 +124,8 @@ module Wikinder
 
         # Returns slug from a wiki link href.
         # Drops leading slash and extension after decoding.
-        # : (URI::Generic) -> String
-        def slug_from_href: (URI::Generic) -> String
-
-        # Returns aliases inside a table cell.
-        # Treats break tags as separators between aliases.
-        # : (Nokogiri::XML::Element) -> Array[String]
-        def aliases_from_cell: (Nokogiri::XML::Element) -> Array[String]
-
-        # Returns a display title from a slug.
-        # Turns ASCII hyphens into spaces.
         # : (String) -> String
-        def slug_to_title: (String) -> String
+        def slug_from_href: (String) -> String
 
         # Writes META rows sorted by creation date.
         # Newest articles stay at the top for editors.

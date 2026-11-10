@@ -2,7 +2,7 @@
 # rbs_inline: enabled
 
 require 'gollum-lib'
-require 'nokogiri'
+require 'commonmarker'
 require 'uri'
 require 'whatlanguage'
 
@@ -102,24 +102,29 @@ module Wikinder
         end
 
         # Returns paths changed between previous head and head.
-        # Compares blob SHAs from both tree listings.
+        # Uses libgit2's tree diff, one pass over the diff only.
         #: () -> Array[String]?
         def changed_paths
           prev_head = @prev_head or return
           return [] if prev_head == @head
 
-          prev_map = blob_sha_map(prev_head)
-          head_map = blob_sha_map(@head)
-          (prev_map.keys | head_map.keys).reject { prev_map[it] == head_map[it] }
+          diff_paths(prev_head, @head)
         end
 
-        # Returns blob SHAs keyed by path for a ref.
-        # Works for the incremental comparison.
-        #: (String) -> Hash[String, String]
-        def blob_sha_map(ref) = @wiki.tree_map_for(ref).to_h { [it.path, it.sha] }
+        # Returns paths of files changed between two refs.
+        # Uses libgit2's native tree diff, not hand-rolled blob maps.
+        #: (String, String) -> Array[String]
+        def diff_paths(prev_ref, head_ref)
+          prev = @wiki.commit_for(prev_ref)
+          head = @wiki.commit_for(head_ref)
+          return [] if prev.nil? || head.nil?
+
+          diff = prev.commit.diff(head.commit)
+          diff.deltas.flat_map { |delta| [delta.old_file[:path], delta.new_file[:path]] }.uniq
+        end
 
         # Parses the META table into rows keyed by slug.
-        # Reads the committed page through Gollum.
+        # Reads the committed page and walks its table AST.
         #: () -> Hash[String, Row]
         def parse
           return {} if @ignore_meta
@@ -128,37 +133,108 @@ module Wikinder
           parse_page(page)
         end
 
-        # Builds one row hash from the rendered META table.
+        # Builds one row from each data row of the META table.
         #: (Gollum::Page) -> Hash[String, Row]
         def parse_page(page)
-          dom = Nokogiri::HTML5.fragment(page.formatted_data)
-          dom.css('tbody tr').to_h { |row| parse_table_row(row) }
+          rows = {} #: Hash[String, Row]
+          parse_table(page.formatted_data).each do |cells|
+            slug, row = row_from_cells(cells)
+            rows[slug] = row if slug && row
+          end
+          rows
         end
 
-        # Builds one row from a META table row.
-        #: (Nokogiri::XML::Element) -> [String, Row]
-        def parse_table_row(row)
-          title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
-          slug = slug_from_href(extract_slug_href(title_cell))
-          [slug, Row.new(build_row_hash(author_cell, creation_cell, modified_cell, language_cell, aliases_cell))]
+        # Returns the cells of every data row of the first table.
+        # The header row is dropped; its contents are constants.
+        #: (String) -> Array[Array[Commonmarker::Node]]
+        def parse_table(markdown)
+          doc = Commonmarker.parse(markdown, options: { extension: { table: true } })
+          tables = [] # @type var tables: Array[Commonmarker::Node]
+          doc.walk { |node| tables << node if node.type.to_s == 'table' }
+          table = tables.first
+          return [] unless table
+
+          rows = [] # @type var rows: Array[Commonmarker::Node]
+          table.walk { |node| rows << node if node.type.to_s == 'table_row' }
+          rows.drop(1).map { |row| table_row_cells(row) }
         end
 
-        # Extracts the wiki href from a title cell.
-        #: (Nokogiri::XML::Element) -> URI::Generic
-        def extract_slug_href(title_cell)
-          URI(title_cell.at_css('a')['href'])
+        # Collects the cells of one table row, in order.
+        #: (Commonmarker::Node) -> Array[Commonmarker::Node]
+        def table_row_cells(row)
+          cells = [] # @type var cells: Array[Commonmarker::Node]
+          row.walk { |node| cells << node if node.type.to_s == 'table_cell' }
+          cells
         end
 
-        # Assembles the row payload from the parsed cells.
-        #: (xml_element, xml_element, xml_element, xml_element, xml_element) -> meta_row
-        def build_row_hash(author_cell, creation_cell, modified_cell, language_cell, aliases_cell)
-          {
-            author: author_cell.text.strip,
-            creation_date: creation_cell.text.strip,
-            modified_date: modified_cell.text.strip,
-            language: language_cell.text.strip,
-            aliases: aliases_from_cell(aliases_cell)
-          }
+        # Builds a slug and a row from one data row.
+        # Returns nil for malformed rows, e.g. header rows without links.
+        #: (Array[Commonmarker::Node]) -> [String, Row]?
+        def row_from_cells(cells)
+          return nil if cells.size < 6
+
+          href = cell_link_url(cells[0]) or return nil
+          attrs = {
+            author: cell_text(cells[1]),
+            creation_date: cell_text(cells[2]),
+            modified_date: cell_text(cells[3]),
+            language: cell_text(cells[4]),
+            aliases: cell_aliases(cell_pieces(cells[5]))
+          } #: meta_row
+          [slug_from_href(href), Row.new(attrs)]
+        end
+
+        # Returns the URL of the first link in a cell.
+        #: (Commonmarker::Node) -> String?
+        def cell_link_url(cell)
+          url = nil #: String?
+          cell.walk do |node|
+            url ||= node.url.to_s if node.type.to_s == 'link'
+          end
+          url
+        end
+
+        # Returns the flattened text of a cell, separating nothing.
+        # Code spans contribute their text; break tags are spaced out.
+        #: (Commonmarker::Node) -> String
+        def cell_text(cell)
+          cell_pieces(cell).filter_map do |kind, text|
+            text unless kind == :br
+          end.join.strip.gsub(/\s+/, ' ')
+        end
+
+        # Splits an aliases cell into its aliases at break tags.
+        #: (Array[[Symbol, String]]) -> Array[String]
+        def cell_aliases(pieces)
+          aliases = [] #: Array[String]
+          current = +''
+          pieces.each do |kind, text|
+            if kind == :br
+              aliases << current.strip unless current.strip.empty?
+              current = +''
+            else
+              current += text
+            end
+          end
+          aliases << current.strip unless current.strip.empty?
+          aliases
+        end
+
+        # Flattens a cell into text and break-tag tokens.
+        #: (Commonmarker::Node) -> Array[[Symbol, String]]
+        def cell_pieces(cell)
+          pieces = [] #: Array[[Symbol, String]]
+          cell.walk do |node|
+            type = node.type.to_s
+            case type
+            when 'text' then pieces << [:text, node.string_content.to_s]
+            when 'code' then pieces << [:code, node.string_content.to_s]
+            when 'html_inline'
+              literal = node.literal.to_s
+              pieces << (%r{\A<br\s*/?>\z}i.match?(literal) ? [:br, literal] : [:text, literal])
+            end
+          end
+          pieces
         end
 
         # Builds a new META row from Git history and content.
@@ -180,31 +256,18 @@ module Wikinder
         #: (Array[Gollum::Version], String) -> Array[String]
         def old_titles(versions, current_path)
           paths = versions.map(&:tracked_pathname).compact.uniq - [current_path]
-          paths.map { |tracked| slug_to_title(Pathname(tracked).sub_ext('').basename.to_s) }
+          paths.map { |tracked| Page.title(Pathname(tracked).sub_ext('').basename.to_s) }
         end
 
         # Returns slug from a wiki link href.
         # Drops leading slash and extension after decoding.
-        #: (URI::Generic) -> String
-        def slug_from_href(href)
-          path = URI.decode_uri_component(href.path.to_s)
-          Pathname(path).sub_ext('').to_s.delete_prefix('/')
-        end
-
-        # Returns aliases inside a table cell.
-        # Treats break tags as separators between aliases.
-        #: (Nokogiri::XML::Element) -> Array[String]
-        def aliases_from_cell(cell)
-          cell.children
-              .slice_after { it.name == 'br' }
-              .map { |group| group.select(&:text?).map(&:text).join.strip }
-              .reject(&:empty?)
-        end
-
-        # Returns a display title from a slug.
-        # Turns ASCII hyphens into spaces.
         #: (String) -> String
-        def slug_to_title(slug) = slug.tr('-', ' ')
+        def slug_from_href(href)
+          path = URI.decode_uri_component(href)
+          Pathname(path).sub_ext('').to_s.delete_prefix('/')
+        rescue URI::InvalidURIError, URI::InvalidComponentError, ArgumentError
+          Pathname(href).sub_ext('').to_s.delete_prefix('/')
+        end
 
         # Writes META rows sorted by creation date.
         # Newest articles stay at the top for editors.
@@ -228,7 +291,7 @@ module Wikinder
         def render_row(pair)
           slug, row = pair
           cells = [
-            "[[#{slug_to_title(slug)}]]", row.author, row.creation_date,
+            "[[#{Page.title(slug)}]]", row.author, row.creation_date,
             row.modified_date, row.language, row.aliases.join(ALIAS_SEPARATOR)
           ]
           inner = cells.map { |cell| cell.empty? ? ' ' : " #{cell} " }.join('|')

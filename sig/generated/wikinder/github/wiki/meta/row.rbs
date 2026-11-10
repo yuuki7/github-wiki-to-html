@@ -18,9 +18,6 @@ module Wikinder
 
           # : (meta_row) -> void
           def initialize: (meta_row) -> void
-
-          # : () -> meta_row
-          def to_h: () -> meta_row
         end
       end
     end

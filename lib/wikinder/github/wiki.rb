@@ -25,8 +25,9 @@ module Wikinder
 
       # Creates a new wiki instance.
       #
-      # Configures the Markdown renderer to match GitHub Wiki. It also reads
-      # the authorship metadata that is kept in the wiki's META.md page.
+      # Reads the wiki's META.md page to drive authorship metadata.
+      # The Markdown renderer for gollum is registered process-wide
+      # once at load time of the Markdown module, not here.
       #
       # @param path [String] Path to the wiki repository.
       # @param options [wiki_options] Options for the wiki.
@@ -35,7 +36,6 @@ module Wikinder
       #: (String, ?wiki_options) -> void
       def initialize(path, options = {})
         @wiki_path = Pathname(path).expand_path
-        Markdown.install!
         @wiki = Gollum::Wiki.new(@wiki_path.to_s, Markdown::GOLLUM_OPTIONS)
         @ungenerated_pages = (options[:ungenerated_pages] || Set[]).freeze
         @unlisted_pages = (options[:unlisted_pages] || Set[]).freeze

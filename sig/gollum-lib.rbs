@@ -2,8 +2,7 @@ type gollum_wiki_options = {
   ?allow_editing: bool,
   ?base_path: String,
   ?filter_chain: Array[Symbol],
-  ?hyphened_tag_lookup: bool,
-  ?universal_toc: bool
+  ?hyphened_tag_lookup: bool
 }
 
 module Gollum
@@ -30,8 +29,26 @@ module Gollum
     def tracked_pathname: () -> String?
   end
 
+  module Helpers
+    def trim_leading_slashes: (String) -> String
+                           | (nil) -> nil
+  end
+
   class Filter
-    class Tags
+    include Helpers
+
+    def initialize: (Markup) -> void
+    attr_reader open_pattern: String
+    attr_reader close_pattern: String
+    def extract: (String) -> String
+    def process: (String) -> String
+
+    class Code < Filter
+      def extract: (String) -> String
+      def process: (String) -> String
+    end
+
+    class Tags < Filter
       def process_tag: (String) -> String
       def open_pattern: () -> String
       def close_pattern: () -> String

@@ -1,27 +1,25 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
-require_relative 'code_regions'
 require 'gollum-lib'
 
 module Gollum
   class Filter
-    # Gollum tag extraction restricted to non-code regions.
-    # Gollum itself skips tags inside <code> elements after it has rendered
-    # to HTML; since the passthrough renderer does not render, code regions
-    # must be recognized here instead.
+    # Resolves wiki markup by emitting standard GFM Markdown, not
+    # HTML. Gollum keeps running in its own domain (page lookup, link
+    # kinds, anchor handling); only the output shape changes.
+    #
+    # Tags outside code regions have already been withdrawn by the
+    # filters before this one; the rest of the substitution stays a
+    # string operation, since an HTML-tree walk would mangle Markdown.
     class AstTags < Tags
-      #: (String) -> String
-      def extract(data)
-        Wikinder::GitHub::Wiki::CodeRegions.process_regions(data) { |seg, code| code ? seg : super(seg) }
-      end
-
-      # String-based replacement; keeps the document byte-identical
-      # apart from placeholders (gollum's HTML-tree walk would mangle it).
-      # Tags outside code are resolved; inside code they stay literal.
+      # Substitutes tag placeholders with their resolved forms.
       #: (String) -> String
       def process(data)
-        Wikinder::GitHub::Wiki::CodeRegions.process_regions(data) { |seg, code| substitute(seg, code) }
+        data.gsub(/#{open_pattern}[a-f0-9]+#{close_pattern}/) do |id|
+          tag = @map[id]
+          tag.nil? ? id : process_tag(tag).gsub(/%2f/i, '/')
+        end
       end
 
       private
@@ -42,30 +40,16 @@ module Gollum
       end
 
       # Generates a normalized site href for wiki paths.
-      # Strips .md extensions and encodes spaces as hyphens.
-      #: (String, String?) -> String
+      # Strips .md extensions, decodes path slashes, and encodes
+      # spaces as hyphens. Anchor-only links come through untouched.
+      #: (String?, String?) -> String
       def generate_href_for_path(path, extra = nil)
-        return extra.to_s if !path && extra
+        return extra if !path && extra
 
         ext = ::File.extname(path.to_s)
-        clean = ::File.join(@markup.wiki.base_path, path)
-        clean = clean.sub(/#{Regexp.escape(ext)}$/, '') if ext == '.md'
-        "#{clean.gsub('%20', '-')}#{extra}"
-      end
-
-      # Replaces placeholders with resolved tags, or literal text when code.
-      #: (String, bool) -> String
-      def substitute(seg, code)
-        seg.gsub(/#{open_pattern}[a-f0-9]+#{close_pattern}/) do |id|
-          tag = @map[id]
-          if tag.nil?
-            id
-          elsif code
-            "[[#{tag}]]"
-          else
-            process_tag(tag).gsub('%2f', '/')
-          end
-        end
+        cleaned = trim_leading_slashes(::File.join(@markup.wiki.base_path, path.to_s))
+        cleaned = cleaned.sub(/#{Regexp.escape(ext)}\z/, '') if ext == '.md'
+        "#{cleaned.gsub('%20', '-')}#{extra}"
       end
     end
   end

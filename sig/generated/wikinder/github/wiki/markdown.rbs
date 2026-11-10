@@ -5,15 +5,18 @@ module Wikinder
     class Wiki
       # Converts GitHub Wiki Markdown to standard GFM Markdown.
       #
-      # Uses gollum-lib to resolve Wiki markup (internal links, anchors,
-      # images, file links, escapes, and code regions). The passthrough
-      # renderer keeps the document as Markdown so the SSG can render it
-      # like any other content. Code regions stay untouched so tags
-      # written inside them survive verbatim.
+      # Wikinder relies on gollum-lib for its Markdown semantics
+      # (wiki tags, page lookup, link kinds). The filter chain is:
+      #
+      #   VerbatimCode, Math, InlineCode, AstTags, Render
+      #
+      # VerbatimCode withdraws fenced code before anything else sees it,
+      # Math normalizes math code spans to dollar math, InlineCode
+      # withdraws inline code, and AstTags resolves wiki markup. Render
+      # is a passthrough, so the SSG re-renders the final GFM document.
       module Markdown
         self.@installed: bool
 
-        # Gollum options for rendering the wiki.
         GOLLUM_OPTIONS: gollum_wiki_options
 
         # Makes gollum-lib emit Markdown instead of HTML.
@@ -21,27 +24,10 @@ module Wikinder
         # : () -> void
         def self.install!: () -> void
 
-        # Renders a wiki page as GFM Markdown.
-        # Tags are resolved in place; the SSG renders the result.
+        # Renders a page as GFM Markdown.
+        # Tags, math and code were handled by the filter chain.
         # : (Gollum::Page) -> String
         def self.transpile: (Gollum::Page) -> String
-
-        # Rewrites math code spans ($`...`$) to math dollars ($...$).
-        # The SSG handles GFM dollars; code fences stay untouched.
-        # : (String) -> String
-        def self.normalize_math: (String) -> String
-
-        # Byte ranges of inline math code nodes ($`...`$).
-        # : (String) -> Array[[Integer, Integer]]
-        def self.math_code_ranges: (String) -> Array[[ Integer, Integer ]]
-
-        # Returns true when the span uses math code, i.e. $`...`$.
-        # : (String?) -> bool
-        def self.math_code_span?: (String?) -> bool
-
-        # Returns byte offsets of the start of each line.
-        # : (String) -> Array[Integer]
-        def self.byte_offsets_by_line: (String) -> Array[Integer]
       end
     end
   end

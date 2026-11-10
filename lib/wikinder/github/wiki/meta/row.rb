@@ -21,17 +21,6 @@ module Wikinder
             @language = new_row[:language]
             @aliases = new_row[:aliases]
           end
-
-          #: () -> meta_row
-          def to_h
-            {
-              author: @author,
-              creation_date: @creation_date,
-              modified_date: @modified_date,
-              language: @language,
-              aliases: @aliases
-            }
-          end
         end
       end
     end
