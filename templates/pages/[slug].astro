@@ -1,49 +1,64 @@
 ---
+import { getCollection, render } from "astro:content";
 import IndividualPage from "../layouts/IndividualPage.astro";
-import Redirect from "../layouts/Redirect.astro";
-import allPages from "../../all-pages.json";
 import site from "../../site.json";
+import Redirect from "../layouts/Redirect.astro";
+import Toc from "../components/Toc.astro";
 
 export async function getStaticPaths() {
-  return allPages.map((item) => ({
-    params: { slug: item.slug },
-    props: { item },
-  }));
+  const entries = await getCollection("pages");
+  return entries
+    .filter(
+      (entry) =>
+        entry.data.kind === "article" || entry.data.kind === "redirect",
+    )
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
 }
 
-const { item } = Astro.props;
-const { language } = site;
+const { entry } = Astro.props;
+const isRedirect = entry.data.kind === "redirect";
+
+const entries = await getCollection("pages");
+const footerFragment = entries.find(
+  (f) => f.data.kind === "special" && f.data.slug === "_Footer",
+);
+const { Content: FooterContent } = footerFragment
+  ? await render(footerFragment)
+  : { Content: null };
+
+const rendered = isRedirect ? null : await render(entry);
 ---
 
-{item.redirect ? (
+{isRedirect ? (
   <Redirect
-    title={item.title}
-    language={language}
-    targetSlug={item.target_slug}
+    title={entry.data.title}
+    language={entry.data.language}
+    targetSlug={entry.data.target_slug}
   />
 ) : (
   <IndividualPage
-    title={item.title}
-    language={item.language}
+    title={entry.data.title}
+    language={entry.data.language}
     meta={{
-      author: item.author,
-      creationDate: item.creation_date,
-      modifiedDate: item.modified_date,
+      author: entry.data.author,
+      creationDate: entry.data.creation_date,
+      modifiedDate: entry.data.modified_date,
     }}
   >
-    <Fragment slot="header">
-      <nav>
-        <a href="/">{site.name}</a>
-      </nav>
+    <Fragment slot="left-sidebar">
+      <Toc headings={rendered.headings} />
     </Fragment>
 
-    <Fragment slot="left-sidebar" set:html={item.toc} />
-
-    <Fragment set:html={item.html} />
+    <rendered.Content />
 
     <Fragment slot="footer">
-      <Fragment set:html={site.footer} />
-      <a href={item.url_on_wiki}>Edit this page on GitHub Wiki</a>
+      {FooterContent && <FooterContent />}
+      <a href={`${site.wiki_url}/${encodeURIComponent(entry.data.slug)}`}>
+        Edit this page on GitHub Wiki
+      </a>
     </Fragment>
   </IndividualPage>
 )}

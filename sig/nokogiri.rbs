@@ -3,3 +3,5 @@ module Nokogiri
     def self.fragment: (String) -> untyped
   end
 end
+
+type xml_element = Nokogiri::XML::Element

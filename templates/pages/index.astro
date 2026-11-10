@@ -1,28 +1,47 @@
 ---
+import { getCollection, render } from "astro:content";
 import HomePage from "../layouts/HomePage.astro";
-import allPages from "../../all-pages.json";
 import site from "../../site.json";
 
-const recentlyCreatedPages = allPages
-  .filter((page) => page.listed)
-  .sort((a, b) => {
-    return (
-      Temporal.Instant.from(b.creation_date).epochMilliseconds -
-      Temporal.Instant.from(a.creation_date).epochMilliseconds
-    );
-  });
+const pages = await getCollection("pages");
+
+const home = pages.find(
+  (f) => f.data.kind === "special" && f.data.slug === "Home",
+);
+const footer = pages.find(
+  (f) => f.data.kind === "special" && f.data.slug === "_Footer",
+);
+if (!home || !footer) {
+  throw new Error("Home or footer page is missing");
+}
+
+const listedPages = pages
+  .filter((p) => p.data.kind === "article" && (p.data.listed ?? true))
+  .sort((a, b) => b.data.creation_date.localeCompare(a.data.creation_date));
+
+const { Content: HomeContent } = await render(home);
+const { Content: FooterContent } = await render(footer);
 ---
 
-<HomePage className="home" title={site.name} language={site.language} isHome>
+<HomePage
+  className="home"
+  title={site.name}
+  language={home.data.language}
+  isHome
+>
   <ul slot="left-sidebar">
-    {recentlyCreatedPages.map((page) => (
+    {listedPages.map((entry) => (
       <li>
-        <a href={`/${encodeURIComponent(page.slug)}`}>{page.title}</a>
+        <a href={`/${encodeURIComponent(entry.data.slug)}`}>
+          {entry.data.title}
+        </a>
       </li>
     ))}
   </ul>
 
-  <Fragment set:html={site.home} />
+  <HomeContent />
 
-  <Fragment slot="footer" set:html={site.footer} />
+  <Fragment slot="footer">
+    <FooterContent />
+  </Fragment>
 </HomePage>

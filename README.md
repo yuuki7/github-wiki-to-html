@@ -17,13 +17,13 @@ Starts the Astro preview server.
 
 ```mermaid
 graph TD
-    A["GitHub Wiki Markdown files"] -->|"gollum-lib (Ruby)"| B["JSON data (CommonMark & rendered HTML components)"]
+    A["GitHub Wiki Markdown files"] -->|"gollum-lib (Ruby)"| B["GFM Markdown files (& YAML front matter)"]
     B -->|"Astro (JavaScript)"| C["Complete HTML files"]
 ```
 
 ## Background
 
-GitHub Wiki was originally powered by Gollum, but its current backend is proprietary, while the Gollum project continues as an open-source compatible implementation. This project uses `gollum-lib` to parse the Markdown files into JSON data, and Astro as a static site generator (SSG) to build the HTML files.
+GitHub Wiki was originally powered by Gollum, but its current backend is proprietary, while the Gollum project continues as an open-source compatible implementation. This project uses `gollum-lib` to render GitHub Wiki-flavored Markdown to standard GFM Markdown, and Astro as a static site generator (SSG) to build the HTML files.
 
 ## Development
 

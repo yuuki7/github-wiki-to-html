@@ -2,9 +2,10 @@
 .astro/
 .config/.gem_rbs_collection/
 .yardoc/
-all-pages.json
 dist/*
 node_modules/
-site.json
+md/
 !dist/Wikinder.html
 !dist/index.html
+.cache/
+site.json

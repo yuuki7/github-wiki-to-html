@@ -4,6 +4,7 @@ module Wikinder
   module GitHub
     class Wiki
       # Reads and writes the META page, syncing rows with git history.
+      # rubocop:disable Metrics/ClassLength
       class Meta
         # Column labels for the META table.
         META_HEADERS: Array[String]
@@ -16,9 +17,9 @@ module Wikinder
 
         @ignore_meta: bool?
 
-        @head: String
-
         @prev_head: String?
+
+        @head: String
 
         @meta_path: Pathname
 
@@ -49,10 +50,18 @@ module Wikinder
 
         private
 
-        # Parses the META table into rows keyed by slug.
-        # Reads the committed page through Gollum.
-        # : () -> Hash[String, Row]
-        def parse: () -> Hash[String, Row]
+        # Updates or creates one row for one page.
+        # Skips unchanged rows when an incremental diff is available.
+        # : (Gollum::Page, Set[String]?) -> void
+        def refresh_row: (Gollum::Page, Set[String]?) -> void
+
+        # Applies the cheap part of a sync to an unchanged row.
+        # : (Row, Gollum::Page) -> void
+        def refresh_incremental: (Row, Gollum::Page) -> void
+
+        # Appends aliases found in the page's rename history.
+        # : (Row, String, Array[Gollum::Version]) -> void
+        def absorb_aliases: (Row, String, Array[Gollum::Version]) -> void
 
         # Returns paths changed between previous head and head.
         # Compares blob SHAs from both tree listings.
@@ -64,18 +73,35 @@ module Wikinder
         # : (String) -> Hash[String, String]
         def blob_sha_map: (String) -> Hash[String, String]
 
+        # Parses the META table into rows keyed by slug.
+        # Reads the committed page through Gollum.
+        # : () -> Hash[String, Row]
+        def parse: () -> Hash[String, Row]
+
+        # Builds one row hash from the rendered META table.
+        # : (Gollum::Page) -> Hash[String, Row]
+        def parse_page: (Gollum::Page) -> Hash[String, Row]
+
+        # Builds one row from a META table row.
+        # : (Nokogiri::XML::Element) -> [String, Row]
+        def parse_table_row: (Nokogiri::XML::Element) -> [ String, Row ]
+
+        # Extracts the wiki href from a title cell.
+        # : (Nokogiri::XML::Element) -> URI::Generic
+        def extract_slug_href: (Nokogiri::XML::Element) -> URI::Generic
+
+        # Assembles the row payload from the parsed cells.
+        # : (xml_element, xml_element, xml_element, xml_element, xml_element) -> meta_row
+        def build_row_hash: (xml_element, xml_element, xml_element, xml_element, xml_element) -> meta_row
+
         # Builds a new META row from Git history and content.
         # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
-        # : (Gollum::Page) -> Row
-        def build_row: (Gollum::Page) -> Row
+        # : (Gollum::Page, Array[Gollum::Version]) -> Row
+        def build_row: (Gollum::Page, Array[Gollum::Version]) -> Row
 
         # Returns old titles found in rename history.
         # : (Array[Gollum::Version], String) -> Array[String]
         def old_titles: (Array[Gollum::Version], String) -> Array[String]
-
-        # Returns the latest author date in ISO 8601 for a page.
-        # : (Gollum::Page) -> String
-        def latest_modified_date: (Gollum::Page) -> String
 
         # Returns slug from a wiki link href.
         # Drops leading slash and extension after decoding.
@@ -84,8 +110,8 @@ module Wikinder
 
         # Returns aliases inside a table cell.
         # Treats break tags as separators between aliases.
-        # : (Nokogiri::XML::Node) -> Array[String]
-        def aliases_from_cell: (Nokogiri::XML::Node) -> Array[String]
+        # : (Nokogiri::XML::Element) -> Array[String]
+        def aliases_from_cell: (Nokogiri::XML::Element) -> Array[String]
 
         # Returns a display title from a slug.
         # Turns ASCII hyphens into spaces.
@@ -96,6 +122,14 @@ module Wikinder
         # Newest articles stay at the top for editors.
         # : () -> void
         def write!: () -> void
+
+        # Returns rows sorted by creation date, newest first.
+        # : () -> Array[[String, Row]]
+        def sort_rows: () -> Array[[ String, Row ]]
+
+        # Renders one row into its markdown table line.
+        # : ([String, Row]) -> String
+        def render_row: ([ String, Row ]) -> String
       end
     end
   end

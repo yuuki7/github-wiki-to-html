@@ -10,10 +10,30 @@ module Wikinder
         # : (String) -> String
         def self.title: (String) -> String
 
-        # Returns the data for a single page.
+        # Writes the page's GFM Markdown file, with YAML front matter.
         # Reads authorship from META rather than recomputing from history.
-        # : (page: Gollum::Page, meta: Meta::Row, wiki_url: URI::Generic, unlisted_pages: Set[String]) -> page_entry
-        def self.build: (page: Gollum::Page, meta: Meta::Row, wiki_url: URI::Generic, unlisted_pages: Set[String]) -> page_entry
+        # : (page: Gollum::Page, meta: Meta::Row, unlisted_pages: Set[String], target_dir: String) -> String
+        def self.write!: (page: Gollum::Page, meta: Meta::Row, unlisted_pages: Set[String], target_dir: String) -> String
+
+        # Writes a redirect page aliased to the given target page.
+        # : (redirect_front_matter, target_dir: String) -> String
+        def self.write_redirect!: (redirect_front_matter, target_dir: String) -> String
+
+        # Assembles YAML front matter for a redirect page.
+        # : (redirect_front_matter) -> String
+        def self.build_redirect_front_matter: (redirect_front_matter) -> String
+
+        # Assembles YAML front matter for a canonical page.
+        # : (page: Gollum::Page, meta: Meta::Row, unlisted_pages: Set[String]) -> String
+        def self.build_front_matter: (page: Gollum::Page, meta: Meta::Row, unlisted_pages: Set[String]) -> String
+
+        # Assembles YAML front matter for a canonical page.
+        # : (Gollum::Page, Meta::Row, Set[String], String) -> String
+        def self.front_matter: (Gollum::Page, Meta::Row, Set[String], String) -> String
+
+        # Writes the front matter and body as an .md file.
+        # : (target_dir: String, file_name: String, front_matter: String, body: String) -> String
+        def self.write_markdown: (target_dir: String, file_name: String, front_matter: String, body: String) -> String
       end
     end
   end

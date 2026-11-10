@@ -4,38 +4,64 @@
 # RBS and Steep already guarantee field presence and value types, so this
 # file does not enumerate fields. Only invariants types cannot express remain.
 
+require 'tmpdir'
+require 'yaml'
+
 RSpec.describe Wikinder::GitHub::Wiki do
   let(:path) { File.expand_path('../../../../yuukinder.wiki', __dir__) }
-  let(:wiki_url) { 'https://github.com/yuuki7/yuukinder/wiki' }
-  let(:wiki) { described_class.new(path, { wiki_url: }) }
+  let(:ungenerated_pages) { Set['Home', 'README', 'LICENSE', 'META', '_Footer'] }
+  let(:unlisted_pages) { Set['Wikinder', 'Wikinder-Japan'] }
+  let(:wiki) do
+    options = { ungenerated_pages:, unlisted_pages: }
+    described_class.new(path, options)
+  end
+  let(:target) { Dir.mktmpdir('content') }
 
-  describe '#pages_data' do
+  after do
+    FileUtils.remove_entry(target)
+  end
+
+  describe '#build' do
     # Slugs are catalogue keys, so a duplicate would collide on the site.
-    it 'returns entries with unique, non-empty slugs' do
-      data = wiki.pages_data
-      expect(data).not_to be_empty
-
-      slugs = data.map { |entry| entry[:slug] }
+    it 'writes pages with unique, non-empty slugs' do
+      wiki.build(target)
+      slugs = Dir.glob(File.join(target, '*.md')).map { |name| File.basename(name, '.md') }
+      expect(slugs).not_to be_empty
       expect(slugs.uniq.size).to eq(slugs.size)
       expect(slugs.none?(&:empty?)).to be(true)
     end
 
     # A redirect is only useful when its target exists as a canonical page.
-    it 'points every redirect at an existing page' do
-      data = wiki.pages_data
-      canonical = data.reject { |entry| entry[:redirect] }.map { |entry| entry[:slug] }
-
-      data.select { |entry| entry[:redirect] }.each do |entry|
-        expect(canonical).to include(entry[:target_slug])
+    it 'points every redirect at an existing article' do
+      wiki.build(target)
+      entries = Dir.glob(File.join(target, '*.md')).map { |name| File.read(name) }
+      kinds = entries.map { |content| YAML.safe_load(content.split("---\n")[1]) }
+      canonical = kinds.select { |d| d['kind'] == 'article' }.map { |d| d['slug'] }
+      kinds.select { |d| d['kind'] == 'redirect' }.each do |d|
+        expect(canonical).to include(d['target_slug'])
       end
     end
-  end
 
-  describe '#site_data' do
-    # Head is the incremental watermark, so it must be a commit SHA.
-    it 'returns a site head as a commit SHA' do
-      data = wiki.site_data
-      expect(data[:head]).to match(/\A[0-9a-f]{40}\z/)
+    # The home page and footer are written as ordinary files.
+    it 'writes home and footer sub-pages' do
+      wiki.build(target)
+      %w[Home _Footer].each do |name|
+        expect(File.exist?(File.join(target, "#{name}.md"))).to be(true)
+      end
+    end
+
+    # Every page must parse as YAML front matter followed by a body.
+    it 'keeps the file shape valid' do
+      wiki.build(target)
+      Dir.glob(File.join(target, '**/*.md')).each do |file|
+        content = File.read(file)
+        chunks = content.split("---\n", 3)
+        expect(chunks.length).to be(3).or be(2)
+        meta = YAML.safe_load(chunks[1])
+        expect(meta).to be_a(Hash)
+        expect(%w[article redirect special]).to include(meta['kind'])
+        expect(meta['title']).to be_a(String)
+      end
     end
   end
 end

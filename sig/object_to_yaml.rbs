@@ -1,0 +1,3 @@
+class Object
+  def to_yaml: (?indentation: Integer, ?line_width: Integer, ?canonical: bool, ?header: bool) -> String
+end

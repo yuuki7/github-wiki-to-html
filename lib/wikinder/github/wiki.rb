@@ -6,26 +6,22 @@ require_relative 'wiki/page'
 require_relative 'wiki/redirect'
 require_relative 'wiki/meta/row'
 require_relative 'wiki/meta'
+require 'fileutils'
 
 module Wikinder
   module GitHub
     # Represents the Wikinder GitHub Wiki.
     #
     # Wraps Gollum::Wiki to give access to the wiki's pages and metadata.
-    # It can export the wiki data as JSON for turning the wiki into a
-    # static HTML site.
+    # It can export the wiki as GFM Markdown content for the site generator.
     class Wiki
-      # Pages not generated.
-      UNGENERATED_PAGES = Set['Home', 'README', 'LICENSE', 'META'].freeze #: Set[String]
-
-      # Pages not listed on the home page.
-      UNLISTED_PAGES = Set['Wikinder', 'Wikinder-Japan'].freeze #: Set[String]
-
       # @rbs @wiki: Gollum::Wiki
-      # @rbs @wiki_url: URI::Generic
-      # @rbs @head: String
       # @rbs @wiki_path: Pathname
       # @rbs @meta: Meta
+
+      attr_reader :head #: String
+      attr_reader :ungenerated_pages #: Set[String]
+      attr_reader :unlisted_pages #: Set[String]
 
       # Creates a new wiki instance.
       #
@@ -34,12 +30,15 @@ module Wikinder
       #
       # @param path [String] Path to the wiki repository.
       # @param options [wiki_options] Options for the wiki.
+      # @param options[:ungenerated_pages] Pages not generated.
+      # @param options[:unlisted_pages] Pages not listed on the home page.
       #: (String, ?wiki_options) -> void
       def initialize(path, options = {})
         @wiki_path = Pathname(path).expand_path
         Markdown.install!
         @wiki = Gollum::Wiki.new(@wiki_path.to_s, Markdown::GOLLUM_OPTIONS)
-        @wiki_url = URI(options.fetch(:wiki_url))
+        @ungenerated_pages = (options[:ungenerated_pages] || Set[]).freeze
+        @unlisted_pages = (options[:unlisted_pages] || Set[]).freeze
         @head = @wiki.repo.head.commit.id
         @meta = Meta.new(
           wiki: @wiki,
@@ -50,41 +49,61 @@ module Wikinder
         )
       end
 
-      # Returns data for every generated page.
+      # Writes the full content tree to target_dir.
       # Syncs META first so each page reads stable authorship.
-      #: () -> Array[page_entry | redirect_entry]
-      def pages_data
-        # Collect the visible markdown pages, then merge in the redirects.
-        pages = @wiki.pages
-                     .select { |page| page.format == :markdown && !UNGENERATED_PAGES.include?(page.filename_stripped) }
+      # Slugs used as file names carry over to routes unchanged.
+      #: (String) -> void
+      def build(target_dir)
+        FileUtils.rm_rf(target_dir)
+        FileUtils.mkdir_p(target_dir)
+        pages = collect_pages
         @meta.sync!(pages)
-
-        # Assemble full entries from the freshly synced META rows.
-        canonical = pages.map do |page|
-          Page.build(
-            page:,
-            meta: @meta.rows.fetch(page.filename_stripped),
-            wiki_url: @wiki_url,
-            unlisted_pages: UNLISTED_PAGES
-          )
-        end
-        canonical + Redirect.entries(pages, @meta.rows)
+        write_pages(pages, target_dir)
+        Redirect.write!(pages, @meta.rows, target_dir:)
+        write_special_pages(target_dir)
       end
 
-      # Returns site-wide data.
-      # Exposes head so the next run can update incrementally.
-      #: () -> { name: String, home: String, footer: String, head: String, language: String }
-      def site_data
-        home = @wiki.page('Home') or raise 'Home page is missing'
-        footer = home.footer or raise 'Footer page is missing'
+      private
 
-        {
-          name: 'Wikinder',
-          home: Markdown.postprocess_html(home.formatted_data),
-          footer: footer.formatted_data,
-          head: @head,
-          language: @meta.detect_language(home.text_data)
-        }
+      # Returns visible Markdown pages, excluding generated ones.
+      #: () -> Array[Gollum::Page]
+      def collect_pages
+        @wiki.pages
+             .select { |page| page.format == :markdown && !@ungenerated_pages.include?(page.filename_stripped) }
+      end
+
+      # Writes one GFM Markdown file per page.
+      #: (Array[Gollum::Page], String) -> void
+      def write_pages(pages, target_dir)
+        pages.each do |page|
+          Page.write!(
+            page:,
+            meta: @meta.rows.fetch(page.filename_stripped),
+            unlisted_pages: @unlisted_pages,
+            target_dir:
+          )
+        end
+      end
+
+      # Writes the home page and footer special page, as ordinary files.
+      #: (String) -> void
+      def write_special_pages(target_dir)
+        write_special_page(name: 'Home', target_dir:)
+        write_special_page(name: '_Footer', target_dir:)
+      end
+
+      # Writes a special page file for a layout slot.
+      #: (name: String, target_dir: String) -> void
+      def write_special_page(name:, target_dir:)
+        page = @wiki.page(name) or raise "#{name} page is missing"
+        file_name = "#{name}.md"
+        front_matter = {
+          'kind' => 'special',
+          'title' => Page.title(page.filename_stripped),
+          'slug' => page.filename_stripped,
+          'language' => @meta.detect_language(page.text_data)
+        }.to_yaml
+        File.write(File.join(target_dir, file_name), "#{front_matter}---\n\n#{Markdown.transpile(page)}")
       end
     end
   end

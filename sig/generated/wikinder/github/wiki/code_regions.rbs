@@ -1,0 +1,28 @@
+# Generated from lib/wikinder/github/wiki/code_regions.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Byte ranges of code regions in a Markdown document.
+      #
+      # AST-based detection (commonmarker), not regex: fenced blocks,
+      # indented blocks, and inline code are all covered uniformly.
+      module CodeRegions
+        # Returns byte ranges of code regions in src.
+        # : (String) -> Array[Range[Integer]]
+        def self.code_ranges: (String) -> Array[Range[Integer]]
+
+        # Applies `block` to non-code regions, keeping code regions verbatim.
+        # Yields segment and a Boolean code flag.
+        # : (String) { (String, bool) -> String } -> String
+        def self.process_regions: (String) { (String, bool) -> String } -> String
+
+        # : (String) -> Array[Integer]
+        def self.offset_of_each_line: (String) -> Array[Integer]
+
+        # : (Array[Integer], Integer, Integer) -> Integer
+        def self.byte_offset: (Array[Integer], Integer, Integer) -> Integer
+      end
+    end
+  end
+end

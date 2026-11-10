@@ -5,24 +5,19 @@ module Wikinder
     # Represents the Wikinder GitHub Wiki.
     #
     # Wraps Gollum::Wiki to give access to the wiki's pages and metadata.
-    # It can export the wiki data as JSON for turning the wiki into a
-    # static HTML site.
+    # It can export the wiki as GFM Markdown content for the site generator.
     class Wiki
-      # Pages not generated.
-      UNGENERATED_PAGES: Set[String]
-
-      # Pages not listed on the home page.
-      UNLISTED_PAGES: Set[String]
-
       @wiki: Gollum::Wiki
-
-      @wiki_url: URI::Generic
-
-      @head: String
 
       @wiki_path: Pathname
 
       @meta: Meta
+
+      attr_reader head: String
+
+      attr_reader ungenerated_pages: Set[String]
+
+      attr_reader unlisted_pages: Set[String]
 
       # Creates a new wiki instance.
       #
@@ -31,18 +26,34 @@ module Wikinder
       #
       # @param path [String] Path to the wiki repository.
       # @param options [wiki_options] Options for the wiki.
+      # @param options[:ungenerated_pages] Pages not generated.
+      # @param options[:unlisted_pages] Pages not listed on the home page.
       # : (String, ?wiki_options) -> void
       def initialize: (String, ?wiki_options) -> void
 
-      # Returns data for every generated page.
+      # Writes the full content tree to target_dir.
       # Syncs META first so each page reads stable authorship.
-      # : () -> Array[page_entry | redirect_entry]
-      def pages_data: () -> Array[page_entry | redirect_entry]
+      # Slugs used as file names carry over to routes unchanged.
+      # : (String) -> void
+      def build: (String) -> void
 
-      # Returns site-wide data.
-      # Exposes head so the next run can update incrementally.
-      # : () -> { name: String, home: String, footer: String, head: String, language: String }
-      def site_data: () -> { name: String, home: String, footer: String, head: String, language: String }
+      private
+
+      # Returns visible Markdown pages, excluding generated ones.
+      # : () -> Array[Gollum::Page]
+      def collect_pages: () -> Array[Gollum::Page]
+
+      # Writes one GFM Markdown file per page.
+      # : (Array[Gollum::Page], String) -> void
+      def write_pages: (Array[Gollum::Page], String) -> void
+
+      # Writes the home page and footer special page, as ordinary files.
+      # : (String) -> void
+      def write_special_pages: (String) -> void
+
+      # Writes a special page file for a layout slot.
+      # : (name: String, target_dir: String) -> void
+      def write_special_page: (name: String, target_dir: String) -> void
     end
   end
 end

@@ -10,6 +10,7 @@ module Wikinder
   module GitHub
     class Wiki
       # Reads and writes the META page, syncing rows with git history.
+      # rubocop:disable Metrics/ClassLength
       class Meta
         # Column labels for the META table.
         META_HEADERS = [
@@ -27,8 +28,8 @@ module Wikinder
 
         # @rbs @wiki: Gollum::Wiki
         # @rbs @meta_path: Pathname
-        # @rbs @prev_head: String?
         # @rbs @head: String
+        # @rbs @prev_head: String?
         # @rbs @ignore_meta: bool?
 
         # Creates a new Meta instance.
@@ -42,8 +43,8 @@ module Wikinder
         def initialize(wiki:, meta_path:, head:, prev_head: nil, ignore_meta: false)
           @wiki = wiki
           @meta_path = meta_path
-          @prev_head = prev_head
           @head = head
+          @prev_head = prev_head
           @ignore_meta = ignore_meta
           @rows = parse
         end
@@ -55,28 +56,9 @@ module Wikinder
         # Drops deleted pages and adds new pages with history heuristics.
         #: (Array[Gollum::Page]) -> void
         def sync!(pages)
-          # Drop rows for pages removed since the last sync.
-          current_slugs = pages.to_set(&:filename_stripped)
-          @rows.select! { |slug, _row| current_slugs.include?(slug) }
-
+          @rows.select! { |slug, _| pages.to_set(&:filename_stripped).include?(slug) }
           changed = changed_paths&.to_set
-
-          # Refresh changed entries or create rows for new pages.
-          pages.each do |page|
-            slug = page.filename_stripped
-            if (row = @rows[slug])
-              if changed.nil? || changed.include?(page.path)
-                row.modified_date = latest_modified_date(page)
-                versions = page.versions({ limit: 0, follow: true })
-                old_titles(versions, page.path).each do |title|
-                  row.aliases << title unless row.aliases.include?(title)
-                end
-              end
-            else
-              @rows[slug] = build_row(page)
-            end
-          end
-
+          pages.each { |page| refresh_row(page, changed) }
           write!
         end
 
@@ -87,33 +69,35 @@ module Wikinder
 
         private
 
-        # Parses the META table into rows keyed by slug.
-        # Reads the committed page through Gollum.
-        #: () -> Hash[String, Row]
-        def parse
-          return {} if @ignore_meta
+        # Updates or creates one row for one page.
+        # Skips unchanged rows when an incremental diff is available.
+        #: (Gollum::Page, Set[String]?) -> void
+        def refresh_row(page, changed)
+          slug = page.filename_stripped
+          row = @rows[slug]
+          return refresh_incremental(row, page) if row && changed && !changed.include?(page.path)
 
-          page = @wiki.page('META') or return {}
+          versions = page.versions({ limit: 0, follow: true })
+          if row
+            row.modified_date = versions.first.authored_date.utc.iso8601
+            absorb_aliases(row, page.path, versions)
+          else
+            @rows[slug] = build_row(page, versions)
+          end
+        end
 
-          # Walk the table cells and rebuild rows from the committed page.
-          dom = Nokogiri::HTML5.fragment(page.formatted_data)
-          dom.css('tbody tr').to_h do |row|
-            title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
-            link = title_cell.at_css('a')
-            slug = slug_from_href(URI(link['href']))
+        # Applies the cheap part of a sync to an unchanged row.
+        #: (Row, Gollum::Page) -> void
+        def refresh_incremental(row, page)
+          versions = page.versions({ limit: 1, follow: true })
+          row.modified_date = versions.first.authored_date.utc.iso8601
+        end
 
-            [
-              slug,
-              Row.new(
-                {
-                  author: author_cell.text.strip,
-                  creation_date: creation_cell.text.strip,
-                  modified_date: modified_cell.text.strip,
-                  language: language_cell.text.strip,
-                  aliases: aliases_from_cell(aliases_cell)
-                }
-              )
-            ]
+        # Appends aliases found in the page's rename history.
+        #: (Row, String, Array[Gollum::Version]) -> void
+        def absorb_aliases(row, path, versions)
+          old_titles(versions, path).each do |title|
+            row.aliases << title unless row.aliases.include?(title)
           end
         end
 
@@ -134,11 +118,53 @@ module Wikinder
         #: (String) -> Hash[String, String]
         def blob_sha_map(ref) = @wiki.tree_map_for(ref).to_h { [it.path, it.sha] }
 
+        # Parses the META table into rows keyed by slug.
+        # Reads the committed page through Gollum.
+        #: () -> Hash[String, Row]
+        def parse
+          return {} if @ignore_meta
+
+          page = @wiki.page('META') or return {}
+          parse_page(page)
+        end
+
+        # Builds one row hash from the rendered META table.
+        #: (Gollum::Page) -> Hash[String, Row]
+        def parse_page(page)
+          dom = Nokogiri::HTML5.fragment(page.formatted_data)
+          dom.css('tbody tr').to_h { |row| parse_table_row(row) }
+        end
+
+        # Builds one row from a META table row.
+        #: (Nokogiri::XML::Element) -> [String, Row]
+        def parse_table_row(row)
+          title_cell, author_cell, creation_cell, modified_cell, language_cell, aliases_cell = row.css('td')
+          slug = slug_from_href(extract_slug_href(title_cell))
+          [slug, Row.new(build_row_hash(author_cell, creation_cell, modified_cell, language_cell, aliases_cell))]
+        end
+
+        # Extracts the wiki href from a title cell.
+        #: (Nokogiri::XML::Element) -> URI::Generic
+        def extract_slug_href(title_cell)
+          URI(title_cell.at_css('a')['href'])
+        end
+
+        # Assembles the row payload from the parsed cells.
+        #: (xml_element, xml_element, xml_element, xml_element, xml_element) -> meta_row
+        def build_row_hash(author_cell, creation_cell, modified_cell, language_cell, aliases_cell)
+          {
+            author: author_cell.text.strip,
+            creation_date: creation_cell.text.strip,
+            modified_date: modified_cell.text.strip,
+            language: language_cell.text.strip,
+            aliases: aliases_from_cell(aliases_cell)
+          }
+        end
+
         # Builds a new META row from Git history and content.
         # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.
-        #: (Gollum::Page) -> Row
-        def build_row(page)
-          versions = page.versions(limit: 0, follow: true)
+        #: (Gollum::Page, Array[Gollum::Version]) -> Row
+        def build_row(page, versions)
           Row.new(
             {
               author: versions.last.author.name,
@@ -157,10 +183,6 @@ module Wikinder
           paths.map { |tracked| slug_to_title(Pathname(tracked).sub_ext('').basename.to_s) }
         end
 
-        # Returns the latest author date in ISO 8601 for a page.
-        #: (Gollum::Page) -> String
-        def latest_modified_date(page) = page.versions(limit: 1, follow: true).first.authored_date.utc.iso8601
-
         # Returns slug from a wiki link href.
         # Drops leading slash and extension after decoding.
         #: (URI::Generic) -> String
@@ -171,7 +193,7 @@ module Wikinder
 
         # Returns aliases inside a table cell.
         # Treats break tags as separators between aliases.
-        #: (Nokogiri::XML::Node) -> Array[String]
+        #: (Nokogiri::XML::Element) -> Array[String]
         def aliases_from_cell(cell)
           cell.children
               .slice_after { it.name == 'br' }
@@ -188,23 +210,31 @@ module Wikinder
         # Newest articles stay at the top for editors.
         #: () -> void
         def write!
-          sorted = @rows.sort do |(slug_a, row_a), (slug_b, row_b)|
-            (row_b.creation_date <=> row_a.creation_date).nonzero? || (slug_a <=> slug_b)
-          end
-
-          # Render each row into its markdown table line.
-          rows = sorted.map do |slug, row|
-            title = slug_to_title(slug)
-            aliases_str = row.aliases.join(ALIAS_SEPARATOR)
-            cells = ["[[#{title}]]", row.author, row.creation_date, row.modified_date, row.language, aliases_str]
-            inner = cells.map { |cell| cell.empty? ? ' ' : " #{cell} " }.join('|')
-            "|#{inner}|"
-          end
-
-          # Write only when content differs.
-          content = [*META_TABLE_HEADER, *rows].join("\n") << "\n"
+          sorted = sort_rows
+          content = [*META_TABLE_HEADER, *sorted.map { |row| render_row(row) }].join("\n") << "\n"
           @meta_path.write(content) unless @meta_path.exist? && @meta_path.read == content
         end
+
+        # Returns rows sorted by creation date, newest first.
+        #: () -> Array[[String, Row]]
+        def sort_rows
+          @rows.sort do |(a, ra), (b, rb)|
+            (rb.creation_date <=> ra.creation_date).nonzero? || (a <=> b)
+          end
+        end
+
+        # Renders one row into its markdown table line.
+        #: ([String, Row]) -> String
+        def render_row(pair)
+          slug, row = pair
+          cells = [
+            "[[#{slug_to_title(slug)}]]", row.author, row.creation_date,
+            row.modified_date, row.language, row.aliases.join(ALIAS_SEPARATOR)
+          ]
+          inner = cells.map { |cell| cell.empty? ? ' ' : " #{cell} " }.join('|')
+          "|#{inner}|"
+        end
+        # rubocop:enable Metrics/ClassLength
       end
     end
   end

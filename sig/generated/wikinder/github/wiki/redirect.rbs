@@ -3,12 +3,21 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Builds redirect entries from aliased page names.
+      # Builds redirect pages from aliased page names.
       class Redirect
-        # Returns redirect entries mixed with pages.
-        # Each entry holds its slug and display title.
-        # : (Array[Gollum::Page], Hash[String, Meta::Row]) -> Array[redirect_entry]
-        def self.entries: (Array[Gollum::Page], Hash[String, Meta::Row]) -> Array[redirect_entry]
+        # Writes one redirect page per alias.
+        # Each redirect carries its slug as the file name and the alias title.
+        # : (Array[Gollum::Page], Hash[String, Meta::Row], target_dir: String) -> void
+        def self.write!: (Array[Gollum::Page], Hash[String, Meta::Row], target_dir: String) -> void
+
+        # Writes redirects for one page's aliases.
+        # : (Gollum::Page, Hash[String, Meta::Row], Set[String], target_dir: String) -> void
+        def self.write_one!: (Gollum::Page, Hash[String, Meta::Row], Set[String], target_dir: String) -> void
+
+        # Writes one redirect if its slug is free.
+        # Strips characters that would break URL syntax. Keeps the rest.
+        # : (write_redirect_options) -> void
+        def self.write_redirect: (write_redirect_options) -> void
       end
     end
   end

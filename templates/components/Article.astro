@@ -10,7 +10,7 @@ const { title, isHome, meta } = Astro.props;
 <article class="article">
   <header class="article__header">
     <h1 class="article__title">{title}</h1>
-    {!isHome && <ArticleMeta {...meta} />}
+    {!isHome && meta && <ArticleMeta {...meta} />}
   </header>
 
   <div class="article__main">

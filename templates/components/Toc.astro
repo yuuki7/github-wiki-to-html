@@ -1,0 +1,30 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+type Props = {
+  headings: Heading[];
+};
+
+const { headings } = Astro.props;
+const items = headings.filter(
+  (h) => h.depth >= 2 && h.depth <= 4 && h.slug !== "footnote-label",
+);
+---
+
+{items.length > 0 && (
+  <nav class="toc">
+    <ul>
+      {items.map((h) => (
+        <li class:list={["toc__item", `toc__item--depth-${h.depth}`]}>
+          <a class="toc__link" href={`#${h.slug}`}>
+            {h.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}

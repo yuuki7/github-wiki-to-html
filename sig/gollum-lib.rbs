@@ -30,6 +30,21 @@ module Gollum
     def tracked_pathname: () -> String?
   end
 
+  class Filter
+    class Tags
+      def process_tag: (String) -> String
+      def open_pattern: () -> String
+      def close_pattern: () -> String
+      def register_tag: (String) -> String
+      def initialize: (Markup) -> void
+      private
+      def path_to_link_text: (String) -> String
+      def generate_href_for_path: (String, ?String?) -> String
+      def css_options_for_link: (Symbol) -> String?
+      def generate_image_attributes: (untyped?) -> [untyped, untyped, bool]
+    end
+  end
+
   module Git
     class Actor
       def name: () -> String
@@ -48,6 +63,10 @@ module Gollum
       def commit: (String) -> Commit?
       def head: () -> Ref
     end
+  end
+
+  class Markup
+    def self.register: (Symbol, String, ?extensions: Array[String], ?render: Proc) -> void
   end
 
   class Wiki

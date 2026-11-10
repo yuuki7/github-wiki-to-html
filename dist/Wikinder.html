@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Wikinder</title>
 
-    <link rel="stylesheet" href="/assets/site.css" />
+    <link rel="stylesheet" href="/assets/Page.css" />
   </head>
   <body class="individual">
     <header class="header">
@@ -14,12 +14,13 @@
     </header>
 
     <aside class="left-sidebar">
-      <div class="toc">
-        <div class="toc-title">Table of Contents</div>
+      <nav class="toc">
         <ul>
-          <li><a href="#wiki-hosts">Wiki hosts</a></li>
+          <li class="toc__item toc__item--depth-2">
+            <a class="toc__link" href="#wiki-hosts"> Wiki hosts </a>
+          </li>
         </ul>
-      </div>
+      </nav>
     </aside>
 
     <main class="main">
@@ -48,37 +49,25 @@
 
         <div class="article__main">
           <table>
-            <tbody>
-              <tr>
-                <th scope="row">Founder</th>
-                <td><a class="internal present" href="/bear">bear</a></td>
-              </tr>
-              <tr>
-                <th scope="row">Founding date</th>
-                <td>September 1, 2005</td>
-              </tr>
-              <tr>
-                <th scope="row">Website</th>
-                <td>
-                  <a href="https://linktr.ee/wikinder">linktr.ee/wikinder</a>
-                </td>
-              </tr>
-            </tbody>
+            <tr>
+              <th scope="row">Founder</th>
+              <td>[bear](/bear)</td>
+            </tr>
+            <tr>
+              <th scope="row">Founding date</th>
+              <td>September 1, 2005</td>
+            </tr>
+            <tr>
+              <th scope="row">Website</th>
+              <td>
+                <a href="https://linktr.ee/wikinder">linktr.ee/wikinder</a>
+              </td>
+            </tr>
           </table>
           <ul>
-            <li>
-              <a class="internal present" href="/Wikinder-Japan">Japan</a>
-            </li>
+            <li><a href="/Wikinder-Japan">Japan</a></li>
           </ul>
-          <h2 id="wiki-hosts">
-            <a class="anchor" id="wiki-hosts" href="#wiki-hosts"></a>Wiki
-            hosts<a
-              href="#wiki-hosts"
-              aria-label="Link to heading 'Wiki hosts'"
-              data-heading-content="Wiki hosts"
-              class="anchor"
-            ></a>
-          </h2>
+          <h2 id="wiki-hosts">Wiki hosts</h2>
           <ul>
             <li>
               <a href="https://github.com/wikinder/wikinder/wiki"
@@ -106,10 +95,9 @@
         <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
         unless otherwise noted.
       </p>
-
-      <a href="https://github.com/yuuki7/yuukinder/wiki/Wikinder"
-        >Edit this page on GitHub Wiki</a
-      >
+      <a href="https://github.com/yuuki7/yuukinder/wiki/Wikinder">
+        Edit this page on GitHub Wiki
+      </a>
     </footer>
   </body>
 </html>

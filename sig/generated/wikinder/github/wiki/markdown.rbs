@@ -3,25 +3,56 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Controls the Markdown renderer shared by pages.
+      # Converts GitHub Wiki Markdown to standard GFM Markdown.
+      #
+      # Uses gollum-lib to resolve Wiki markup (internal links, anchors,
+      # images, file links, escapes, and code regions). The passthrough
+      # renderer keeps the document as Markdown so the SSG can render it
+      # like any other content. Code regions stay untouched so tags
+      # written inside them survive verbatim.
       module Markdown
         self.@installed: bool
 
-        # CommonMarker options for rendering wiki markdown.
-        OPTIONS: commonmarker_options
-
-        # Gollum wiki configuration options.
+        # Gollum options for rendering the wiki.
         GOLLUM_OPTIONS: gollum_wiki_options
 
-        # Makes CommonMarker the only renderer for Gollum.
-        # Replaces defaults so wiki and rendered HTML stay consistent.
+        # Makes gollum-lib emit Markdown instead of HTML.
+        # Registers the official renderer hook; nothing is patched.
         # : () -> void
         def self.install!: () -> void
 
-        # Corrects internal links to match page URLs.
-        # Rewrites wiki internal links under the site base.
+        # Renders a wiki page as GFM Markdown.
+        # Tags are resolved in place; the SSG renders the result.
+        # : (Gollum::Page) -> String
+        def self.transpile: (Gollum::Page) -> String
+
+        # Rewrites math code spans ($`...`$) to math dollars ($...$).
+        # The SSG handles GFM dollars; code fences stay untouched.
         # : (String) -> String
-        def self.postprocess_html: (String) -> String
+        def self.normalize_math: (String) -> String
+
+        # Byte ranges of inline math code nodes ($`...`$).
+        # : (String) -> Array[[Integer, Integer]]
+        def self.math_code_ranges: (String) -> Array[[ Integer, Integer ]]
+
+        # Returns true when the span uses math code, i.e. $`...`$.
+        # : (String?) -> bool
+        def self.math_code_span?: (String?) -> bool
+
+        # Returns byte offsets of the start of each line.
+        # : (String) -> Array[Integer]
+        def self.byte_offsets_by_line: (String) -> Array[Integer]
+
+        # Strips the file extension and encoded space from internal links.
+        # GitHub Wiki links point at `/Page.md`; the site serves `/Page`.
+        # Only Markdown links and raw HTML href attributes are rewritten,
+        # and only when they are root-relative (not absolute URLs).
+        # : (String) -> String
+        def self.rewrite_internal_hrefs: (String) -> String
+
+        # Rewrites one non-code segment.
+        # : (String) -> String
+        def self.rewrite_internal_links_in_segment: (String) -> String
 
         # Strips the extension and rewrites encoded spaces to hyphens.
         # Keeps page URLs stable across wiki and site encodings.

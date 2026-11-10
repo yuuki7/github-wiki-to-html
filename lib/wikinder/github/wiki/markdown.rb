@@ -1,71 +1,129 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
+require_relative 'code_regions'
+require_relative 'ast_tags'
+require 'gollum-lib'
 require 'commonmarker'
-require 'nokogiri'
 require 'uri'
 
 module Wikinder
   module GitHub
     class Wiki
-      # Controls the Markdown renderer shared by pages.
+      # Converts GitHub Wiki Markdown to standard GFM Markdown.
+      #
+      # Uses gollum-lib to resolve Wiki markup (internal links, anchors,
+      # images, file links, escapes, and code regions). The passthrough
+      # renderer keeps the document as Markdown so the SSG can render it
+      # like any other content. Code regions stay untouched so tags
+      # written inside them survive verbatim.
       module Markdown
         # @rbs self.@installed: bool
 
-        # CommonMarker options for rendering wiki markdown.
-        OPTIONS = {
-          render: {
-            unsafe: true
-          },
-          extension: {
-            autolink: true,
-            footnotes: true,
-            math_code: true,
-            math_dollars: true,
-            strikethrough: true,
-            table: true,
-            tagfilter: false,
-            tasklist: true
-          }
-        }.freeze #: commonmarker_options
-
-        # Gollum wiki configuration options.
+        # Gollum options for rendering the wiki.
         GOLLUM_OPTIONS = {
           allow_editing: false,
-          filter_chain: %i[Tags TOC Render],
+          filter_chain: %i[AstTags Render],
           hyphened_tag_lookup: true,
           universal_toc: true
         }.freeze #: gollum_wiki_options
 
-        # Makes CommonMarker the only renderer for Gollum.
-        # Replaces defaults so wiki and rendered HTML stay consistent.
+        # Makes gollum-lib emit Markdown instead of HTML.
+        # Registers the official renderer hook; nothing is patched.
         #: () -> void
         def self.install!
           return if @installed
 
-          # Wrap CommonMarker with the project's GFM options.
-          # @type var render_markdown: ^(String) -> String
-          render_markdown = proc do |markdown|
-            Commonmarker.to_html(markdown, options: OPTIONS)
-          end
-
-          ::GitHub::Markup::Markdown::MARKDOWN_GEMS.replace('commonmarker' => render_markdown)
+          ::Gollum::Markup.register(
+            :markdown, 'Markdown',
+            extensions: %w[md mkd mkdn mdown markdown],
+            render: proc { |data| data }
+          )
           @installed = true
         end
 
-        # Corrects internal links to match page URLs.
-        # Rewrites wiki internal links under the site base.
-        #: (String) -> String
-        def self.postprocess_html(html)
-          dom = Nokogiri::HTML5.fragment(html)
+        # Renders a wiki page as GFM Markdown.
+        # Tags are resolved in place; the SSG renders the result.
+        #: (Gollum::Page) -> String
+        def self.transpile(page)
+          markdown = page.formatted_data.dup
+          normalize_math(markdown)
+          rewrite_internal_hrefs(markdown)
+          markdown
+        end
 
-          # Normalize internal links for the site build.
-          dom.css('a.internal').each do |anchor|
-            uri = URI(anchor['href'])
-            uri.path = normalize_link_path(uri.path.to_s)
-            anchor['href'] = uri.to_s
+        # Rewrites math code spans ($`...`$) to math dollars ($...$).
+        # The SSG handles GFM dollars; code fences stay untouched.
+        #: (String) -> String
+        def self.normalize_math(markdown)
+          return markdown if markdown.empty?
+
+          ranges = math_code_ranges(markdown)
+          ranges.reverse_each do |start, finish|
+            math_body = markdown[(start...finish)]&.slice(2..-3).to_s
+            markdown[(start...finish)] = "$#{math_body}$"
           end
-          dom.to_html
+          markdown
+        end
+
+        # Byte ranges of inline math code nodes ($`...`$).
+        #: (String) -> Array[[Integer, Integer]]
+        def self.math_code_ranges(markdown)
+          doc = Commonmarker.parse(markdown, options: { extension: { math_code: true, math_dollars: true } })
+          ranges = [] #: Array[[Integer, Integer]]
+          offset_of_line = byte_offsets_by_line(markdown)
+          doc.walk do |node|
+            next unless node.type == :math
+
+            sp = node.source_position
+            start = offset_of_line[sp[:start_line] - 1] + sp[:start_column] - 1
+            finish = offset_of_line[sp[:end_line] - 1] + sp[:end_column]
+            ranges << [start, finish] if math_code_span?(markdown[start...finish])
+          end
+          ranges
+        end
+
+        # Returns true when the span uses math code, i.e. $`...`$.
+        #: (String?) -> bool
+        def self.math_code_span?(span)
+          span ? span.start_with?('$`') && span.end_with?('`$') : false
+        end
+
+        # Returns byte offsets of the start of each line.
+        #: (String) -> Array[Integer]
+        def self.byte_offsets_by_line(markdown)
+          offset = 0
+          lines = [] #: Array[Integer]
+          markdown.each_line do |line|
+            lines << offset
+            offset += line.bytesize
+          end
+          lines
+        end
+
+        # Strips the file extension and encoded space from internal links.
+        # GitHub Wiki links point at `/Page.md`; the site serves `/Page`.
+        # Only Markdown links and raw HTML href attributes are rewritten,
+        # and only when they are root-relative (not absolute URLs).
+        #: (String) -> String
+        def self.rewrite_internal_hrefs(markdown)
+          markdown.replace(CodeRegions.process_regions(markdown) do |segment, code|
+            code ? segment : rewrite_internal_links_in_segment(segment)
+          end)
+          markdown
+        end
+
+        # Rewrites one non-code segment.
+        #: (String) -> String
+        def self.rewrite_internal_links_in_segment(segment)
+          segment = segment.gsub(%r{(?<=\]\()/(?!/)(?<base>[^)#\s]*)\.md(?<anchor>#[^)]*)?(?=\))}) do
+            m = Regexp.last_match or next('')
+            "/#{normalize_link_path(m[:base].to_s)}#{m[:anchor]}"
+          end
+          segment.gsub(%r{(?<=href=")/(?!/)(?<base>[^"]*)\.md(?<anchor>#[^"]*)?(?=")}) do
+            m = Regexp.last_match or next('')
+            "/#{normalize_link_path(m[:base].to_s)}#{m[:anchor]}"
+          end
         end
 
         # Strips the extension and rewrites encoded spaces to hyphens.

@@ -11,12 +11,12 @@ export interface BaseProps {
 }
 
 export type ArticleProps = BaseProps & {
-  isHome?: false;
-  meta: ArticleMetaProps;
+  isHome?: boolean;
+  meta?: ArticleMetaProps;
 };
 
 export type HomeProps = BaseProps & {
-  isHome: true;
+  isHome?: true;
 };
 
 export type RedirectProps = BaseProps & {

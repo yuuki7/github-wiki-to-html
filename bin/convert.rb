@@ -2,20 +2,28 @@
 # frozen_string_literal: true
 
 require_relative '../lib/wikinder/github/wiki'
-require 'json'
 require 'optparse'
+require 'fileutils'
+require 'json'
 
 # Path to the wiki repository.
 WIKI_PATH = '../../yuukinder.wiki'
 
-# Base URL for page links.
+# Pages not generated.
+UNGENERATED_PAGES = Set['Home', 'README', 'LICENSE', 'META', '_Footer'].freeze
+
+# Pages not listed on the home page.
+UNLISTED_PAGES = Set['Wikinder', 'Wikinder-Japan'].freeze
+
+# Site-wide name and wiki URL.
+SITE_NAME = 'Wikinder'
 WIKI_URL = 'https://github.com/yuuki7/yuukinder/wiki'
 
-# Path to the site data file.
-SITE_DATA_PATH = '../site.json'
+# Output directory for the generated markdown.
+MD_DIR = '../md'
 
-# Path to the pages data file.
-PAGES_DATA_PATH = '../all-pages.json'
+# Previous wiki head, used for an incremental META sync.
+CACHE_PATH = '../.cache/head'
 
 # Parse the flag that forces rebuilding META from scratch.
 options = { ignore_meta: false }
@@ -26,26 +34,25 @@ OptionParser.new do |opts|
 end.parse!
 
 Dir.chdir(__dir__) do
+  FileUtils.mkdir_p(File.dirname(CACHE_PATH))
+
   # Read the previous run's head for an incremental update.
   prev_head = nil
-  if File.exist?(SITE_DATA_PATH)
-    begin
-      prev_head = JSON.parse(File.read(SITE_DATA_PATH))['head']
-      prev_head = nil if prev_head.nil? || prev_head.to_s.strip.empty?
-    rescue JSON::ParserError
-      prev_head = nil
-    end
+  if File.exist?(CACHE_PATH)
+    candidate = File.read(CACHE_PATH).strip
+    prev_head = candidate.match?(/\A[0-9a-f]{40}\z/) ? candidate : nil
   end
 
-  # Build both JSON files together from one wiki instance.
   wiki = Wikinder::GitHub::Wiki.new(
     WIKI_PATH,
     {
-      wiki_url: WIKI_URL,
       prev_head:,
-      ignore_meta: options[:ignore_meta]
+      ignore_meta: options[:ignore_meta],
+      ungenerated_pages: UNGENERATED_PAGES,
+      unlisted_pages: UNLISTED_PAGES
     }
   )
-  File.write(PAGES_DATA_PATH, "#{JSON.pretty_generate(wiki.pages_data)}\n")
-  File.write(SITE_DATA_PATH, "#{JSON.pretty_generate(wiki.site_data)}\n")
+  wiki.build(MD_DIR)
+  File.write(CACHE_PATH, "#{wiki.head}\n")
+  File.write('../site.json', "#{JSON.pretty_generate({ name: SITE_NAME, wiki_url: WIKI_URL })}\n")
 end

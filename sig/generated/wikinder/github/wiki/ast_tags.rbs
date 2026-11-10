@@ -1,0 +1,34 @@
+# Generated from lib/wikinder/github/wiki/ast_tags.rb with RBS::Inline
+
+module Gollum
+  class Filter
+    # Gollum tag extraction restricted to non-code regions.
+    # Gollum itself skips tags inside <code> elements after it has rendered
+    # to HTML; since the passthrough renderer does not render, code regions
+    # must be recognized here instead.
+    class AstTags < Tags
+      # : (String) { (String, bool) -> String } -> String
+      def extract: (String) { (String, bool) -> String } -> String
+
+      # String-based replacement; keeps the document byte-identical
+      # apart from placeholders (gollum's HTML-tree walk would mangle it).
+      # Tags outside code are resolved; inside code they stay literal.
+      # : (String) { (String, bool) -> String } -> String
+      def process: (String) { (String, bool) -> String } -> String
+
+      private
+
+      # Returns a GFM link, preserving the kind of link gollum resolved.
+      # : (String, String?, String?, Symbol?) -> String
+      def generate_link: (String, String?, String?, Symbol?) -> String
+
+      # Returns a GFM image, dropping image options gollum would have applied.
+      # : (String, Hash[Symbol, untyped]?) -> String
+      def generate_image: (String, Hash[Symbol, untyped]?) -> String
+
+      # Replaces placeholders with resolved tags, or literal text when code.
+      # : (String, bool) -> String
+      def substitute: (String, bool) -> String
+    end
+  end
+end
