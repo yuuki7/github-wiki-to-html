@@ -46,10 +46,7 @@ module Gollum
       def generate_href_for_path(path, extra = nil)
         return extra if !path && extra
 
-        ext = ::File.extname(path.to_s)
-        cleaned = trim_leading_slashes(::File.join(@markup.wiki.base_path, path.to_s))
-        cleaned = cleaned.sub(/#{Regexp.escape(ext)}\z/, '') if ext == '.md'
-        "#{cleaned.gsub('%20', '-')}#{extra}"
+        super(path.to_s.sub(/\.md\z/, ''), nil).gsub('%20', '-') + extra.to_s
       end
     end
   end
