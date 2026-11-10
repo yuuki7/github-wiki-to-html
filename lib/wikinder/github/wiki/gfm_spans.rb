@@ -17,6 +17,9 @@ module Gollum
     # code form are rewritten to dollar math, the form GFM renders
     # as math; dollar math forms are restored verbatim.
     class GfmSpans < Filter
+      # Replaces inline code spans, math spans, and indented code blocks
+      # with placeholders so upstream filters never see their raw content.
+      # GFM indented code blocks are protected verbatim as well.
       #: (String) -> String
       def extract(data)
         return data if data.empty?
@@ -28,7 +31,7 @@ module Gollum
         Commonmarker.parse(data, options: { extension: { math_dollars: true, math_code: true } }).walk do |node|
           type = node.type.to_s
           sp   = node.source_position
-          next unless %w[code math].include?(type)
+          next unless %w[code code_block math].include?(type)
 
           first = byte_offset(offsets, sp[:start_line], sp[:start_column])
           last  = byte_offset_end(offsets, sp[:end_line], sp[:end_column])

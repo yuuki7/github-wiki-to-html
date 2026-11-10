@@ -12,6 +12,9 @@ module Gollum
     # code form are rewritten to dollar math, the form GFM renders
     # as math; dollar math forms are restored verbatim.
     class GfmSpans < Filter
+      # Replaces inline code spans, math spans, and indented code blocks
+      # with placeholders so upstream filters never see their raw content.
+      # GFM indented code blocks are protected verbatim as well.
       # : (String) -> String
       def extract: (String) -> String
 

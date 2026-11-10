@@ -2,21 +2,43 @@
 
 module Gollum
   class Filter
-    # Resolves wiki markup by emitting standard GFM Markdown, not
-    # HTML. Gollum keeps running in its own domain (page lookup, link
-    # kinds, anchor handling); only the output shape changes.
+    # Resolves wiki markup by emitting HTML anchors for the output.
+    # Gollum keeps running in its own domain (page lookup, link kinds,
+    # anchor handling); only the output shape changes.
     #
-    # Tags outside code regions have already been withdrawn by the
-    # filters before this one; the rest of the substitution stays a
-    # string operation, since an HTML-tree walk would mangle Markdown.
+    # Plain text inside raw HTML blocks requires raw HTML anchors:
+    # Astro's Markdown pipeline does not parse GFM links inside HTML
+    # markup, so a `[[Page]]` inside e.g. `<td>` would stay literal.
+    # Emitting HTML anchors everywhere keeps behavior uniform.
     class AstTags < Tags
       # Substitutes tag placeholders with their resolved forms.
       # : (String) -> String
       def process: (String) -> String
 
+      # Resolves a file/image attachment reference.
+      # Uses GFM-safe escaped path (spaces -> %20) for attachments,
+      # matching how Gollum emits hrefs for file links.
+      # : (String, String?) -> String?
+      def process_file_link_tag: (String, String?) -> String?
+
+      # : (String, String?) -> String
+      def process_image_tag: (String, String?) -> String
+
+      ESC_TEXT: Hash[String, String]
+
+      ESC_ATTR: Hash[String, String]
+
       private
 
-      # Returns a GFM link, preserving the kind of link gollum resolved.
+      # Escapes the text content of an HTML anchor.
+      # : (String) -> String
+      def escape_link_text: (String) -> String
+
+      # Returns an HTML anchor, preserving the kind of link gollum resolved.
+      # Plain text inside raw HTML blocks needs raw HTML; GFM links would
+      # stay literal inside HTML markup, so we emit HTML anchors everywhere
+      # (Astro's Markdown renderer understands raw HTML inline and the GFM
+      # anchor form does not work inside raw HTML blocks).
       # : (String, String?, String?, Symbol?) -> String
       def generate_link: (String, String?, String?, Symbol?) -> String
 
@@ -25,10 +47,12 @@ module Gollum
       def generate_image: (String, Hash[Symbol, untyped]?) -> String
 
       # Generates a normalized site href for wiki paths.
-      # Strips .md extensions, decodes path slashes, and encodes
-      # spaces as hyphens. Anchor-only links come through untouched.
-      # : (String?, String?) -> String
-      def generate_href_for_path: (String?, String?) -> String
+      # Page slugs (.md stripped) and extensionless tag lookups both
+      # hyphenate spaces, since GitHub Wiki page filenames follow the
+      # `page-name.md` convention. Attachment paths (e.g. `.png` files)
+      # keep their escaped URL as-is so the raw path is preserved.
+      # : (String?, ?String?) -> String
+      def generate_href_for_path: (String?, ?String?) -> String
     end
   end
 end

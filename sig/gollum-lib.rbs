@@ -12,6 +12,7 @@ module Gollum
   end
 
   class Page
+    def self.valid_extension?: (String) -> bool
     def filename_stripped: () -> String
     def footer: () -> Page?
     def format: () -> Symbol
@@ -55,6 +56,10 @@ module Gollum
       def register_tag: (String) -> String
       def initialize: (Markup) -> void
       private
+      def process_file_link_tag: (String, String?) -> String?
+      def process_image_tag: (String, Hash[Symbol, untyped]?) -> String
+      def find_page_or_file_from_path: (String, ?Symbol) -> untyped?
+      def parse_image_tag_options: (String?) -> Hash[Symbol, untyped]
       def path_to_link_text: (String) -> String
       def generate_href_for_path: (String, ?String?) -> String
       def css_options_for_link: (Symbol) -> String?
