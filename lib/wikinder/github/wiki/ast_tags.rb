@@ -65,7 +65,8 @@ module Gollum
       #: (String, String?, String?, Symbol?) -> String
       def generate_link(path, name = nil, extra = nil, kind = nil)
         url = kind == :external ? path : generate_href_for_path(path, extra)
-        text = escape_link_text(name || path)
+        raw_text = name || path || extra.to_s.delete_prefix('#')
+        text = escape_link_text(raw_text)
         href = url.to_s.gsub(/[&<>"']/, ESC_ATTR)
         "<a href=\"#{href}\">#{text}</a>"
       end
