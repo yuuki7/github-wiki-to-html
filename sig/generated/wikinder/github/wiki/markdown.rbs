@@ -42,22 +42,6 @@ module Wikinder
         # Returns byte offsets of the start of each line.
         # : (String) -> Array[Integer]
         def self.byte_offsets_by_line: (String) -> Array[Integer]
-
-        # Strips the file extension and encoded space from internal links.
-        # GitHub Wiki links point at `/Page.md`; the site serves `/Page`.
-        # Only Markdown links and raw HTML href attributes are rewritten,
-        # and only when they are root-relative (not absolute URLs).
-        # : (String) -> String
-        def self.rewrite_internal_hrefs: (String) -> String
-
-        # Rewrites one non-code segment.
-        # : (String) -> String
-        def self.rewrite_internal_links_in_segment: (String) -> String
-
-        # Strips the extension and rewrites encoded spaces to hyphens.
-        # Keeps page URLs stable across wiki and site encodings.
-        # : (String) -> String
-        def self.normalize_link_path: (String) -> String
       end
     end
   end

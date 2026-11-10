@@ -7,14 +7,14 @@ module Gollum
     # to HTML; since the passthrough renderer does not render, code regions
     # must be recognized here instead.
     class AstTags < Tags
-      # : (String) { (String, bool) -> String } -> String
-      def extract: (String) { (String, bool) -> String } -> String
+      # : (String) -> String
+      def extract: (String) -> String
 
       # String-based replacement; keeps the document byte-identical
       # apart from placeholders (gollum's HTML-tree walk would mangle it).
       # Tags outside code are resolved; inside code they stay literal.
-      # : (String) { (String, bool) -> String } -> String
-      def process: (String) { (String, bool) -> String } -> String
+      # : (String) -> String
+      def process: (String) -> String
 
       private
 
@@ -25,6 +25,11 @@ module Gollum
       # Returns a GFM image, dropping image options gollum would have applied.
       # : (String, Hash[Symbol, untyped]?) -> String
       def generate_image: (String, Hash[Symbol, untyped]?) -> String
+
+      # Generates a normalized site href for wiki paths.
+      # Strips .md extensions and encodes spaces as hyphens.
+      # : (String, String?) -> String
+      def generate_href_for_path: (String, String?) -> String
 
       # Replaces placeholders with resolved tags, or literal text when code.
       # : (String, bool) -> String

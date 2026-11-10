@@ -11,7 +11,7 @@ module Gollum
     # to HTML; since the passthrough renderer does not render, code regions
     # must be recognized here instead.
     class AstTags < Tags
-      #: (String) { (String, bool) -> String } -> String
+      #: (String) -> String
       def extract(data)
         Wikinder::GitHub::Wiki::CodeRegions.process_regions(data) { |seg, code| code ? seg : super(seg) }
       end
@@ -19,7 +19,7 @@ module Gollum
       # String-based replacement; keeps the document byte-identical
       # apart from placeholders (gollum's HTML-tree walk would mangle it).
       # Tags outside code are resolved; inside code they stay literal.
-      #: (String) { (String, bool) -> String } -> String
+      #: (String) -> String
       def process(data)
         Wikinder::GitHub::Wiki::CodeRegions.process_regions(data) { |seg, code| substitute(seg, code) }
       end
@@ -39,6 +39,18 @@ module Gollum
       def generate_image(path, options = nil)
         alt = options&.[](:alt) || ::File.basename(path)
         "![#{alt}](#{path})"
+      end
+
+      # Generates a normalized site href for wiki paths.
+      # Strips .md extensions and encodes spaces as hyphens.
+      #: (String, String?) -> String
+      def generate_href_for_path(path, extra = nil)
+        return extra.to_s if !path && extra
+
+        ext = ::File.extname(path.to_s)
+        clean = ::File.join(@markup.wiki.base_path, path)
+        clean = clean.sub(/#{Regexp.escape(ext)}$/, '') if ext == '.md'
+        "#{clean.gsub('%20', '-')}#{extra}"
       end
 
       # Replaces placeholders with resolved tags, or literal text when code.

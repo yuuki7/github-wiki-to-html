@@ -48,7 +48,6 @@ module Wikinder
         def self.transpile(page)
           markdown = page.formatted_data.dup
           normalize_math(markdown)
-          rewrite_internal_hrefs(markdown)
           markdown
         end
 
@@ -100,36 +99,6 @@ module Wikinder
           end
           lines
         end
-
-        # Strips the file extension and encoded space from internal links.
-        # GitHub Wiki links point at `/Page.md`; the site serves `/Page`.
-        # Only Markdown links and raw HTML href attributes are rewritten,
-        # and only when they are root-relative (not absolute URLs).
-        #: (String) -> String
-        def self.rewrite_internal_hrefs(markdown)
-          markdown.replace(CodeRegions.process_regions(markdown) do |segment, code|
-            code ? segment : rewrite_internal_links_in_segment(segment)
-          end)
-          markdown
-        end
-
-        # Rewrites one non-code segment.
-        #: (String) -> String
-        def self.rewrite_internal_links_in_segment(segment)
-          segment = segment.gsub(%r{(?<=\]\()/(?!/)(?<base>[^)#\s]*)\.md(?<anchor>#[^)]*)?(?=\))}) do
-            m = Regexp.last_match or next('')
-            "/#{normalize_link_path(m[:base].to_s)}#{m[:anchor]}"
-          end
-          segment.gsub(%r{(?<=href=")/(?!/)(?<base>[^"]*)\.md(?<anchor>#[^"]*)?(?=")}) do
-            m = Regexp.last_match or next('')
-            "/#{normalize_link_path(m[:base].to_s)}#{m[:anchor]}"
-          end
-        end
-
-        # Strips the extension and rewrites encoded spaces to hyphens.
-        # Keeps page URLs stable across wiki and site encodings.
-        #: (String) -> String
-        def self.normalize_link_path(path) = Pathname(path).sub_ext('').to_s.gsub('%20', '-')
       end
     end
   end
