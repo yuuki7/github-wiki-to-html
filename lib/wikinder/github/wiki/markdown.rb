@@ -2,8 +2,7 @@
 # rbs_inline: enabled
 
 require_relative 'verbatim_code'
-require_relative 'math'
-require_relative 'inline_code'
+require_relative 'gfm_spans'
 require_relative 'ast_tags'
 require 'gollum-lib'
 
@@ -15,18 +14,18 @@ module Wikinder
       # Wikinder relies on gollum-lib for its Markdown semantics
       # (wiki tags, page lookup, link kinds). The filter chain is:
       #
-      #   VerbatimCode, Math, InlineCode, AstTags, Render
+      #   VerbatimCode, GfmSpans, AstTags, Render
       #
-      # VerbatimCode withdraws fenced code before anything else sees it,
-      # Math normalizes math code spans to dollar math, InlineCode
-      # withdraws inline code, and AstTags resolves wiki markup. Render
+      # VerbatimCode withdraws fenced code blocks before anything else sees it.
+      # GfmSpans withdraws inline code and math spans in a single AST walk and
+      # preserves their literal content. AstTags resolves wiki markup. Render
       # is a passthrough, so the SSG re-renders the final GFM document.
       module Markdown
         # @rbs self.@installed: bool
 
         GOLLUM_OPTIONS = {
           allow_editing: false,
-          filter_chain: %i[VerbatimCode Math InlineCode AstTags Render],
+          filter_chain: %i[VerbatimCode GfmSpans AstTags Render],
           hyphened_tag_lookup: true
         }.freeze #: gollum_wiki_options
 

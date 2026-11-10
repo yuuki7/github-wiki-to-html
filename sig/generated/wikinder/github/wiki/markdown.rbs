@@ -8,11 +8,11 @@ module Wikinder
       # Wikinder relies on gollum-lib for its Markdown semantics
       # (wiki tags, page lookup, link kinds). The filter chain is:
       #
-      #   VerbatimCode, Math, InlineCode, AstTags, Render
+      #   VerbatimCode, GfmSpans, AstTags, Render
       #
-      # VerbatimCode withdraws fenced code before anything else sees it,
-      # Math normalizes math code spans to dollar math, InlineCode
-      # withdraws inline code, and AstTags resolves wiki markup. Render
+      # VerbatimCode withdraws fenced code blocks before anything else sees it.
+      # GfmSpans withdraws inline code and math spans in a single AST walk and
+      # preserves their literal content. AstTags resolves wiki markup. Render
       # is a passthrough, so the SSG re-renders the final GFM document.
       module Markdown
         self.@installed: bool
