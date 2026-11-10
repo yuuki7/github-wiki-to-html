@@ -80,38 +80,20 @@ module Wikinder
 
         # Builds one row from each data row of the META table.
         # : (Gollum::Page) -> Hash[String, Row]
+        # Builds one row from each data row of the META table.
+        # Renders Meta through Commonmarker and parses the resulting HTML
+        # fragment with Nokogiri; header rows live in <thead>, rows here in <tbody>.
+        # : (Gollum::Page) -> Hash[String, Row]
         def parse_page: (Gollum::Page) -> Hash[String, Row]
+                      | (Gollum::Page) -> Hash[String, Row]
 
-        # Returns the cells of every data row of the first table.
-        # The header row is dropped; its contents are constants.
-        # : (String) -> Array[Array[Commonmarker::Node]]
-        def parse_table: (String) -> Array[Array[Commonmarker::Node]]
-
-        # Collects the cells of one table row, in order.
-        # : (Commonmarker::Node) -> Array[Commonmarker::Node]
-        def table_row_cells: (Commonmarker::Node) -> Array[Commonmarker::Node]
-
-        # Builds a slug and a row from one data row.
-        # Returns nil for malformed rows, e.g. header rows without links.
-        # : (Array[Commonmarker::Node]) -> [String, Row]?
-        def row_from_cells: (Array[Commonmarker::Node]) -> [ String, Row ]?
-
-        # Returns the URL of the first link in a cell.
-        # : (Commonmarker::Node) -> String?
-        def cell_link_url: (Commonmarker::Node) -> String?
-
-        # Returns the flattened text of a cell, separating nothing.
-        # Code spans contribute their text; break tags are spaced out.
-        # : (Commonmarker::Node) -> String
-        def cell_text: (Commonmarker::Node) -> String
+        # Returns the stripped text of a cell.
+        # : (Nokogiri::XML::Element) -> String
+        def cell_text: (Nokogiri::XML::Element) -> String
 
         # Splits an aliases cell into its aliases at break tags.
-        # : (Array[[Symbol, String]]) -> Array[String]
-        def cell_aliases: (Array[[ Symbol, String ]]) -> Array[String]
-
-        # Flattens a cell into text and break-tag tokens.
-        # : (Commonmarker::Node) -> Array[[Symbol, String]]
-        def cell_pieces: (Commonmarker::Node) -> Array[[ Symbol, String ]]
+        # : (Nokogiri::XML::Element) -> Array[String]
+        def cell_aliases: (Nokogiri::XML::Element) -> Array[String]
 
         # Builds a new META row from Git history and content.
         # Extracts initial author/creation dates from the oldest commit and current modified date from the newest.

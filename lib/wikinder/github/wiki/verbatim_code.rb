@@ -15,11 +15,10 @@ module Gollum
       def process(data)
         return data if @map.empty?
 
-        @map.each do |id, spec|
-          body = fence_block(spec[:lang], spec[:code], spec[:indent])
-          data = data.gsub(%r{(<p>#{Regexp.escape(id)}</p>|#{Regexp.escape(id)})}) { body }
+        data.gsub(/#{open_pattern}[a-f0-9]+#{close_pattern}/) do |id|
+          spec = @map[id]
+          spec ? fence_block(spec[:lang], spec[:code], spec[:indent]) : id
         end
-        data
       end
 
       private

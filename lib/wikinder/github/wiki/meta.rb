@@ -3,6 +3,7 @@
 
 require 'gollum-lib'
 require 'commonmarker'
+require 'nokogiri'
 require 'uri'
 require 'whatlanguage'
 
@@ -135,106 +136,52 @@ module Wikinder
 
         # Builds one row from each data row of the META table.
         #: (Gollum::Page) -> Hash[String, Row]
+        # Builds one row from each data row of the META table.
+        # Renders Meta through Commonmarker and parses the resulting HTML
+        # fragment with Nokogiri; header rows live in <thead>, rows here in <tbody>.
+        #: (Gollum::Page) -> Hash[String, Row]
         def parse_page(page)
+          html = Commonmarker.to_html(
+            page.formatted_data,
+            options: { extension: { table: true }, render: { unsafe: true } }
+          )
+          table = Nokogiri::HTML5.fragment(html).at_css('table')
+          return {} unless table
+
           rows = {} #: Hash[String, Row]
-          parse_table(page.formatted_data).each do |cells|
-            slug, row = row_from_cells(cells)
-            rows[slug] = row if slug && row
+          table.css('tbody tr').each do |tr|
+            cells = tr.css('td')
+            next if cells.size < 6
+
+            href = cells[0].at_css('a')&.[]('href')
+            next unless href
+
+            slug = slug_from_href(href)
+            attrs = {
+              author: cell_text(cells[1]),
+              creation_date: cell_text(cells[2]),
+              modified_date: cell_text(cells[3]),
+              language: cell_text(cells[4]),
+              aliases: cell_aliases(cells[5])
+            } #: meta_row
+            rows[slug] = Row.new(attrs)
           end
           rows
         end
 
-        # Returns the cells of every data row of the first table.
-        # The header row is dropped; its contents are constants.
-        #: (String) -> Array[Array[Commonmarker::Node]]
-        def parse_table(markdown)
-          doc = Commonmarker.parse(markdown, options: { extension: { table: true } })
-          tables = [] # @type var tables: Array[Commonmarker::Node]
-          doc.walk { |node| tables << node if node.type.to_s == 'table' }
-          table = tables.first
-          return [] unless table
-
-          rows = [] # @type var rows: Array[Commonmarker::Node]
-          table.walk { |node| rows << node if node.type.to_s == 'table_row' }
-          rows.drop(1).map { |row| table_row_cells(row) }
-        end
-
-        # Collects the cells of one table row, in order.
-        #: (Commonmarker::Node) -> Array[Commonmarker::Node]
-        def table_row_cells(row)
-          cells = [] # @type var cells: Array[Commonmarker::Node]
-          row.walk { |node| cells << node if node.type.to_s == 'table_cell' }
-          cells
-        end
-
-        # Builds a slug and a row from one data row.
-        # Returns nil for malformed rows, e.g. header rows without links.
-        #: (Array[Commonmarker::Node]) -> [String, Row]?
-        def row_from_cells(cells)
-          return nil if cells.size < 6
-
-          href = cell_link_url(cells[0]) or return nil
-          attrs = {
-            author: cell_text(cells[1]),
-            creation_date: cell_text(cells[2]),
-            modified_date: cell_text(cells[3]),
-            language: cell_text(cells[4]),
-            aliases: cell_aliases(cell_pieces(cells[5]))
-          } #: meta_row
-          [slug_from_href(href), Row.new(attrs)]
-        end
-
-        # Returns the URL of the first link in a cell.
-        #: (Commonmarker::Node) -> String?
-        def cell_link_url(cell)
-          url = nil #: String?
-          cell.walk do |node|
-            url ||= node.url.to_s if node.type.to_s == 'link'
-          end
-          url
-        end
-
-        # Returns the flattened text of a cell, separating nothing.
-        # Code spans contribute their text; break tags are spaced out.
-        #: (Commonmarker::Node) -> String
+        # Returns the stripped text of a cell.
+        #: (Nokogiri::XML::Element) -> String
         def cell_text(cell)
-          cell_pieces(cell).filter_map do |kind, text|
-            text unless kind == :br
-          end.join.strip.gsub(/\s+/, ' ')
+          cell.text.strip.gsub(/\s+/, ' ')
         end
 
         # Splits an aliases cell into its aliases at break tags.
-        #: (Array[[Symbol, String]]) -> Array[String]
-        def cell_aliases(pieces)
-          aliases = [] #: Array[String]
-          current = +''
-          pieces.each do |kind, text|
-            if kind == :br
-              aliases << current.strip unless current.strip.empty?
-              current = +''
-            else
-              current += text
-            end
-          end
-          aliases << current.strip unless current.strip.empty?
-          aliases
-        end
-
-        # Flattens a cell into text and break-tag tokens.
-        #: (Commonmarker::Node) -> Array[[Symbol, String]]
-        def cell_pieces(cell)
-          pieces = [] #: Array[[Symbol, String]]
-          cell.walk do |node|
-            type = node.type.to_s
-            case type
-            when 'text' then pieces << [:text, node.string_content.to_s]
-            when 'code' then pieces << [:code, node.string_content.to_s]
-            when 'html_inline'
-              literal = node.literal.to_s
-              pieces << (%r{\A<br\s*/?>\z}i.match?(literal) ? [:br, literal] : [:text, literal])
-            end
-          end
-          pieces
+        #: (Nokogiri::XML::Element) -> Array[String]
+        def cell_aliases(cell)
+          cell.children
+              .slice_after { |child| child.name == 'br' }
+              .map { |group| group.select(&:text?).map(&:text).join.strip }
+              .reject(&:empty?)
         end
 
         # Builds a new META row from Git history and content.

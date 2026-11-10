@@ -8,4 +8,5 @@ module Commonmarker
   end
 
   def self.parse: (String, options: untyped) -> Node
+  def self.to_html: (String, options: untyped) -> String
 end

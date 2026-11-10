@@ -26,10 +26,7 @@ module Gollum
       def process(data)
         return data if @map.empty?
 
-        @map.each do |id, span|
-          data = data.gsub(id) { span }
-        end
-        data
+        data.gsub(/#{open_pattern}[a-f0-9]+#{close_pattern}/) { |id| @map[id] || id }
       end
     end
   end
