@@ -146,7 +146,8 @@ module Wikinder
       # page as changed and rewrites every row.
       #: (String?) -> Array[String]?
       def diff_paths(from_ref)
-        return nil if from_ref.nil? || from_ref == @head
+        return nil if from_ref.nil?
+        return [] if from_ref == @head
 
         prev_commit = rev_parse(from_ref)
         return nil unless prev_commit

@@ -226,7 +226,13 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'leaves META.md untouched when the repo is unchanged' do
       out1 = build(scratch)
       before_meta = File.read(File.join(scratch, 'META.md'))
-      out2 = build(scratch)
+
+      # The incremental path must diff the scratch repo's own HEAD against itself.
+      base_sha = Dir.chdir(scratch) { `git rev-parse HEAD`.strip }
+      wiki = described_class.new(scratch, { ungenerated_pages: Set['Home'], unlisted_pages: Set[] })
+      expect(wiki.send(:diff_paths, base_sha)).to eq([])
+
+      out2 = build(scratch, prev_head: base_sha)
       expect(File.read(File.join(scratch, 'META.md'))).to eq(before_meta)
       FileUtils.remove_entry(out1)
       FileUtils.remove_entry(out2)
@@ -241,12 +247,20 @@ RSpec.describe Wikinder::GitHub::Wiki do
       updated = original.gsub(/(\[\[history\]\] \| )[^|]+/, '\\1curated-author')
       File.write(meta_path, updated)
 
-      base_sha = `git rev-parse HEAD`.strip.force_encoding('UTF-8')
+      # The initial commit SHA of the scratch repo; passing it as prev_head
+      # forces the incremental path (not a silent full rebuild).
+      base_sha = Dir.chdir(scratch) { `git rev-parse HEAD`.strip }
+
       system('git', 'mv', 'history.md', 'renamed.md', chdir: scratch)
       system('git', 'add', '-f', '.', chdir: scratch)
       system({ 'GIT_AUTHOR_DATE' => '2024-06-15T00:00:00Z', 'GIT_COMMITTER_DATE' => '2024-06-15T00:00:00Z' },
              'git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'rename history to renamed',
              chdir: scratch)
+
+      # The incremental path must see a non-nil, non-empty delta since base_sha.
+      # (nil would silently fall back to a full rebuild and defeat the test's intent.)
+      wiki = described_class.new(scratch, { ungenerated_pages: Set['Home'], unlisted_pages: Set[] })
+      expect(wiki.send(:diff_paths, base_sha)).to include('renamed.md')
 
       out2 = build(scratch, prev_head: base_sha)
       row_line = File.readlines(meta_path).find { |l| l.include?('[[renamed]]') }
