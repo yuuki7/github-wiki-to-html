@@ -158,14 +158,19 @@ module Wikinder
           changed = prev_head.nil? || ignore_meta ? nil : wiki.diff_paths(prev_head)
 
           if changed && changed.empty?
-            # Nothing in the repo changed. Honour the existing rows as-is,
-            # dropping rows whose pages no longer exist (defensive guard).
+            # Nothing in the changes itself, but META.md may have drifted from
+            # this repo (reverted or hand-edited). Keep the rows we already
+            # have, but rebuild rows for pages the rows no longer cover —
+            # via refresh_row, so rename inheritance and curated fields are
+            # honoured exactly as in a full rebuild, not dropped to
+            # git-derived defaults.
             still_current = Set.new(pages.map { |page| File.basename(page, '.md') })
             previously.each { |slug, row| rows[slug] = row }
             pages.each do |page|
               slug = File.basename(page, '.md')
-              rows[slug] ||= build_row(wiki, page)
+              rows[slug] ||= refresh_row(wiki, page, inherited_row(wiki, previously, page, slug))
             end
+            rows.delete_if { |slug, _| !still_current.include?(slug) }
             rows.delete_if { |slug, _| !still_current.include?(slug) }
             prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
             write(meta_path, rows)
@@ -201,6 +206,11 @@ module Wikinder
         # hand-curated alias whose name has since been claimed by another
         # page is removed instead of shadowing it.
         #
+        # Additionally, an alias claimed by more than one page's row is
+        # dropped from *every* claimant and reported: a redirect file can
+        # only have one healthy target, and silently letting the last page
+        # win would hide the ambiguity regardless of write order.
+        #
         # Comparison is case-insensitive because the output target may live
         # on a case-insensitive filesystem.
         #: (Hash[String, meta_row], Array[String], Set[String]) -> void
@@ -209,10 +219,33 @@ module Wikinder
           pages.each { |page| occupied << File.basename(page, '.md').downcase }
 
           rows.each_value do |row|
-            row_slug = row[:slug].to_s.downcase
             row[:aliases] = row[:aliases].reject do |title|
               slug = Slugs.for_title(title).downcase
-              occupied.include?(slug) || slug == row_slug
+              unless Slugs.safe?(slug)
+                warn "META.md: ignoring unsafe alias #{title.inspect}; it would not produce a valid page"
+                next true
+              end
+              slug == row[:slug].to_s.downcase || occupied.include?(slug)
+            end
+          end
+
+          claims = Hash.new { |hash, key| hash[key] = [] }
+          rows.each_value do |row|
+            row[:aliases].each do |title|
+              claims[Slugs.for_title(title).downcase] << [row, title]
+            end
+          end
+          claims.each_value do |pairs|
+            claimants = pairs.map(&:first).uniq
+            next if claimants.length <= 1
+
+            # Use a stable owner list for the warning so the same set of
+            # pages always produces the same diagnosis.
+            owners = claimants.map { |row| "[[#{row[:slug]}]]" }.sort.join(', ')
+            warn "META.md: alias #{pairs.first[1].inspect} is claimed by #{owners}; ignoring it"
+            pairs.map(&:first).uniq.each do |row|
+              titles = pairs.select { |listed, _| listed.equal?(row) }.map(&:last)
+              row[:aliases] = row[:aliases] - titles
             end
           end
         end

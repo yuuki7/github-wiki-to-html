@@ -39,6 +39,12 @@ module Wikinder
         end
 
         # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
+        # Tag syntax inside raw HTML blocks is protected by PROTECTED_HTML
+        # (script/comment/style bodies included); inline tags anywhere are
+        # protected as html_inline code ranges below.
+        #: Regexp
+        PROTECTED_HTML = %r{<!--.*?-->|<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[a-zA-Z/!?][^>]*>}im
+
         #: (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
         def self.typed_ranges(source, offsets)
           ranges = [] #: Array[[Range[Integer], Symbol]]
@@ -46,14 +52,45 @@ module Wikinder
             type = node.type.to_s
             sp = node.source_position
             case type
-            when 'code', 'code_block', 'math'
+            when 'code', 'code_block', 'math', 'html_inline'
+              # Inline tags stay verbatim (with their attributes); their
+              # inner text runs through the normal Markdown pipeline.
               ranges << [range_for(offsets, sp), :code]
             when 'html_block'
-              ranges << [range_for(offsets, sp), :html]
+              html_fragments(source, range_for(offsets, sp)).each { |fragment, mode| ranges << [fragment, mode] }
             end
           end
           ranges.sort_by! { |range, _| [range.begin, range.end] }
           ranges
+        end
+
+        # Splits an html_block range into :code subranges (comments,
+        # script/style bodies, individual tags with their attributes) and
+        # :html gaps between them. Everything inside a tag — including its
+        # attributes — stays verbatim; wiki syntax in text between tags is
+        # rewritten as raw HTML anchors.
+        #: (String, Range[Integer]) -> Array[[Range[Integer], Symbol]]
+        def self.html_fragments(source, html_range)
+          fragments = [] #: Array[[Range[Integer], Symbol]]
+          # Work on raw bytes so regex match offsets are byte offsets —
+          # matching UTF-8 text would yield character offsets, corrupting
+          # multibyte content.
+          block = (source.byteslice(html_range) || '').dup.force_encoding(Encoding::BINARY)
+          cursor = 0
+
+          block.to_enum(:scan, PROTECTED_HTML).each do
+            match = Regexp.last_match
+            next if match.nil?
+
+            guard_start = match.begin(0) || 0
+            guard_end = match.end(0) || 0
+            next_start = html_range.begin + guard_start
+            fragments << [(html_range.begin + cursor)...next_start, :html] if guard_start > cursor
+            fragments << [(html_range.begin + guard_start)...(html_range.begin + guard_end), :code]
+            cursor = guard_end
+          end
+          fragments << [(html_range.begin + cursor)...html_range.end, :html] if cursor < block.length
+          fragments
         end
 
         #: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]

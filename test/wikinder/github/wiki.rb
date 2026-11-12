@@ -217,6 +217,25 @@ RSpec.describe Wikinder::GitHub::Wiki do
       expect(output).to include('<a href="/Foo">Foo</a>')
     end
 
+    # Wikilinks inside comments/script/style/tags are literal, never rewritten.
+    it 'does not rewrite wikilinks inside HTML comments' do
+      output = Wikinder::GitHub::Wiki::Tags.render("<!-- keep [[keep]] -->\n[[Link]]\n")
+      expect(output).to include('<!-- keep [[keep]] -->')
+      expect(output).to include('[Link](/Link)')
+    end
+
+    it 'does not rewrite wikilinks inside script bodies' do
+      output = Wikinder::GitHub::Wiki::Tags.render("<script>\nvar x = '[[keep]]';\n</script>\n[[Link]]\n")
+      expect(output).to include("var x = '[[keep]]';")
+      expect(output).to include('[Link](/Link)')
+    end
+
+    it 'does not rewrite wikilinks inside tag attributes' do
+      output = Wikinder::GitHub::Wiki::Tags.render("<a href=\"[[keep]]\">text [[Link]]</a>\n")
+      expect(output).to include('href="[[keep]]"')
+      expect(output).to include('[Link](/Link)')
+    end
+
     # The .md extension must not leak into the link target when an anchor is present.
     it 'strips the .md suffix before keeping the anchor' do
       output = Wikinder::GitHub::Wiki::Tags.render('[[Foo.md#anchor]]')
@@ -385,6 +404,116 @@ RSpec.describe Wikinder::GitHub::Wiki do
     end
   end
 
+  describe '#robustness' do
+    let(:scratch) { Dir.mktmpdir('robust-wiki') }
+
+    after do
+      FileUtils.remove_entry(scratch)
+    end
+
+    def git(*args)
+      raise "git failed: #{args.inspect}" unless system(
+        'git', '-c', 'user.email=t@e', '-c', 'user.name=t', *args, chdir: scratch
+      )
+    end
+
+    # Two pages with the same basename would collide at the flat output
+    # root — one must be kept deterministically and the other skipped.
+    it 'keeps exactly one page when basenames collide, and warns' do
+      system('git', 'init', '-q', '--initial-branch=main', chdir: scratch)
+      FileUtils.mkdir_p(File.join(scratch, 'a'))
+      FileUtils.mkdir_p(File.join(scratch, 'b'))
+      File.write(File.join(scratch, 'a', 'Guide.md'), "a guide\n")
+      File.write(File.join(scratch, 'b', 'Guide.md'), "b guide\n")
+      git('add', '-A')
+      git('commit', '-qm', 'seed')
+
+      target = Dir.mktmpdir('robust-out')
+      begin
+        expect { Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target) }
+          .to output(/duplicate page name/).to_stderr
+        expect(Dir.children(target).grep(/Guide/)).to eq(['Guide.md'])
+        expect(File.read(File.join(target, 'Guide.md'))).to include('a guide')
+      ensure
+        FileUtils.remove_entry(target)
+      end
+    end
+
+    # An alias claimed by two different pages names neither wrapper nor
+    # redirect uniquely — it must be dropped from every claimant.
+    it 'drops an alias claimed by two different pages, and warns' do
+      FixtureWiki.build(scratch)
+      meta_path = File.join(scratch, 'META.md')
+      lines = File.readlines(meta_path).map(&:chomp)
+      rows = lines.map do |line|
+        if line.include?('[[About]]') || line.include?('[[Japanese page]]')
+          line.sub(/\|\s*\|\z/, '| Shared |')
+        else
+          line
+        end
+      end
+      File.write(meta_path, "#{rows.join("\n")}\n")
+
+      target = Dir.mktmpdir('robust-out')
+      begin
+        expect { Wikinder::GitHub::Wiki.new(scratch, fixture_options(unlisted_pages: Set[])).build(target) }
+          .to output(/claimed by/).to_stderr
+        expect(File.exist?(File.join(target, 'Shared.md'))).to be(false)
+        expect(File.read(File.join(scratch, 'META.md'))).not_to include('| Shared |')
+      ensure
+        FileUtils.remove_entry(target)
+      end
+    end
+
+    # Aliases must never resolve outside the output directory.
+    it 'drops an alias with path separators instead of escaping the output dir' do
+      FixtureWiki.build(scratch)
+      meta_path = File.join(scratch, 'META.md')
+      lines = File.readlines(meta_path).map(&:chomp)
+      rows = lines.map do |line|
+        if line.include?('[[Japanese page]]')
+          line.sub(/\|\s*\|\z/, '| ../escape |')
+        else
+          line
+        end
+      end
+      File.write(meta_path, "#{rows.join("\n")}\n")
+
+      target = Dir.mktmpdir('robust-out')
+      begin
+        expect { Wikinder::GitHub::Wiki.new(scratch, fixture_options(unlisted_pages: Set[])).build(target) }
+          .to output(/unsafe alias/).to_stderr
+        expect(File.exist?(File.join(target, '..', 'escape.md'))).to be(false)
+        expect(File.read(File.join(scratch, 'META.md'))).not_to include('../escape')
+      ensure
+        FileUtils.remove_entry(target)
+      end
+    end
+
+    # Stale subdirectory assets must be removed on the next build.
+    it 'removes subdirectory assets removed from the repo, leaving empty dirs cleaned' do
+      system('git', 'init', '-q', '--initial-branch=main', chdir: scratch)
+      File.write(File.join(scratch, 'page.md'), "page\n")
+      FileUtils.mkdir_p(File.join(scratch, 'inner', 'deep'))
+      File.binwrite(File.join(scratch, 'inner', 'deep', 'image.png'), 'png'.b)
+      git('add', '-A')
+      git('commit', '-qm', 'add asset')
+
+      target = Dir.mktmpdir('robust-out')
+      begin
+        Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target)
+        expect(File.exist?(File.join(target, 'inner', 'deep', 'image.png'))).to be(true)
+
+        git('rm', '-q', 'inner/deep/image.png')
+        git('commit', '-qm', 'remove asset')
+        Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target)
+        expect(File.exist?(File.join(target, 'inner', 'deep', 'image.png'))).to be(false)
+      ensure
+        FileUtils.remove_entry(target)
+      end
+    end
+  end
+
   describe '#incremental sync' do
     let(:scratch) { Dir.mktmpdir('incr-wiki') }
 
@@ -421,6 +550,37 @@ RSpec.describe Wikinder::GitHub::Wiki do
 
       out2 = build(scratch, prev_head: base_sha)
       expect(File.read(File.join(scratch, 'META.md'))).to eq(before_meta)
+      FileUtils.remove_entry(out1)
+      FileUtils.remove_entry(out2)
+    end
+
+    # A reverted META.md must not erase curated fields on a rename.
+    # After the revert, a fast-path build (prev_head == HEAD) sees a
+    # renamed page with no matching row; it must recover the curated row
+    # via rename history, not fall back to git-derived defaults.
+    it 'restores curated fields when META.md is reverted to a pre-rename state' do
+      meta_path = File.join(scratch, 'META.md')
+
+      out1 = build(scratch)
+      File.write(meta_path, File.read(meta_path).gsub(/(\[\[history\]\] \| )[^|]+/, '\\1curated-author'))
+      curated = File.read(meta_path)
+      system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'add', '-f', 'META.md', chdir: scratch)
+      system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'curate author', chdir: scratch)
+
+      system('git', 'mv', 'history.md', 'renamed-final.md', chdir: scratch)
+      system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'rename history to renamed-final',
+             chdir: scratch)
+
+      # Simulate a META.md revert: the working tree goes back to the
+      # curated snapshot (rows keyed by the old slug).
+      File.write(meta_path, curated)
+
+      base_sha = Dir.chdir(scratch) { `git rev-parse HEAD`.strip }
+      out2 = build(scratch, prev_head: base_sha)
+      row_line = File.readlines(meta_path).find { |line| line.include?('[[renamed final]]') }
+      expect(row_line).to include('curated-author')   # hand-curated value survives
+      expect(row_line).to include('2020-01-01')       # creation_date from git history
+      expect(row_line).to include('history')          # rename alias recovered
       FileUtils.remove_entry(out1)
       FileUtils.remove_entry(out2)
     end

@@ -15,6 +15,14 @@ module Wikinder
 
         # : (String) -> String
         def self.title_for: (String) -> String
+
+        # Returns true when +slug+ is usable as the natural path segment of
+        # a generated page or redirect: no directory separators, no parent
+        # references, never hidden or empty. Such names can still appear as
+        # titles, but may not emit path segments that escape the output
+        # directory or collapse onto site routes.
+        # : (String) -> bool
+        def self.safe?: (String) -> bool
       end
     end
   end

@@ -25,8 +25,22 @@ module Wikinder
         def self.line_offsets: (String) -> Array[Integer]
 
         # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
+        # Tag syntax inside raw HTML blocks is protected by PROTECTED_HTML
+        # (script/comment/style bodies included); inline tags anywhere are
+        # protected as html_inline code ranges below.
+        # : Regexp
+        PROTECTED_HTML: ::Regexp
+
         # : (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
         def self.typed_ranges: (String, Array[Integer]) -> Array[[ Range[Integer], Symbol ]]
+
+        # Splits an html_block range into :code subranges (comments,
+        # script/style bodies, individual tags with their attributes) and
+        # :html gaps between them. Everything inside a tag — including its
+        # attributes — stays verbatim; wiki syntax in text between tags is
+        # rewritten as raw HTML anchors.
+        # : (String, Range[Integer]) -> Array[[Range[Integer], Symbol]]
+        def self.html_fragments: (String, Range[Integer]) -> Array[[ Range[Integer], Symbol ]]
 
         # : (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
         def self.range_for: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]

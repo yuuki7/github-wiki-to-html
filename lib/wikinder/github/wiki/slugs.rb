@@ -18,6 +18,21 @@ module Wikinder
 
         #: (String) -> String
         def self.title_for(slug) = slug.tr('-', ' ')
+
+        # Returns true when +slug+ is usable as the natural path segment of
+        # a generated page or redirect: no directory separators, no parent
+        # references, never hidden or empty. Such names can still appear as
+        # titles, but may not emit path segments that escape the output
+        # directory or collapse onto site routes.
+        #: (String) -> bool
+        def self.safe?(slug)
+          return false if slug.empty?
+          return false if ['.', '..'].include?(slug)
+          return false if slug.include?('/') || slug.include?('\\')
+          return false if slug.start_with?('.') # dotfiles are never wiki pages
+
+          true
+        end
       end
     end
   end

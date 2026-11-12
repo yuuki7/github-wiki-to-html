@@ -57,31 +57,119 @@ module Wikinder
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       #
       # All outputs are computed in memory first; only when computation of
-      # every page (or asset) succeeded does the method touch the filesystem.
-      # A mid-build crash therefore never leaves a half-written md/tree behind.
+      # every page (or asset) succeeded are files written, each via a
+      # same-directory temporary file atomically renamed into place. A crash
+      # can therefore leave previous-generation and new files mixed, but
+      # never a torn individual file. After the write, files the new build
+      # no longer produces are removed (keeping anything unrelated to the
+      # build untouched); subdirectory assets are tracked by
+      # <target_dir>/.assets-manifest for the same cleanup.
       #: (String) -> void
       def build(target_dir)
         outputs = compute_outputs
+        verify_confined!(target_dir, outputs)
 
-        # Remove a bounded set of stale output files, keep any unrelated
-        # files in target_dir.
-        %w[*.md *.png *.jpg *.jpeg *.gif *.webp *.svg].each do |pattern|
-          rm_dir_glob(target_dir, pattern)
-        end
         FileUtils.mkdir_p(target_dir)
-
         outputs.each do |relative, content|
           destination = File.join(target_dir, relative)
           FileUtils.mkdir_p(File.dirname(destination))
-          File.binwrite(destination, content)
+          temp = "#{destination}.tmp.#{Process.pid}"
+          begin
+            File.binwrite(temp, content)
+            File.rename(temp, destination)
+          ensure
+            FileUtils.rm_f(temp)
+          end
         end
+
+        cleanup_stale_files(target_dir, outputs)
+        write_assets_manifest(target_dir, outputs)
       end
 
       private
 
+      # Refuses to build when any output path would escape the output
+      # directory — callers get a loud error before any filesystem write
+      # happens.
+      #: (String, Hash[String, String]) -> void
+      def verify_confined!(target_dir, outputs)
+        base = File.expand_path(target_dir)
+        outputs.each_key do |key|
+          raise 'error: empty output path in outputs' if key.empty?
+
+          expanded = File.expand_path(key, base)
+          next if expanded.start_with?("#{base}#{File::SEPARATOR}")
+
+          raise "error: unsafe output path #{key.inspect} escapes the output directory"
+        end
+      end
+
+      # Removes stale generated files no longer produced by this build,
+      # keeping unrelated files in target_dir untouched.
+      #: (String, Hash[String, String]) -> void
+      def cleanup_stale_files(target_dir, outputs)
+        keep = Set.new(outputs.keys.reject { |key| key.include?('/') })
+        %w[*.md *.png *.jpg *.jpeg *.gif *.webp *.svg].each do |pattern|
+          Dir.glob(File.join(target_dir, pattern)).each do |path|
+            next if keep.include?(File.basename(path))
+
+            FileUtils.rm_f(path)
+          end
+        end
+
+        stale = read_assets_manifest(target_dir) - outputs.keys
+        stale.each do |relative|
+          path = File.join(target_dir, relative)
+          FileUtils.rm_f(path)
+          prune_empty_directories(File.dirname(path), target_dir)
+        end
+      end
+
+      # Removes directories that became empty because their stale assets
+      # were deleted, walking up but never above target_dir.
       #: (String, String) -> void
-      def rm_dir_glob(target_dir, pattern)
-        FileUtils.rm_f(Dir.glob(File.join(target_dir, pattern)))
+      def prune_empty_directories(directory, stop_at)
+        path = directory
+        while path.start_with?(stop_at) && path != stop_at && File.directory?(path)
+          break unless Dir.empty?(path)
+
+          Dir.rmdir(path)
+          path = File.dirname(path)
+        end
+      rescue SystemCallError
+        nil
+      end
+
+      #: (String) -> String
+      def assets_manifest_path(target_dir)
+        File.join(target_dir, '.assets-manifest')
+      end
+
+      #: (String) -> Array[String]
+      def read_assets_manifest(target_dir)
+        path = assets_manifest_path(target_dir)
+        return [] unless File.exist?(path)
+
+        lines = File.readlines(path).map(&:chomp).reject(&:empty?)
+        lines.reject { |line| line.start_with?('/') || line.include?('..') }
+      rescue SystemCallError
+        []
+      end
+
+      # Records the asset outputs of this build so they can be located for
+      # stale-file cleanup on the next build (covers subdirectory assets,
+      # which root-level glob patterns never see).
+      #: (String, Hash[String, String]) -> void
+      def write_assets_manifest(target_dir, outputs)
+        assets = outputs.keys.select do |key|
+          %w[.png .jpg .jpeg .gif .webp .svg].include?(File.extname(key).downcase)
+        end
+        path = assets_manifest_path(target_dir)
+        if assets.empty?
+          FileUtils.rm_f(path)
+        else
+          File.write(path, "#{assets.sort.join("\n")}\n")
+        end
       end
 
       # Computes every output the build would produce, returning them as a
@@ -191,18 +279,44 @@ module Wikinder
           next if File.basename(path).start_with?('.') # dotfiles are never wiki pages
 
           slug = File.basename(path, '.md')
+          next unless Slugs.safe?(slug)
           next if @ungenerated_pages.include?(slug)
 
           result << path
         end
-        result.sort
+        result.sort!
+
+        # Two pages with the same basename would collide at the flat output
+        # root. Keep the first deterministically (after sorting) and warn.
+        duplicates = result.group_by { |path| File.basename(path, '.md') }
+                           .select { |_slug, paths| paths.size > 1 }
+        duplicates.each_value do |paths|
+          warn "duplicate page name #{paths.join(', ')}; keeping #{paths.first}"
+          paths.drop(1).each { |loser| result.delete(loser) }
+        end
+        result
       end
 
       public
 
-      #: (String) -> Rugged::tree_entry?
-      def tree_entry(path)
-        @repo.head.target.tree[path]
+      # Looks up a path inside the HEAD tree, descending through subtrees
+      # byte-exactly. Rugged's `tree["a/b.md"]` only flattens a single
+      # directory, so wikis pushed with subdirectories need this instead.
+      #: (String, ?tree: Rugged::Tree?) -> Rugged::tree_entry?
+      def tree_entry(path, tree: nil)
+        parts = path.split('/').reject(&:empty?)
+        return nil if parts.empty?
+
+        current = tree || @repo.head.target.tree
+        parts.each do |part|
+          entry = current[part]
+          return nil if entry.nil?
+          return entry if part == parts.last
+          return nil if entry[:type] != :tree
+
+          current = @repo.lookup(entry[:oid])
+        end
+        nil
       end
 
       #: (String) -> String
@@ -332,7 +446,7 @@ module Wikinder
         parents = commit.parents
         if parents.empty?
           # The root commit touches exactly the paths it introduced.
-          return !commit.tree[path].nil?
+          return !tree_entry(path, tree: commit.tree).nil?
         end
 
         commit.diff(parents.first).deltas.any? do |delta|
@@ -347,9 +461,12 @@ module Wikinder
       def article_front_matter(page_name, meta = {})
         slug = File.basename(page_name, '.md')
         row = meta[slug]
-        bounds = commit_bounds_for(page_name)
-        last = bounds[:latest]
-        first = bounds[:earliest]
+        # Only inspect git history when the META row does not answer the
+        # questions — incremental builds rely on previous rows to skip the
+        # history walk entirely.
+        bounds = row.nil? ? commit_bounds_for(page_name) : nil
+        last = bounds && bounds[:latest]
+        first = bounds && bounds[:earliest]
         author = if row
                    row[:author]
                  elsif last

@@ -67,6 +67,11 @@ module Wikinder
         # hand-curated alias whose name has since been claimed by another
         # page is removed instead of shadowing it.
         #
+        # Additionally, an alias claimed by more than one page's row is
+        # dropped from *every* claimant and reported: a redirect file can
+        # only have one healthy target, and silently letting the last page
+        # win would hide the ambiguity regardless of write order.
+        #
         # Comparison is case-insensitive because the output target may live
         # on a case-insensitive filesystem.
         # : (Hash[String, meta_row], Array[String], Set[String]) -> void

@@ -43,15 +43,45 @@ module Wikinder
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       #
       # All outputs are computed in memory first; only when computation of
-      # every page (or asset) succeeded does the method touch the filesystem.
-      # A mid-build crash therefore never leaves a half-written md/tree behind.
+      # every page (or asset) succeeded are files written, each via a
+      # same-directory temporary file atomically renamed into place. A crash
+      # can therefore leave previous-generation and new files mixed, but
+      # never a torn individual file. After the write, files the new build
+      # no longer produces are removed (keeping anything unrelated to the
+      # build untouched); subdirectory assets are tracked by
+      # <target_dir>/.assets-manifest for the same cleanup.
       # : (String) -> void
       def build: (String) -> void
 
       private
 
+      # Refuses to build when any output path would escape the output
+      # directory — callers get a loud error before any filesystem write
+      # happens.
+      # : (String, Hash[String, String]) -> void
+      def verify_confined!: (String, Hash[String, String]) -> void
+
+      # Removes stale generated files no longer produced by this build,
+      # keeping unrelated files in target_dir untouched.
+      # : (String, Hash[String, String]) -> void
+      def cleanup_stale_files: (String, Hash[String, String]) -> void
+
+      # Removes directories that became empty because their stale assets
+      # were deleted, walking up but never above target_dir.
       # : (String, String) -> void
-      def rm_dir_glob: (String, String) -> void
+      def prune_empty_directories: (String, String) -> void
+
+      # : (String) -> String
+      def assets_manifest_path: (String) -> String
+
+      # : (String) -> Array[String]
+      def read_assets_manifest: (String) -> Array[String]
+
+      # Records the asset outputs of this build so they can be located for
+      # stale-file cleanup on the next build (covers subdirectory assets,
+      # which root-level glob patterns never see).
+      # : (String, Hash[String, String]) -> void
+      def write_assets_manifest: (String, Hash[String, String]) -> void
 
       # Computes every output the build would produce, returning them as a
       # map of target-relative paths to content. Meta.sync! still mutates
@@ -81,8 +111,11 @@ module Wikinder
 
       public
 
-      # : (String) -> Rugged::tree_entry?
-      def tree_entry: (String) -> Rugged::tree_entry?
+      # Looks up a path inside the HEAD tree, descending through subtrees
+      # byte-exactly. Rugged's `tree["a/b.md"]` only flattens a single
+      # directory, so wikis pushed with subdirectories need this instead.
+      # : (String, ?tree: Rugged::Tree?) -> Rugged::tree_entry?
+      def tree_entry: (String, ?tree: Rugged::Tree?) -> Rugged::tree_entry?
 
       # : (String) -> String
       def text_for: (String) -> String
