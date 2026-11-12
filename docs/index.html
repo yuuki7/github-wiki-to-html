@@ -74,11 +74,11 @@ Starts the Astro preview server.</li>
 </ul>
 <h2 id="Workflow">Workflow</h2>
 <pre class="code mermaid"><code class="mermaid">graph TD
-    A[&quot;GitHub Wiki Markdown files&quot;] --&gt;|&quot;gollum-lib (Ruby)&quot;| B[&quot;JSON data (CommonMark &amp; rendered HTML components)&quot;]
+    A[&quot;GitHub Wiki Markdown files&quot;] --&gt;|&quot;gollum-lib (Ruby)&quot;| B[&quot;GFM Markdown files (&amp; YAML front matter)&quot;]
     B --&gt;|&quot;Astro (JavaScript)&quot;| C[&quot;Complete HTML files&quot;]
 </code></pre>
 <h2 id="Background">Background</h2>
-<p>GitHub Wiki was originally powered by Gollum, but its current backend is proprietary, while the Gollum project continues as an open-source compatible implementation. This project uses <code>gollum-lib</code> to parse the Markdown files into JSON data, and Astro as a static site generator (SSG) to build the HTML files.</p>
+<p>GitHub Wiki was originally powered by Gollum, but its current backend is proprietary, while the Gollum project continues as an open-source compatible implementation. This project uses <code>gollum-lib</code> to render GitHub Wiki-flavored Markdown to standard GFM Markdown, and Astro as a static site generator (SSG) to build the HTML files.</p>
 <h2 id="Development">Development</h2>
 <p>This project uses the following tools for maintainability:</p>
 <ul>
