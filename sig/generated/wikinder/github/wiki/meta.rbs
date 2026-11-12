@@ -32,6 +32,11 @@ module Wikinder
         # : (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
         def self.sync!: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
 
+        # Finds the row to inherit for a page, trying the current slug first
+        # and every predecessor slug from rename history otherwise.
+        # : (Wiki, Hash[String, meta_row], String, String) -> meta_row?
+        def self.inherited_row: (Wiki, Hash[String, meta_row], String, String) -> meta_row?
+
         # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
         # : (Wiki, String, meta_row?) -> meta_row
         def self.refresh_row: (Wiki, String, meta_row?) -> meta_row

@@ -92,17 +92,33 @@ module Wikinder
 
           pages.each do |page|
             slug = File.basename(page, '.md')
-            already = previously.key?(slug)
-            if !changed.nil? && already && changed.none? { |path| path.b == page.b }
-              rows[slug] = previously[slug].dup
+            inherited = inherited_row(wiki, previously, page, slug)
+            if !changed.nil? && inherited && changed.none? { |path| path.b == page.b }
+              row = inherited.dup
+              row[:slug] = slug
+              row[:title] = Slugs.title_for(slug)
+              rows[slug] = row
               next
             end
 
-            rows[slug] = refresh_row(wiki, page, previously[slug])
+            rows[slug] = refresh_row(wiki, page, inherited)
           end
 
           write(meta_path, rows)
           rows
+        end
+
+        # Finds the row to inherit for a page, trying the current slug first
+        # and every predecessor slug from rename history otherwise.
+        #: (Wiki, Hash[String, meta_row], String, String) -> meta_row?
+        def self.inherited_row(wiki, previously, page, slug)
+          return previously[slug] if previously.key?(slug)
+
+          wiki.rename_history_for(page).each do |predecessor|
+            row = previously[File.basename(predecessor, '.md')]
+            return row if row
+          end
+          nil
         end
 
         # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
