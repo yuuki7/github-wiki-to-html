@@ -163,14 +163,21 @@ module Wikinder
         # fixed rule the first thing is the display text, so [[#math|Math]]
         # renders [#math](/Math). Anchor handling applies only to the
         # single-part form ([[#anchor]] -> [anchor](#anchor)).
+        # Handles [[File.md#anchor]] explicitly: the anchor fragment must
+        # survive intact while only the page path component loses .md.
+        # A leading '#' is an in-page anchor and passes through unchanged.
         #: (String) -> String
         def self.resolve_link_target(target)
           return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
           return target if target.start_with?('/')
           return target if target.start_with?('#')
 
-          name = target.end_with?('.md') ? target.sub(/\.md\z/, '') : target
-          "/#{Slugs.for_title(name)}"
+          fragment = target.split('#', 2)
+          path = fragment[0] || ''
+          anchor = fragment[1]
+          name = path.end_with?('.md') ? path.sub(/\.md\z/, '') : path
+          resolved = "/#{Slugs.for_title(name)}"
+          anchor ? "#{resolved}##{anchor}" : resolved
         end
 
         #: (String) -> bool

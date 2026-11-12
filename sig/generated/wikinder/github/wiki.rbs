@@ -41,6 +41,10 @@ module Wikinder
       def initialize: (String | Pathname, ?wiki_options) -> void
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
+      #
+      # All outputs are computed in memory first; only when computation of
+      # every page (or asset) succeeded does the method touch the filesystem.
+      # A mid-build crash therefore never leaves a half-written md/tree behind.
       # : (String) -> void
       def build: (String) -> void
 
@@ -48,6 +52,29 @@ module Wikinder
 
       # : (String, String) -> void
       def rm_dir_glob: (String, String) -> void
+
+      # Computes every output the build would produce, returning them as a
+      # map of target-relative paths to content. Meta.sync! still mutates
+      # META.md in the source tree (that is its job); everything else happens
+      # purely in memory.
+      # : () -> Hash[String, String]
+      def compute_outputs: () -> Hash[String, String]
+
+      # Builds the front matter for one page, wrapping any failure with the
+      # page path so a crash mid-build identifies the file responsible.
+      # : (String, Hash[String, meta_row]) -> String
+      def front_matter_with_context: (String, Hash[String, meta_row]) -> String
+
+      # Renders one page, wrapping any failure with the page path so a crash
+      # mid-build identifies the file responsible.
+      # : (String) -> String
+      def render_page_with_context: (String) -> String
+
+      # : (String, String) -> String
+      def special_output: (String, String) -> String
+
+      # : (Hash[String, meta_row], Set[String]) -> Hash[String, String]
+      def redirect_outputs: (Hash[String, meta_row], Set[String]) -> Hash[String, String]
 
       # : () -> Array[String]
       def collect_pages: () -> Array[String]
@@ -98,22 +125,6 @@ module Wikinder
 
       # : (String) -> String
       def title_for: (String) -> String
-
-      # : (String, String) -> void
-      def write_special: (String, String) -> void
-
-      # Copies image attachments next to the pages so Astro can resolve
-      # relative image references ([[readme.png]] etc.).
-      # : (String) -> void
-      def write_assets: (String) -> void
-
-      # Writes one redirect file per alias. Aliases whose slug collides
-      # with an existing output slug (article, special page, or ungenerated
-      # page) or with the row's own slug are skipped as a second line of
-      # defence — Meta.sync! prunes colliding aliases before this runs —
-      # because an alias redirect must never shadow an existing page.
-      # : (Hash[String, meta_row], String, Set[String]) -> void
-      def write_redirects: (Hash[String, meta_row], String, Set[String]) -> void
     end
   end
 end

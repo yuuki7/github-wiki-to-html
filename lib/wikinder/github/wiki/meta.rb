@@ -21,6 +21,12 @@ module Wikinder
       #
       # With ignore_meta set, every row is rebuilt from history and the
       # previously committed META.md is disregarded.
+      #
+      # Cells are written with backslash escapes — '\|' for a literal pipe
+      # and '\\' for a literal backslash — so any author or title can be
+      # represented losslessly. Newlines inside a value are flattened to
+      # spaces. Hand-written rows without escapes are read leniently, and
+      # those tolerances are intentional rather than optional.
       module Meta
         META_HEADERS = ['Title', 'Author', 'Creation date',
                         'Modified date', 'Language', 'Aliases'].freeze #: Array[String]
@@ -30,35 +36,103 @@ module Wikinder
         ].freeze #: Array[String]
         ALIAS_SEPARATOR = '<br>' #: String
 
+        #: (String?) -> String
+        def self.escape_cell(text)
+          text.to_s.gsub('\\', '\\\\\\\\').gsub('|', '\\|').gsub(/[\r\n]+/, ' ').strip
+        end
+
+        # Splits a table line into cells, undressing the backslash escapes.
+        # Handles '\\' and '\|' as two-character sequences; a backslash
+        # followed by any other byte is kept verbatim.
+        #: (String) -> Array[String]
+        def self.split_cells(line)
+          body = line.chomp
+          return [] unless body.start_with?('|') && body.end_with?('|')
+
+          inner = body[1..-2] || ''
+          cells = [] #: Array[String]
+          current = +''
+          i = 0
+          while i < inner.length
+            ch = inner[i]
+            break if ch.nil? # cannot happen, satisfies the type checker
+
+            if ch == '\\'
+              nxt = inner[i + 1]
+              if nxt && ['\\', '|'].include?(nxt)
+                current << nxt
+                i += 2
+                next
+              end
+              current << ch
+              i += 1
+              next
+            end
+            if ch == '|'
+              cells << current
+              current = +''
+              i += 1
+              next
+            end
+            current << ch
+            i += 1
+          end
+          cells << current
+          cells.map(&:strip)
+        end
+
         #: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
         def self.load(meta_path, ignore_meta: false)
           return {} if ignore_meta
           return {} unless meta_path.exist?
 
           result = {} #: Hash[String, meta_row]
-          meta_path.each_line do |line|
-            row = parse_row(line.chomp)
-            result[row[:slug]] = row if row
+          meta_path.each_line.with_index(1) do |line, index|
+            row = parse_row(line.chomp, index)
+            next unless row
+
+            if result.key?(row[:slug])
+              warn "META.md: duplicate row for [[#{row[:slug]}]] on line #{index}; keeping the last"
+            end
+            result[row[:slug]] = row
           end
           result
         end
 
-        #: (String) -> meta_row?
-        def self.parse_row(line)
-          return nil unless line.start_with?('|') && line.end_with?('|')
+        #: (String, ?Integer, Integer?) -> meta_row?
+        # Line numbers are only used for diagnostics; the parser is tolerant
+        # of broken rows (they are skipped with a warning), because a hand
+        # edit should never make the sync crash.
+        def self.parse_row(line, line_number = nil)
+          location = line_number ? " (line #{line_number})" : ''
+          cells = split_cells(line)
+          return nil if cells.empty?
+          return nil if cells.all? { |cell| cell.match?(/\A-+\z/) }
+          return nil if cells[0] == 'Title' || (cells.length == 1 && cells[0].empty?)
 
-          cells = Array(line.split('|', -1)[1..-2]).map(&:strip)
-          return nil if cells.length < META_HEADERS.length
-          return nil if cells[0].start_with?('---')
-          return nil if cells[0] == 'Title'
+          if cells.length < META_HEADERS.length
+            warn "META.md: ignoring row with too few cells#{location}"
+            return nil
+          end
+          if cells.length > META_HEADERS.length
+            warn "META.md: ignoring #{cells.length - META_HEADERS.length} extra cell(s)#{location}"
+            cells = cells.first(META_HEADERS.length)
+          end
 
-          match = cells[0].match(/\[\[([^\]]+)\]\]/)
-          return nil unless match
+          title_cell = cells[0]
+          unless title_cell.start_with?('[[') && title_cell.end_with?(']]')
+            warn "META.md: ignoring row without a [[Title]] cell#{location}"
+            return nil
+          end
 
-          title = match[1].strip
-          slug = Slugs.for_title(title)
+          title = title_cell[2...-2].to_s.strip
+          if title.empty?
+            warn "META.md: ignoring row with an empty [[]] cell#{location}"
+            return nil
+          end
+
           {
-            slug: slug,
+            slug: Slugs.for_title(title),
             title: title,
             author: cells[1],
             creation_date: cells[2],
@@ -205,26 +279,40 @@ module Wikinder
         #: (Pathname, Hash[String, meta_row]) -> void
         def self.write(meta_path, rows)
           sorted = rows.values.sort do |a, b|
-            (b[:creation_date] <=> a[:creation_date]).nonzero? || (a[:slug] <=> b[:slug])
+            (b[:creation_date].to_s <=> a[:creation_date].to_s).nonzero? ||
+              (a[:slug].to_s <=> b[:slug].to_s)
           end
           lines = [*META_TABLE_HEADER]
           sorted.each do |row|
             title = row[:title] || Slugs.title_for(row[:slug])
             cells = [
-              "[[#{title}]]",
-              row[:author],
-              row[:creation_date],
-              row[:modified_date],
-              row[:language],
-              row[:aliases].join(ALIAS_SEPARATOR)
+              "[[#{escape_cell(title)}]]",
+              escape_cell(row[:author]),
+              escape_cell(row[:creation_date]),
+              escape_cell(row[:modified_date]),
+              escape_cell(row[:language]),
+              escape_cell(row[:aliases].join(ALIAS_SEPARATOR))
             ]
-            inner = cells.map { |cell| cell.to_s.empty? ? ' ' : " #{cell} " }.join('|')
+            inner = cells.map { |cell| cell.empty? ? ' ' : " #{cell} " }.join('|')
             lines << "|#{inner}|"
           end
           content = lines.join("\n") << "\n"
           return if meta_path.exist? && meta_path.read == content
 
-          meta_path.write(content)
+          write_atomically(meta_path, content)
+        end
+
+        # Writes via a temporary file so a crash mid-write can never leave
+        # META.md truncated or half-written for the next invocation.
+        #: (Pathname, String) -> void
+        def self.write_atomically(meta_path, content)
+          temp = "#{meta_path}.tmp.#{Process.pid}"
+          begin
+            File.write(temp, content)
+            File.rename(temp, meta_path)
+          ensure
+            FileUtils.rm_f(temp)
+          end
         end
       end
     end

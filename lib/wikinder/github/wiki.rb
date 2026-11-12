@@ -55,36 +55,26 @@ module Wikinder
       end
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
+      #
+      # All outputs are computed in memory first; only when computation of
+      # every page (or asset) succeeded does the method touch the filesystem.
+      # A mid-build crash therefore never leaves a half-written md/tree behind.
       #: (String) -> void
       def build(target_dir)
-        # Remove old output, keep any unrelated files in target_dir.
+        outputs = compute_outputs
+
+        # Remove a bounded set of stale output files, keep any unrelated
+        # files in target_dir.
         %w[*.md *.png *.jpg *.jpeg *.gif *.webp *.svg].each do |pattern|
           rm_dir_glob(target_dir, pattern)
         end
         FileUtils.mkdir_p(target_dir)
 
-        pages = collect_pages
-        meta_path = Pathname(@path.to_s) / 'META.md'
-        meta = Meta.sync!(self, pages, meta_path, ignore_meta: @ignore_meta, prev_head: @prev_head)
-
-        pages.each do |page|
-          front_matter = article_front_matter(page, meta)
-          File.write(
-            File.join(target_dir, File.basename(page)),
-            "#{front_matter}---\n\n#{render_page(page)}"
-          )
+        outputs.each do |relative, content|
+          destination = File.join(target_dir, relative)
+          FileUtils.mkdir_p(File.dirname(destination))
+          File.binwrite(destination, content)
         end
-
-        write_special('Home', target_dir)
-        write_special('_Footer', target_dir)
-
-        occupied = Set.new(meta.keys.map(&:downcase))
-        occupied.merge(@ungenerated_pages.map(&:downcase))
-        %w[Home _Footer].each do |name|
-          occupied << name.downcase if tree_entry("#{name}.md")
-        end
-        write_redirects(meta, target_dir, occupied)
-        write_assets(target_dir)
       end
 
       private
@@ -92,6 +82,102 @@ module Wikinder
       #: (String, String) -> void
       def rm_dir_glob(target_dir, pattern)
         FileUtils.rm_f(Dir.glob(File.join(target_dir, pattern)))
+      end
+
+      # Computes every output the build would produce, returning them as a
+      # map of target-relative paths to content. Meta.sync! still mutates
+      # META.md in the source tree (that is its job); everything else happens
+      # purely in memory.
+      #: () -> Hash[String, String]
+      def compute_outputs
+        outputs = {} #: Hash[String, String]
+
+        pages = collect_pages
+        meta_path = Pathname(@path.to_s) / 'META.md'
+        meta = Meta.sync!(self, pages, meta_path, ignore_meta: @ignore_meta, prev_head: @prev_head)
+
+        pages.each do |page|
+          front_matter = front_matter_with_context(page, meta)
+          outputs[File.basename(page)] = "#{front_matter}---\n\n#{render_page_with_context(page)}"
+        end
+
+        %w[Home _Footer].each do |name|
+          file_name = "#{name}.md"
+          next unless tree_entry(file_name)
+
+          outputs[file_name] = special_output(name, file_name)
+        end
+
+        occupied = Set.new(meta.keys.map(&:downcase))
+        occupied.merge(@ungenerated_pages.map(&:downcase))
+        %w[Home _Footer].each do |name|
+          occupied << name.downcase if tree_entry("#{name}.md")
+        end
+        redirect_outputs(meta, occupied).each { |relative, content| outputs[relative] = content }
+
+        image_extensions = %w[.png .jpg .jpeg .gif .webp .svg]
+        @repo.head.target.tree.walk(:preorder) do |root, entry|
+          next unless entry[:type] == :blob
+
+          path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
+          next unless image_extensions.include?(File.extname(path).downcase)
+          next if File.basename(path).start_with?('.') # dotfiles are never wiki assets
+
+          outputs[path] = @repo.lookup(entry[:oid]).content
+        end
+
+        outputs
+      end
+
+      # Builds the front matter for one page, wrapping any failure with the
+      # page path so a crash mid-build identifies the file responsible.
+      #: (String, Hash[String, meta_row]) -> String
+      def front_matter_with_context(page, meta)
+        article_front_matter(page, meta)
+      rescue StandardError => e
+        raise "could not build front matter for page #{page}: #{e.class}: #{e.message}"
+      end
+
+      # Renders one page, wrapping any failure with the page path so a crash
+      # mid-build identifies the file responsible.
+      #: (String) -> String
+      def render_page_with_context(page)
+        render_page(page)
+      rescue StandardError => e
+        raise "could not render page #{page}: #{e.class}: #{e.message}"
+      end
+
+      #: (String, String) -> String
+      def special_output(name, file_name)
+        front_matter = {
+          'kind' => 'special',
+          'title' => title_for(name),
+          'slug' => name,
+          'language' => 'en'
+        }.to_yaml
+        "#{front_matter}---\n\n#{render_page_with_context(file_name)}"
+      end
+
+      #: (Hash[String, meta_row], Set[String]) -> Hash[String, String]
+      def redirect_outputs(meta, occupied_slugs)
+        outputs = {} #: Hash[String, String]
+        meta.each do |target_slug, row|
+          row[:aliases].each do |title|
+            alias_slug = Slugs.for_title(title)
+            downcased = alias_slug.downcase
+            next if occupied_slugs.include?(downcased) || downcased == target_slug.downcase
+
+            front_matter = {
+              'kind' => 'redirect',
+              'title' => title,
+              'slug' => alias_slug,
+              'target_slug' => target_slug,
+              'language' => row[:language]
+            }.to_yaml
+            outputs["#{alias_slug}.md"] = "#{front_matter}---\n\n"
+          end
+        end
+        outputs
       end
 
       #: () -> Array[String]
@@ -124,7 +210,13 @@ module Wikinder
         entry = tree_entry(name)
         return '' unless entry
 
-        @repo.lookup(entry[:oid]).content.force_encoding(Encoding::UTF_8)
+        content = @repo.lookup(entry[:oid]).content.force_encoding(Encoding::UTF_8)
+        return content if content.valid_encoding?
+
+        # Replace invalid byte sequences with U+FFFD so a single bad page
+        # never aborts the whole build — but say so, loudly.
+        warn "text_for: #{name} contains invalid UTF-8; invalid bytes were replaced with U+FFFD"
+        content.scrub
       end
 
       #: (String) -> Hash[Symbol, Rugged::Commit?]
@@ -295,66 +387,6 @@ module Wikinder
 
       #: (String) -> String
       def title_for(slug) = Slugs.title_for(slug)
-
-      #: (String, String) -> void
-      def write_special(name, target_dir)
-        file_name = "#{name}.md"
-        return unless tree_entry(file_name)
-
-        front_matter = {
-          'kind' => 'special',
-          'title' => title_for(name),
-          'slug' => name,
-          'language' => 'en'
-        }.to_yaml
-        File.write(
-          File.join(target_dir, file_name),
-          "#{front_matter}---\n\n#{render_page(file_name)}"
-        )
-      end
-
-      # Copies image attachments next to the pages so Astro can resolve
-      # relative image references ([[readme.png]] etc.).
-      #: (String) -> void
-      def write_assets(target_dir)
-        image_extensions = %w[.png .jpg .jpeg .gif .webp .svg]
-        @repo.head.target.tree.walk(:preorder) do |root, entry|
-          next unless entry[:type] == :blob
-
-          path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
-          next unless image_extensions.include?(File.extname(path).downcase)
-          next if File.basename(path).start_with?('.') # dotfiles are never wiki assets
-
-          destination = File.join(target_dir, path)
-          FileUtils.mkdir_p(File.dirname(destination))
-          File.binwrite(destination, @repo.lookup(entry[:oid]).content)
-        end
-      end
-
-      # Writes one redirect file per alias. Aliases whose slug collides
-      # with an existing output slug (article, special page, or ungenerated
-      # page) or with the row's own slug are skipped as a second line of
-      # defence — Meta.sync! prunes colliding aliases before this runs —
-      # because an alias redirect must never shadow an existing page.
-      #: (Hash[String, meta_row], String, Set[String]) -> void
-      def write_redirects(meta, target_dir, occupied_slugs)
-        meta.each do |target_slug, row|
-          row[:aliases].each do |title|
-            alias_slug = Slugs.for_title(title)
-            downcased = alias_slug.downcase
-            next if occupied_slugs.include?(downcased) || downcased == target_slug.downcase
-
-            front_matter = {
-              'kind' => 'redirect',
-              'title' => title,
-              'slug' => alias_slug,
-              'target_slug' => target_slug,
-              'language' => row[:language]
-            }.to_yaml
-            File.write(File.join(target_dir, "#{alias_slug}.md"), "#{front_matter}---\n\n")
-          end
-        end
-      end
     end
   end
 end

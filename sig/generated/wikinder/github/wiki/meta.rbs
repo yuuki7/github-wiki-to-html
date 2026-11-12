@@ -18,6 +18,12 @@ module Wikinder
       #
       # With ignore_meta set, every row is rebuilt from history and the
       # previously committed META.md is disregarded.
+      #
+      # Cells are written with backslash escapes — '\|' for a literal pipe
+      # and '\\' for a literal backslash — so any author or title can be
+      # represented losslessly. Newlines inside a value are flattened to
+      # spaces. Hand-written rows without escapes are read leniently, and
+      # those tolerances are intentional rather than optional.
       module Meta
         META_HEADERS: Array[String]
 
@@ -25,11 +31,23 @@ module Wikinder
 
         ALIAS_SEPARATOR: String
 
+        # : (String?) -> String
+        def self.escape_cell: (String?) -> String
+
+        # Splits a table line into cells, undressing the backslash escapes.
+        # Handles '\\' and '\|' as two-character sequences; a backslash
+        # followed by any other byte is kept verbatim.
+        # : (String) -> Array[String]
+        def self.split_cells: (String) -> Array[String]
+
         # : (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
         def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
 
-        # : (String) -> meta_row?
-        def self.parse_row: (String) -> meta_row?
+        # : (String, ?Integer, Integer?) -> meta_row?
+        #  Line numbers are only used for diagnostics; the parser is tolerant
+        #  of broken rows (they are skipped with a warning), because a hand
+        #  edit should never make the sync crash.
+        def self.parse_row: (String, ?Integer, Integer?) -> meta_row?
 
         # Syncs META.md with the given pages and returns the merged rows,
         # keyed by slug.
@@ -72,6 +90,11 @@ module Wikinder
 
         # : (Pathname, Hash[String, meta_row]) -> void
         def self.write: (Pathname, Hash[String, meta_row]) -> void
+
+        # Writes via a temporary file so a crash mid-write can never leave
+        # META.md truncated or half-written for the next invocation.
+        # : (Pathname, String) -> void
+        def self.write_atomically: (Pathname, String) -> void
       end
     end
   end

@@ -99,6 +99,71 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
+    # A page containing invalid UTF-8 bytes must not abort the build.
+    it 'replaces invalid bytes in .md content instead of crashing' do
+      path = Dir.mktmpdir('utf8-wiki')
+      out = Dir.mktmpdir('utf8-out')
+      begin
+        system('git', 'init', '-q', '--initial-branch=main', chdir: path)
+        File.binwrite(File.join(path, 'page.md'), "before \xff\xfe after [[foo]]\n".b)
+        system('git', 'add', '-A', chdir: path)
+        system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'bad utf8',
+               chdir: path)
+
+        expect { described_class.new(path, fixture_options(ignore_meta: true)).build(out) }
+          .not_to raise_error
+        expect(File.read(File.join(out, 'page.md'), mode: 'rb')).to include("\uFFFD".b)
+      ensure
+        FileUtils.remove_entry(path)
+        FileUtils.remove_entry(out)
+      end
+    end
+
+    # A failing page must not leave any files behind in the output directory.
+    it 'writes nothing when a page fails to render' do
+      path = Dir.mktmpdir('atomic-wiki')
+      out = Dir.mktmpdir('atomic-out')
+      begin
+        system('git', 'init', '-q', '--initial-branch=main', chdir: path)
+        File.write(File.join(path, 'page.md'), "body\n")
+        system('git', 'add', '-A', chdir: path)
+        system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'content',
+               chdir: path)
+        allow(Wikinder::GitHub::Wiki::Tags).to receive(:render).and_raise(StandardError, 'boom')
+
+        expect { described_class.new(path, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(out) }
+          .to raise_error(/could not render page page\.md/)
+        expect(Dir.children(out)).to be_empty
+      ensure
+        FileUtils.remove_entry(path)
+        FileUtils.remove_entry(out)
+      end
+    end
+
+    # An author name containing a pipe must round-trip through META.md.
+    it 'round-trips an author name containing a pipe' do
+      scratch = Dir.mktmpdir('pipe-author-wiki')
+      out = Dir.mktmpdir('pipe-author-out')
+      begin
+        system('git', 'init', '-q', '--initial-branch=main', chdir: scratch)
+        File.write(File.join(scratch, 'page.md'), "text\n")
+        system('git', 'add', '-A', chdir: scratch)
+        system({ 'GIT_AUTHOR_NAME' => 'O-kun|Chan', 'GIT_COMMITTER_NAME' => 'O-kun|Chan' },
+               'git', '-c', 'user.email=t@e', 'commit', '-qm', 'pipe author', chdir: scratch)
+
+        described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(out)
+        meta_path = File.join(scratch, 'META.md')
+        expect(File.read(meta_path)).to include('O-kun\|Chan')
+
+        described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(out)
+        rows = Wikinder::GitHub::Wiki::Meta.load(Pathname(meta_path))
+        expect(rows['page'][:author]).to eq('O-kun|Chan')
+      ensure
+        FileUtils.remove_entry(scratch)
+        FileUtils.remove_entry(out)
+      end
+    end
+
     # --ignore-meta exercises the git-history fallback for authorship metadata.
     it 'derives metadata from git history when META.md is ignored' do
       path = Dir.mktmpdir('ignored-wiki')
@@ -150,6 +215,12 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'rewrites wikilinks at the end of a raw HTML block without trailing newline' do
       output = Wikinder::GitHub::Wiki::Tags.render("<div>\nSee [[Foo]]")
       expect(output).to include('<a href="/Foo">Foo</a>')
+    end
+
+    # The .md extension must not leak into the link target when an anchor is present.
+    it 'strips the .md suffix before keeping the anchor' do
+      output = Wikinder::GitHub::Wiki::Tags.render('[[Foo.md#anchor]]')
+      expect(output).to include('[Foo.md#anchor](/Foo#anchor)')
     end
 
     # Pipe form: image path on the left (Gollum convention), caption on the right.
@@ -384,6 +455,58 @@ RSpec.describe Wikinder::GitHub::Wiki do
       expect(row_line).to include('2020-01-01')      # creation_date preserved
       FileUtils.remove_entry(out)
       FileUtils.remove_entry(out2)
+    end
+  end
+end
+
+RSpec.describe Wikinder::GitHub::Wiki::Meta do
+  it 'round-trips cells containing pipes and backslashes' do
+    line = '| [[French programmer]] | O-\|Chan | 2024-01-01T00:00:00Z | ' \
+           '2024-01-01T00:00:00Z | en | ex<br>a\|b<br>z \\ |'
+    row = described_class.parse_row(line)
+    expect(row[:author]).to eq('O-|Chan')
+    expect(row[:aliases]).to eq(['ex', 'a|b', 'z \\'])
+    cells = [
+      "[[#{described_class.escape_cell(row[:title])}]]",
+      described_class.escape_cell(row[:author]),
+      described_class.escape_cell(row[:creation_date]),
+      described_class.escape_cell(row[:modified_date]),
+      described_class.escape_cell(row[:language]),
+      described_class.escape_cell(row[:aliases].join('<br>'))
+    ]
+    expect(cells).to eq([
+                          '[[French programmer]]',
+                          'O-\|Chan',
+                          '2024-01-01T00:00:00Z',
+                          '2024-01-01T00:00:00Z',
+                          'en',
+                          'ex<br>a\|b<br>z \\\\'
+                        ])
+  end
+
+  it 'warns and skips rows with too few cells' do
+    expect { described_class.parse_row('| [[x]] | |') }.to output(/too few cells/).to_stderr
+    expect(described_class.parse_row('| [[x]] | |')).to be_nil
+  end
+
+  it 'warns when a row has no [[Title]] cell' do
+    line = '| not-a-title | a | b | c | d | e |'
+    expect { described_class.parse_row(line) }.to output(/Title/).to_stderr
+    expect(described_class.parse_row(line)).to be_nil
+  end
+
+  it 'keeps the later row when a slug is duplicated, with a warning' do
+    path = Dir.mktmpdir('dup-meta')
+    begin
+      File.write(File.join(path, 'META.md'), <<~MD)
+        | [[page]] | t | d | d | en | |
+        | [[page]] | t | d2 | d2 | en | curated |
+      MD
+      rows = nil
+      expect { rows = described_class.load(Pathname(path) / 'META.md') }.to output(/duplicate row/).to_stderr
+      expect(rows['page'][:aliases]).to eq(['curated'])
+    ensure
+      FileUtils.remove_entry(path)
     end
   end
 end
