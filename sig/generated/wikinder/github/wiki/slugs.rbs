@@ -1,0 +1,17 @@
+# Generated from lib/wikinder/github/wiki/slugs.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Consistent title ↔ slug conversion shared across the suite.
+      module Slugs
+        # Map any whitespace punctuation to single hyphens.
+        # : (String) -> String
+        def self.for_title: (String) -> String
+
+        # : (String) -> String
+        def self.title_for: (String) -> String
+      end
+    end
+  end
+end

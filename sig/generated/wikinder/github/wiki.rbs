@@ -2,16 +2,17 @@
 
 module Wikinder
   module GitHub
-    # Represents the Wikinder GitHub Wiki.
+    # Represents a GitHub Wiki repository as a coherent set of Markdown pages.
     #
-    # Wraps Gollum::Wiki to give access to the wiki's pages and metadata.
-    # It can export the wiki as GFM Markdown content for the site generator.
+    # The wiki repository contains .md files; this class enumerates them,
+    # rewrites wiki-specific syntax, and produces YAML front matter
+    # with metadata for downstream consumers.
     class Wiki
-      @wiki: Gollum::Wiki
+      @earliest: Hash[String, Rugged::Commit?]
 
-      @wiki_path: Pathname
+      @repo: Rugged::Repository
 
-      @meta: Meta
+      @path: Pathname
 
       attr_reader head: String
 
@@ -21,40 +22,64 @@ module Wikinder
 
       # Creates a new wiki instance.
       #
-      # Reads the wiki's META.md page to drive authorship metadata.
-      # The Markdown renderer for gollum is registered process-wide
-      # once at load time of the Markdown module, not here.
-      #
-      # @param path [String] Path to the wiki repository.
-      # @param options [wiki_options] Options for the wiki.
-      # @param options[:ungenerated_pages] Pages not generated.
-      # @param options[:unlisted_pages] Pages not listed on the home page.
-      # : (String, ?wiki_options) -> void
-      def initialize: (String, ?wiki_options) -> void
+      # @param path [String | Pathname] path to the wiki repository.
+      # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
+      # : (String | Pathname, ?Hash[Symbol, Array[String] | Set[String]]) -> void
+      def initialize: (String | Pathname, ?Hash[Symbol, Array[String] | Set[String]]) -> void
 
-      # Writes the full content tree to target_dir.
-      # Syncs META first so each page reads stable authorship.
-      # Slugs used as file names carry over to routes unchanged.
+      # Builds the entire output tree, writing Markdown files with YAML front matter.
+      # Builds the entire output tree, writing Markdown files with YAML front matter.
       # : (String) -> void
       def build: (String) -> void
 
       private
 
-      # Returns visible Markdown pages, excluding generated ones.
-      # : () -> Array[Gollum::Page]
-      def collect_pages: () -> Array[Gollum::Page]
+      # : (String, String) -> void
+      def rm_dir_glob: (String, String) -> void
 
-      # Writes one GFM Markdown file per page.
-      # : (Array[Gollum::Page], String) -> void
-      def write_pages: (Array[Gollum::Page], String) -> void
+      # : () -> Array[String]
+      def collect_pages: () -> Array[String]
 
-      # Writes the home page and footer special page, as ordinary files.
-      # : (String) -> void
-      def write_special_pages: (String) -> void
+      # : (String) -> String
+      def text_for: (String) -> String
 
-      # Writes a special page file for a layout slot.
-      # : (name: String, target_dir: String) -> void
-      def write_special_page: (name: String, target_dir: String) -> void
+      # : (String) -> String
+      def render_page: (String) -> String
+
+      # : (String) -> Rugged::Commit?
+      def earliest_commit_for: (String) -> Rugged::Commit?
+
+      # : () -> String
+      def head_commit_date: () -> String
+
+      # : () -> String
+      def head_author: () -> String
+
+      # : (String) -> String
+      def detect_language: (String) -> String
+
+      # : (Rugged::Commit, String) -> bool
+      def touched?: (Rugged::Commit, String) -> bool
+
+      # The wiki repository is flat: all pages live at the repository root,
+      # so a single tree lookup resolves the path.
+      # : (String) -> Rugged::Entry?
+      def tree_entry: (String) -> Rugged::Entry?
+
+      # : () -> Hash[String, meta_row]
+      def parse_meta: () -> Hash[String, meta_row]
+
+      # : (String, ?Hash[String, meta_row]) -> String
+      def article_front_matter: (String, ?Hash[String, meta_row]) -> String
+
+      # : (String) -> String
+      def title_for: (String) -> String
+
+      # : (String, String) -> void
+      def write_special: (String, String) -> void
+
+      # : (Hash[String, meta_row], String) -> void
+      def write_redirects: (Hash[String, meta_row], String) -> void
     end
   end
 end

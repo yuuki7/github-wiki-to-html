@@ -13,10 +13,8 @@ sources:
 # A directory to install the downloaded RBSs
 path: .gem_rbs_collection
 
+# Rugged and WhatLanguage are not published in gem_rbs_collection,
+# so they are covered by the hand-written sig/rugged.rbs and sig/whatlanguage.rbs.
 gems:
-  # If you want to avoid installing rbs files for gems, you can specify them here.
   - name: commonmarker
-  - name: gollum-lib
-  - name: nokogiri
   - name: strscan
-  - name: whatlanguage

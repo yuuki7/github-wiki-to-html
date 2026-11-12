@@ -101,26 +101,10 @@ gems:
     revision: a2080c5762e4d22bf00ca0591eb4c8ec5d1fdd55
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
-- name: mime-types
-  version: '3.5'
-  source:
-    type: git
-    name: ruby/gem_rbs_collection
-    revision: a2080c5762e4d22bf00ca0591eb4c8ec5d1fdd55
-    remote: https://github.com/ruby/gem_rbs_collection.git
-    repo_dir: gems
 - name: monitor
   version: '0'
   source:
     type: stdlib
-- name: nokogiri
-  version: '1.11'
-  source:
-    type: git
-    name: ruby/gem_rbs_collection
-    revision: a2080c5762e4d22bf00ca0591eb4c8ec5d1fdd55
-    remote: https://github.com/ruby/gem_rbs_collection.git
-    repo_dir: gems
 - name: openssl
   version: '0'
   source:

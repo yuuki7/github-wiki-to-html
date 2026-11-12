@@ -1,0 +1,45 @@
+module Rugged
+  class Repository
+    def initialize: (String) -> void
+    def head: () -> Ref
+    def lookup: (String) -> Blob
+    def walk: (String, ?Symbol) -> Enumerator[Commit, void]
+  end
+
+  class Blob
+    def content: () -> String
+    def oid: () -> String
+  end
+
+  class Tree
+    def []: (String) -> Entry?
+    def walk: (Symbol) { (String, Entry) -> void } -> void
+  end
+
+  class Entry
+    attr_reader oid: String
+    attr_reader type: Symbol
+    attr_reader name: String
+    attr_reader filemode: Integer
+
+    def []: (Symbol) -> untyped
+  end
+
+  class Diff
+    def deltas: () -> Array[untyped]
+  end
+
+  class Commit
+    def tree: () -> Tree
+    def id: () -> String
+    def time: () -> Time
+    def author: () -> Hash[Symbol, untyped]
+    def parents: () -> Array[Commit]
+    def diff: (Commit?) -> untyped
+  end
+
+  class Ref
+    def target: () -> Commit
+    def target_id: () -> String
+  end
+end

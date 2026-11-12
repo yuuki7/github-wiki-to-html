@@ -4,10 +4,7 @@ source 'https://rubygems.org'
 
 gem 'base64', '~> 0.3.0'
 gem 'commonmarker', '~> 2.10.1'
-gem 'gollum-lib', '~> 6.1.0'
-gem 'nokogiri', '~> 1.19'
-gem 'ostruct', '~> 0.6.3'
-gem 'rdoc', '~> 8.1.0'
+gem 'rugged', '~> 1.9'
 gem 'whatlanguage', '~> 3.0'
 
 group :development do

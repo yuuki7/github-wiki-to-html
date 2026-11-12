@@ -1,23 +1,27 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
-require_relative 'wiki/markdown'
-require_relative 'wiki/page'
-require_relative 'wiki/redirect'
-require_relative 'wiki/meta/row'
-require_relative 'wiki/meta'
+require 'rugged'
+require 'yaml'
 require 'fileutils'
+require 'time'
+require 'whatlanguage'
+
+require_relative 'wiki/slugs'
+require_relative 'wiki/language'
+require_relative 'wiki/tags'
 
 module Wikinder
   module GitHub
-    # Represents the Wikinder GitHub Wiki.
+    # Represents a GitHub Wiki repository as a coherent set of Markdown pages.
     #
-    # Wraps Gollum::Wiki to give access to the wiki's pages and metadata.
-    # It can export the wiki as GFM Markdown content for the site generator.
+    # The wiki repository contains .md files; this class enumerates them,
+    # rewrites wiki-specific syntax, and produces YAML front matter
+    # with metadata for downstream consumers.
     class Wiki
-      # @rbs @wiki: Gollum::Wiki
-      # @rbs @wiki_path: Pathname
-      # @rbs @meta: Meta
+      # @rbs @path: Pathname
+      # @rbs @repo: Rugged::Repository
+      # @rbs @earliest: Hash[String, Rugged::Commit?]
 
       attr_reader :head #: String
       attr_reader :ungenerated_pages #: Set[String]
@@ -25,85 +29,220 @@ module Wikinder
 
       # Creates a new wiki instance.
       #
-      # Reads the wiki's META.md page to drive authorship metadata.
-      # The Markdown renderer for gollum is registered process-wide
-      # once at load time of the Markdown module, not here.
-      #
-      # @param path [String] Path to the wiki repository.
-      # @param options [wiki_options] Options for the wiki.
-      # @param options[:ungenerated_pages] Pages not generated.
-      # @param options[:unlisted_pages] Pages not listed on the home page.
-      #: (String, ?wiki_options) -> void
+      # @param path [String | Pathname] path to the wiki repository.
+      # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
+      #: (String | Pathname, ?Hash[Symbol, Array[String] | Set[String]]) -> void
       def initialize(path, options = {})
-        @wiki_path = Pathname(path).expand_path
-        @wiki = Gollum::Wiki.new(@wiki_path.to_s, Markdown::GOLLUM_OPTIONS)
-        @ungenerated_pages = (options[:ungenerated_pages] || Set[]).freeze
-        @unlisted_pages = (options[:unlisted_pages] || Set[]).freeze
-        @head = @wiki.repo.head.commit.id
-        @meta = Meta.new(
-          wiki: @wiki,
-          meta_path: @wiki_path.join('META.md'),
-          head: @head,
-          prev_head: options[:prev_head],
-          ignore_meta: options[:ignore_meta] || false
-        )
+        @path = Pathname(path.to_s).expand_path
+        @repo = Rugged::Repository.new(@path.to_s)
+        @head = @repo.head.target_id
+        @ungenerated_pages = Array(options[:ungenerated_pages] || []).to_set.freeze
+        @unlisted_pages = Array(options[:unlisted_pages] || []).to_set.freeze
       end
 
-      # Writes the full content tree to target_dir.
-      # Syncs META first so each page reads stable authorship.
-      # Slugs used as file names carry over to routes unchanged.
+      # Builds the entire output tree, writing Markdown files with YAML front matter.
+      # Builds the entire output tree, writing Markdown files with YAML front matter.
       #: (String) -> void
       def build(target_dir)
-        FileUtils.rm_rf(target_dir)
+        rm_dir_glob(target_dir, '*.md')
         FileUtils.mkdir_p(target_dir)
+
         pages = collect_pages
-        @meta.sync!(pages)
-        write_pages(pages, target_dir)
-        Redirect.write!(pages, @meta.rows, target_dir:)
-        write_special_pages(target_dir)
+        meta = parse_meta
+
+        pages.each do |page|
+          front_matter = article_front_matter(page, meta)
+          File.write(
+            File.join(target_dir, File.basename(page)),
+            "#{front_matter}---\n\n#{render_page(page)}"
+          )
+        end
+
+        write_special('Home', target_dir)
+        write_special('_Footer', target_dir)
+
+        write_redirects(meta, target_dir)
       end
 
       private
 
-      # Returns visible Markdown pages, excluding generated ones.
-      #: () -> Array[Gollum::Page]
-      def collect_pages
-        @wiki.pages
-             .select { |page| page.format == :markdown && !@ungenerated_pages.include?(page.filename_stripped) }
+      #: (String, String) -> void
+      def rm_dir_glob(target_dir, pattern)
+        FileUtils.rm_f(Dir.glob(File.join(target_dir, pattern)))
       end
 
-      # Writes one GFM Markdown file per page.
-      #: (Array[Gollum::Page], String) -> void
-      def write_pages(pages, target_dir)
-        pages.each do |page|
-          Page.write!(
-            page:,
-            meta: @meta.rows.fetch(page.filename_stripped),
-            unlisted_pages: @unlisted_pages,
-            target_dir:
-          )
+      #: () -> Array[String]
+      def collect_pages
+        result = [] #: Array[String]
+        @repo.head.target.tree.walk(:preorder) do |root, entry|
+          next unless entry[:type] == :blob
+
+          path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
+          next unless path.end_with?('.md')
+
+          slug = File.basename(path, '.md')
+          next if @ungenerated_pages.include?(slug)
+
+          result << path
+        end
+        result.sort
+      end
+
+      #: (String) -> String
+      def text_for(name)
+        entry = tree_entry(name)
+        return '' unless entry
+
+        @repo.lookup(entry[:oid]).content.force_encoding(Encoding::UTF_8)
+      end
+
+      #: (String) -> String
+      def render_page(name)
+        Tags.render(text_for(name))
+      end
+
+      #: (String) -> Rugged::Commit?
+      def earliest_commit_for(path)
+        @earliest ||= {} #: Hash[String, Rugged::Commit?]
+        return @earliest[path] if @earliest.key?(path)
+
+        earliest = nil #: Rugged::Commit?
+        # Walk commits with default (reverse chronological) order and keep
+        # the oldest one that touched the file.
+        @repo.walk('HEAD').each do |commit|
+          if touched?(commit, path)
+            earliest = commit
+          elsif earliest
+            break
+          end
+        end
+        @earliest[path] = earliest
+      end
+
+      #: () -> String
+      def head_commit_date = @repo.head.target.time.utc.iso8601
+
+      #: () -> String
+      def head_author = @repo.head.target.author[:name] || 'unknown'
+
+      #: (String) -> String
+      def detect_language(text) = Language.call(text)
+
+      #: (Rugged::Commit, String) -> bool
+      def touched?(commit, path)
+        parents = commit.parents
+        return true if parents.empty?
+
+        commit.diff(parents.first).deltas.any? do |delta|
+          delta.new_file[:path] == path || delta.old_file[:path] == path
         end
       end
 
-      # Writes the home page and footer special page, as ordinary files.
-      #: (String) -> void
-      def write_special_pages(target_dir)
-        write_special_page(name: 'Home', target_dir:)
-        write_special_page(name: '_Footer', target_dir:)
+      # The wiki repository is flat: all pages live at the repository root,
+      # so a single tree lookup resolves the path.
+      #: (String) -> Rugged::Entry?
+      def tree_entry(path)
+        @repo.head.target.tree[path]
       end
 
-      # Writes a special page file for a layout slot.
-      #: (name: String, target_dir: String) -> void
-      def write_special_page(name:, target_dir:)
-        page = @wiki.page(name) or raise "#{name} page is missing"
+      #: () -> Hash[String, meta_row]
+      def parse_meta
+        path = 'META.md'
+        entry = tree_entry(path)
+        return {} unless entry
+
+        body = @repo.lookup(entry[:oid]).content.force_encoding(Encoding::UTF_8)
+        result = {} #: Hash[String, meta_row]
+        body.each_line.with_index do |line, i|
+          next if i < 2
+
+          row = line.chomp
+          next unless row.start_with?('|') && row.end_with?('|')
+
+          cells = Array(row.split('|', -1)[1..-2]).map(&:strip)
+          next if cells.length < 6
+
+          item_title = cells[0]
+          title_match = item_title.match(/\[\[([^\]]+)\]\]/)
+          next unless title_match
+
+          title = title_match[1].strip
+          slug = Slugs.for_title(title)
+          result[slug] = {
+            author: cells[1],
+            creation_date: cells[2],
+            modified_date: cells[3],
+            language: cells[4],
+            aliases: cells[5].split('<br>').map(&:strip).reject(&:empty?)
+          }
+        end
+        result
+      end
+
+      #: (String, ?Hash[String, meta_row]) -> String
+      def article_front_matter(page_name, meta = {})
+        slug = File.basename(page_name, '.md')
+        row = meta[slug]
+        earliest = earliest_commit_for(page_name)
+        author = row ? row[:author] : head_author
+        creation_date =
+          if row
+            row[:creation_date]
+          elsif earliest
+            earliest.time.utc.iso8601
+          else
+            'unknown'
+          end
+        modified_date = row ? row[:modified_date] : head_commit_date
+        language = row ? row[:language] : detect_language(text_for(page_name))
+        front_matter = {
+          'kind' => 'article',
+          'title' => title_for(slug),
+          'slug' => slug,
+          'author' => author,
+          'creation_date' => creation_date,
+          'modified_date' => modified_date,
+          'language' => language
+        }
+        front_matter = front_matter.merge('listed' => false) if @unlisted_pages.include?(slug)
+        front_matter.to_yaml
+      end
+
+      #: (String) -> String
+      def title_for(slug) = Slugs.title_for(slug)
+
+      #: (String, String) -> void
+      def write_special(name, target_dir)
         file_name = "#{name}.md"
+        return unless tree_entry(file_name)
+
         front_matter = {
           'kind' => 'special',
-          'title' => Page.title(page.filename_stripped),
-          'slug' => page.filename_stripped,
-          'language' => @meta.detect_language(page.text_data)
+          'title' => title_for(name),
+          'slug' => name,
+          'language' => 'en'
         }.to_yaml
-        File.write(File.join(target_dir, file_name), "#{front_matter}---\n\n#{Markdown.transpile(page)}")
+        File.write(
+          File.join(target_dir, file_name),
+          "#{front_matter}---\n\n#{render_page(file_name)}"
+        )
+      end
+
+      #: (Hash[String, meta_row], String) -> void
+      def write_redirects(meta, target_dir)
+        meta.each do |target_slug, row|
+          row[:aliases].each do |title|
+            alias_slug = Slugs.for_title(title)
+            front_matter = {
+              'kind' => 'redirect',
+              'title' => title,
+              'slug' => alias_slug,
+              'target_slug' => target_slug,
+              'language' => row[:language]
+            }.to_yaml
+            File.write(File.join(target_dir, "#{alias_slug}.md"), "#{front_matter}---\n\n")
+          end
+        end
       end
     end
   end

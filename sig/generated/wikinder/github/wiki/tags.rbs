@@ -1,0 +1,47 @@
+# Generated from lib/wikinder/github/wiki/tags.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Converts the GitHub Wiki Markdown dialect to standard GFM Markdown.
+      #
+      # Wikilinks use the double-bracket syntax: [[Page]], [[Page|Display]],
+      # [#anchor](#anchor), images reuse the same form: ![[image.png]].
+      # Standard Markdown is passed through.
+      #
+      # Fenced code blocks and inline code spans are preserved verbatim
+      # through placeholder exchange so their contents are untouched.
+      module Tags
+        WIKILINK_PATTERN: ::Regexp
+
+        OPEN_PLACEHOLDER: ::String
+
+        CLOSE_PLACEHOLDER: ::String
+
+        # : (String) -> String
+        def self.render: (String) -> String
+
+        # : (String) -> String
+        def self.render_anchor: (String) -> String
+
+        # : (String) -> String
+        def self.render_image: (String) -> String
+
+        # : (String) -> [String, String]
+        def self.split_ref: (String) -> [ String, String ]
+
+        # : (String) -> String
+        def self.resolve_link_target: (String) -> String
+
+        # : (String, Range[Integer]) -> String
+        def self.byteslice_range: (String, Range[Integer]) -> String
+
+        # : (String, Integer) -> String
+        def self.byteslice_tail: (String, Integer) -> String
+
+        # : (String) -> String
+        def self.escape: (String) -> String
+      end
+    end
+  end
+end

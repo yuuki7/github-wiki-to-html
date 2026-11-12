@@ -12,18 +12,3 @@ type wiki_options = {
   ?ungenerated_pages: Set[String],
   ?unlisted_pages: Set[String]
 }
-
-type redirect_front_matter = {
-  alias_title: String,
-  alias_slug: String,
-  target_slug: String,
-  language: String
-}
-
-type write_redirect_options = {
-  alias_title: String,
-  target_slug: String,
-  meta_rows: Hash[String, Wikinder::GitHub::Wiki::Meta::Row],
-  used: Set[String],
-  target_dir: String
-}

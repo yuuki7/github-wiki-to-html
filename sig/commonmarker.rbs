@@ -5,6 +5,7 @@ module Commonmarker
     def walk: () { (Node) -> void } -> untyped
     def string_content: () -> String
     def literal: () -> String
+    def source_position: () -> Hash[Symbol, Integer]
   end
 
   def self.parse: (String, options: untyped) -> Node

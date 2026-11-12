@@ -5,26 +5,10 @@ GEM
     base64 (0.3.0)
     commonmarker (2.10.1-arm64-darwin)
     concurrent-ruby (1.3.8)
-    crass (1.0.8)
     csv (3.3.7)
     diff-lcs (1.6.2)
-    erb (6.0.7)
     ffi (1.17.4-arm64-darwin)
     fileutils (1.8.1)
-    gemojione (4.3.3)
-      json
-    github-markup (4.0.2)
-    gollum-lib (6.1.0)
-      gemojione (~> 4.1)
-      github-markup (~> 4.0)
-      gollum-rugged_adapter (~> 3.0)
-      loofah (~> 2.3)
-      nokogiri (~> 1.8)
-      rouge (~> 3.1)
-      twitter-text (= 1.14.7)
-    gollum-rugged_adapter (3.0)
-      mime-types (~> 3.4)
-      rugged (~> 1.5)
     json (3.1.0)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
@@ -33,16 +17,6 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
-    loofah (2.25.3)
-      crass (~> 1.0.2)
-      nokogiri (>= 1.19.5)
-    mime-types (3.7.0)
-      logger
-      mime-types-data (~> 3.2025, >= 3.2025.0507)
-    mime-types-data (3.2026.1103)
-    nokogiri (1.19.7-arm64-darwin)
-      racc (~> 1.4)
-    ostruct (0.6.3)
     parallel (2.3.0)
     parser (3.3.13.0)
       ast (~> 2.4.1)
@@ -61,13 +35,7 @@ GEM
     rbs-inline (0.14.0)
       prism (>= 0.29)
       rbs (~> 4.0)
-    rdoc (8.1.0)
-      erb
-      prism (>= 1.6.0)
-      rbs (>= 4.0.0)
-      tsort
     regexp_parser (2.13.1)
-    rouge (3.30.0)
     rspec (3.13.2)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -129,11 +97,6 @@ GEM
     terminal-table (4.0.0)
       unicode-display_width (>= 1.1.1, < 4)
     tsort (0.2.0)
-    twitter-text (1.14.7)
-      unf (~> 0.1.0)
-    unf (0.1.4)
-      unf_ext
-    unf_ext (0.0.9.1)
     unicode-display_width (3.3.0)
       unicode-emoji (~> 4.3)
     unicode-emoji (4.3.0)
@@ -148,18 +111,15 @@ PLATFORMS
 DEPENDENCIES
   base64 (~> 0.3.0)
   commonmarker (~> 2.10.1)
-  gollum-lib (~> 6.1.0)
-  nokogiri (~> 1.19)
-  ostruct (~> 0.6.3)
   rake (~> 13.4.2)
   rbs (~> 4.2.0)
   rbs-inline (~> 0.14.0)
-  rdoc (~> 8.1.0)
   rspec (~> 3.13)
   rubocop (~> 1.92.1)
   rubocop-rake (~> 0.7.1)
   rubocop-rbs_inline (~> 2.0.0)
   rubocop-rspec (~> 3.10)
+  rugged (~> 1.9)
   steep (~> 2.1.0)
   webrick (~> 1.9.2)
   whatlanguage (~> 3.0)
@@ -170,26 +130,15 @@ CHECKSUMS
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   commonmarker (2.10.1-arm64-darwin) sha256=f8d9842699c0b2e52d5447ed9cc426bd2803ddaa0460b0a1e1cab9371926c012
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
-  crass (1.0.8) sha256=7a0145c7a2c59f8e7923b3a69ce819c444823a00a5127d805298fea13be24efe
   csv (3.3.7) sha256=15a3f16f6628da8664d455eb634e7f22031bcf53044923caf56975109e71b9f8
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
-  erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   ffi (1.17.4-arm64-darwin) sha256=19071aaf1419251b0a46852abf960e77330a3b334d13a4ab51d58b31a937001b
   fileutils (1.8.1) sha256=2d541a1ee34a9ed5c4f054be8fb819a26b5d654488a31dc8806917cf448b9cc3
-  gemojione (4.3.3) sha256=aa462341a968d3e1890e2a0c749a287fbfa74d4cff7269f8e0e2e47787288d3b
-  github-markup (4.0.2) sha256=3f7088894ba796c8c72991202df6b0083aa5f21aeb51013167e4953d20a06257
-  gollum-lib (6.1.0) sha256=eb2e7bc7538f8acb0605c16f45f2024b5d784658b72bcf52a730fffc04436d5c
-  gollum-rugged_adapter (3.0) sha256=139ff691c5c40ba8c659a6b684be0727ed335c66f8705ad849588f2d5f758102
   json (3.1.0) sha256=3ce7ccf8fde58960177a3a756c31f292a4c1e1dedee884547096a5b0604e3bd8
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   listen (3.10.1) sha256=4c3f32855657f348747da4dd2372ff3790d90a6b1d3e4f21a3706adb2d04783c
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
-  loofah (2.25.3) sha256=545f14eef0cc2a7de80df560530d593232b7c07e515c5c4e37532d9cb5b0185c
-  mime-types (3.7.0) sha256=dcebf61c246f08e15a4de34e386ebe8233791e868564a470c3fe77c00eed5e56
-  mime-types-data (3.2026.1103) sha256=cda7af94d895f1fd33e000acea800e6ed31e4c861e3d6c1a27c8b74f9e44dc64
-  nokogiri (1.19.7-arm64-darwin) sha256=f27d7f25f4873fbc3aa35a2cc2fb680c98555fec1925348da439d0869d541142
-  ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
   parser (3.3.13.0) sha256=e02f9b63c2fe05b0c68f692ba4df89b3cb113b663964f75d988fbebfd6c3deca
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
@@ -200,9 +149,7 @@ CHECKSUMS
   rb-inotify (0.11.1) sha256=a0a700441239b0ff18eb65e3866236cd78613d6b9f78fea1f9ac47a85e47be6e
   rbs (4.2.0) sha256=51f7b886dcc05bc09e10b901daa6a81829f6adc03101d6ca9ea4aac6103e0674
   rbs-inline (0.14.0) sha256=eaf47b46690d63acddab1f6804c9cc205a4bc78e637cfc421a0b1239874ef51c
-  rdoc (8.1.0) sha256=befc37880a5cfd36dcb176c748b5fd5ee39dd3536a75e81824e4972ce230f60a
   regexp_parser (2.13.1) sha256=5aedb6b7c35688f51e86eef17a15374dfd287c83f4ca644b2c5f3ec50a33b44b
-  rouge (3.30.0) sha256=a3d353222aa72e49e2c86726c0bcfd719f82592f57d494474655f48e669eceb6
   rspec (3.13.2) sha256=206284a08ad798e61f86d7ca3e376718d52c0bc944626b2349266f239f820587
   rspec-core (3.13.6) sha256=a8823c6411667b60a8bca135364351dda34cd55e44ff94c4be4633b37d828b2d
   rspec-expectations (3.13.5) sha256=33a4d3a1d95060aea4c94e9f237030a8f9eae5615e9bd85718fe3a09e4b58836
@@ -220,9 +167,6 @@ CHECKSUMS
   strscan (3.1.8) sha256=aae2db611a225559f21ffbb71765c9a4e60fd262534a9ea84f4f11c7f32f679e
   terminal-table (4.0.0) sha256=f504793203f8251b2ea7c7068333053f0beeea26093ec9962e62ea79f94301d2
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
-  twitter-text (1.14.7) sha256=6fbf511d449d61a2e2198dd758622193aa74d6e95a6ec7111725cce0e181629c
-  unf (0.1.4) sha256=4999517a531f2a955750f8831941891f6158498ec9b6cb1c81ce89388e63022e
-  unf_ext (0.0.9.1) sha256=926114a858934126c6bbfd3254347dadb5dae354711869368c0f75e3765fc6e9
   unicode-display_width (3.3.0) sha256=4b7aa66a4b11db50f6f7e98411215cd0dd10eaecb665d36eec5bcacb3fa0b613
   unicode-emoji (4.3.0) sha256=11c02fa73290378c066bb0562cd4c87d8e1b706fbbe0059ca12746a4244de8ce
   uri (1.1.2) sha256=89292e98eabbef6248b0a0ed5e7e398e152f83f17560023a6d94a7f492b169fb

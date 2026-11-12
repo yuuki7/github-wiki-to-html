@@ -1,0 +1,13 @@
+# Generated from lib/wikinder/github/wiki/language.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Detects the ISO language code of a page body, defaulting to English.
+      module Language
+        # : (String?) -> String
+        def self.call: (String?) -> String
+      end
+    end
+  end
+end
