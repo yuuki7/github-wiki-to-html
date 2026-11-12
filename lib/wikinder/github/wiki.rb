@@ -35,6 +35,9 @@ module Wikinder
       #
       # @param path [String | Pathname] path to the wiki repository.
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
+      #   ungenerated_pages defaults to Set['META'] — this tool manages
+      #   META.md itself, so treating it as an ordinary page would generate
+      #   a garbage article from it; pass Set[] explicitly to opt out.
       # @param options[:ignore_meta] Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
       # @param options[:prev_head] SHA of the commit this repo was last read
@@ -44,14 +47,13 @@ module Wikinder
         @path = Pathname(path.to_s).expand_path
         @repo = Rugged::Repository.new(@path.to_s)
         @head = @repo.head.target_id
-        @ungenerated_pages = Array(options[:ungenerated_pages] || []).to_set.freeze
+        @ungenerated_pages = Array(options.fetch(:ungenerated_pages) { Set['META'] }).to_set.freeze
         @unlisted_pages = Array(options[:unlisted_pages] || []).to_set.freeze
         @ignore_meta = options[:ignore_meta] == true
         prev_head = options[:prev_head]
         @prev_head = prev_head.is_a?(String) ? prev_head : nil
       end
 
-      # Builds the entire output tree, writing Markdown files with YAML front matter.
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       #: (String) -> void
       def build(target_dir)
@@ -76,7 +78,12 @@ module Wikinder
         write_special('Home', target_dir)
         write_special('_Footer', target_dir)
 
-        write_redirects(meta, target_dir)
+        occupied = Set.new(meta.keys.map(&:downcase))
+        occupied.merge(@ungenerated_pages.map(&:downcase))
+        %w[Home _Footer].each do |name|
+          occupied << name.downcase if tree_entry("#{name}.md")
+        end
+        write_redirects(meta, target_dir, occupied)
         write_assets(target_dir)
       end
 
@@ -95,6 +102,7 @@ module Wikinder
 
           path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
           next unless path.end_with?('.md')
+          next if File.basename(path).start_with?('.') # dotfiles are never wiki pages
 
           slug = File.basename(path, '.md')
           next if @ungenerated_pages.include?(slug)
@@ -197,12 +205,20 @@ module Wikinder
             diff.deltas.each do |delta|
               next unless delta.status == :renamed
 
-              # keep the earliest predecessor for each target (walked from HEAD,
-              # so first seen wins). Byte-compare paths like touched? does,
-              # because rugged hands back ASCII-8BIT path strings.
-              child = delta.old_file[:path].b
-              parent = delta.new_file[:path].b
-              map[child] ||= parent
+              # Rugged's +a.diff(b)+ treats +a+ as the *old* side and +b+ as the
+              # *new* side, so +commit.diff(parent)+ is chronologically
+              # reversed. Do not "fix" the argument order — doing so inverts
+              # the whole map and every dependent lookup fails silently.
+              #
+              # For status :renamed, old_file is the *newer* path (the
+              # commit's side) and new_file is the *older* one, so the map
+              # reads "current name -> name it was renamed from". Everything
+              # is walked from HEAD, so first seen wins. Byte-compare paths
+              # like touched? does, because rugged hands back ASCII-8BIT
+              # path strings.
+              newer = delta.old_file[:path].b
+              older = delta.new_file[:path].b
+              map[newer] ||= older
             end
           end
           map
@@ -307,6 +323,7 @@ module Wikinder
 
           path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
           next unless image_extensions.include?(File.extname(path).downcase)
+          next if File.basename(path).start_with?('.') # dotfiles are never wiki assets
 
           destination = File.join(target_dir, path)
           FileUtils.mkdir_p(File.dirname(destination))
@@ -314,11 +331,19 @@ module Wikinder
         end
       end
 
-      #: (Hash[String, meta_row], String) -> void
-      def write_redirects(meta, target_dir)
+      # Writes one redirect file per alias. Aliases whose slug collides
+      # with an existing output slug (article, special page, or ungenerated
+      # page) or with the row's own slug are skipped as a second line of
+      # defence — Meta.sync! prunes colliding aliases before this runs —
+      # because an alias redirect must never shadow an existing page.
+      #: (Hash[String, meta_row], String, Set[String]) -> void
+      def write_redirects(meta, target_dir, occupied_slugs)
         meta.each do |target_slug, row|
           row[:aliases].each do |title|
             alias_slug = Slugs.for_title(title)
+            downcased = alias_slug.downcase
+            next if occupied_slugs.include?(downcased) || downcased == target_slug.downcase
+
             front_matter = {
               'kind' => 'redirect',
               'title' => title,

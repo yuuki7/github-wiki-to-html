@@ -30,6 +30,9 @@ module Wikinder
       #
       # @param path [String | Pathname] path to the wiki repository.
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
+      #   ungenerated_pages defaults to Set['META'] — this tool manages
+      #   META.md itself, so treating it as an ordinary page would generate
+      #   a garbage article from it; pass Set[] explicitly to opt out.
       # @param options[:ignore_meta] Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
       # @param options[:prev_head] SHA of the commit this repo was last read
@@ -37,7 +40,6 @@ module Wikinder
       # : (String | Pathname, ?wiki_options) -> void
       def initialize: (String | Pathname, ?wiki_options) -> void
 
-      # Builds the entire output tree, writing Markdown files with YAML front matter.
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       # : (String) -> void
       def build: (String) -> void
@@ -105,8 +107,13 @@ module Wikinder
       # : (String) -> void
       def write_assets: (String) -> void
 
-      # : (Hash[String, meta_row], String) -> void
-      def write_redirects: (Hash[String, meta_row], String) -> void
+      # Writes one redirect file per alias. Aliases whose slug collides
+      # with an existing output slug (article, special page, or ungenerated
+      # page) or with the row's own slug are skipped as a second line of
+      # defence — Meta.sync! prunes colliding aliases before this runs —
+      # because an alias redirect must never shadow an existing page.
+      # : (Hash[String, meta_row], String, Set[String]) -> void
+      def write_redirects: (Hash[String, meta_row], String, Set[String]) -> void
     end
   end
 end

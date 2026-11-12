@@ -83,6 +83,22 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
+    # META.md is managed by this tool and must never become a page of
+    # its own when the caller forgets to exclude it.
+    it 'excludes META.md from output when no options are given' do
+      path = Dir.mktmpdir('default-opts-wiki')
+      target = Dir.mktmpdir('default-opts-content')
+      begin
+        FixtureWiki.build(path)
+        described_class.new(path).build(target)
+        expect(File.exist?(File.join(target, 'META.md'))).to be(false)
+        expect(File.exist?(File.join(target, 'About.md'))).to be(true)
+      ensure
+        FileUtils.remove_entry(path)
+        FileUtils.remove_entry(target)
+      end
+    end
+
     # --ignore-meta exercises the git-history fallback for authorship metadata.
     it 'derives metadata from git history when META.md is ignored' do
       path = Dir.mktmpdir('ignored-wiki')
@@ -121,6 +137,19 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'renders bare image references as Markdown images' do
       output = Wikinder::GitHub::Wiki::Tags.render('![[kuma.png]]')
       expect(output).to include('![kuma](kuma.png)')
+    end
+
+    # Regression: a wikilink used to lose its final byte when it sat at the
+    # very end of a raw HTML block, so it was left verbatim instead of
+    # becoming an anchor link.
+    it 'rewrites wikilinks at the end of a raw HTML block' do
+      output = Wikinder::GitHub::Wiki::Tags.render("<div>\nSee [[Foo]]\n")
+      expect(output).to include('<a href="/Foo">Foo</a>')
+    end
+
+    it 'rewrites wikilinks at the end of a raw HTML block without trailing newline' do
+      output = Wikinder::GitHub::Wiki::Tags.render("<div>\nSee [[Foo]]")
+      expect(output).to include('<a href="/Foo">Foo</a>')
     end
 
     # Pipe form: image path on the left (Gollum convention), caption on the right.
@@ -195,6 +224,93 @@ RSpec.describe Wikinder::GitHub::Wiki do
       ensure
         FileUtils.remove_entry(scratch)
       end
+    end
+  end
+
+  describe '#redirects' do
+    let(:scratch) { Dir.mktmpdir('redirect-wiki') }
+
+    after do
+      FileUtils.remove_entry(scratch)
+    end
+
+    # Replaces the empty aliases cell of the given [[Title]] row with
+    # +alias_text+. Raises when the row is missing or its aliases cell is
+    # not empty, so a shape change in the fixture is never silently skipped.
+    def set_alias(title, alias_text)
+      meta_path = File.join(scratch, 'META.md')
+      lines = File.readlines(meta_path).map(&:chomp)
+      index = lines.find_index { |line| line.include?("[[#{title}]]") }
+      raise "no row for [[#{title}]]" if index.nil?
+
+      updated = lines[index].sub(/\|\s*\|\z/, "| #{alias_text} |")
+      raise "aliases cell is not empty on row [[#{title}]]: #{lines[index]}" if updated == lines[index]
+
+      lines[index] = updated
+      File.write(meta_path, "#{lines.join("\n")}\n")
+    end
+
+    # A stale name from a rename must never shadow an existing article.
+    it 'keeps the existing article when an alias collides with its slug' do
+      FixtureWiki.build(scratch)
+      set_alias('Japanese page', 'About')
+
+      target = Dir.mktmpdir('content')
+      described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
+
+      expect(File.read(File.join(target, 'About.md'))).to include('kind: article')
+      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
+      expect(row).not_to include('About')
+      FileUtils.remove_entry(target)
+    end
+
+    # Same priority applies to the special pages.
+    it 'keeps the special Home page when an alias collides with it' do
+      FixtureWiki.build(scratch)
+      set_alias('Japanese page', 'Home')
+
+      target = Dir.mktmpdir('content')
+      described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
+
+      expect(File.read(File.join(target, 'Home.md'))).to include('kind: special')
+      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
+      expect(row).not_to include('Home')
+      FileUtils.remove_entry(target)
+    end
+
+    # Hand-curated alias must be dropped through the incremental keep path
+    # too, not only through a full rebuild.
+    it 'prunes a hand-curated colliding alias via the incremental keep path' do
+      FixtureWiki.build(scratch)
+      target = Dir.mktmpdir('content')
+      described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
+      base_sha = Dir.chdir(scratch) { `git rev-parse HEAD`.strip }
+
+      set_alias('Japanese page', 'About')
+
+      target2 = Dir.mktmpdir('content2')
+      wiki = described_class.new(scratch, fixture_options(unlisted_pages: Set[]).merge(prev_head: base_sha))
+      wiki.build(target2)
+      expect(wiki.send(:diff_paths, base_sha)).to eq([]) # provenance: incremental keep path ran
+      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
+      expect(row).not_to include('About')
+      expect(File.read(File.join(target2, 'About.md'))).to include('kind: article')
+      FileUtils.remove_entry(target)
+      FileUtils.remove_entry(target2)
+    end
+
+    # A non-colliding alias is still materialised as a redirect.
+    it 'writes a redirect for a free alias' do
+      FixtureWiki.build(scratch)
+      set_alias('Japanese page', 'Timeline of yuuki')
+
+      target = Dir.mktmpdir('content')
+      described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
+
+      expect(File.read(File.join(target, 'Timeline-of-yuuki.md'))).to include('kind: redirect')
+      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
+      expect(row).to include('Timeline of yuuki')
+      FileUtils.remove_entry(target)
     end
   end
 

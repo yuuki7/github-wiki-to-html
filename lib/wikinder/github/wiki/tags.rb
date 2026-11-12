@@ -38,11 +38,6 @@ module Wikinder
           offsets
         end
 
-        #: (Array[Integer], Integer, Integer) -> Integer
-        def self.byte_offset(offsets, line_number, column)
-          offsets[line_number - 1] + column - 1
-        end
-
         # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
         #: (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
         def self.typed_ranges(source, offsets)
@@ -63,8 +58,13 @@ module Wikinder
 
         #: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
         def self.range_for(offsets, source_position)
-          first = byte_offset(offsets, source_position[:start_line], source_position[:start_column])
-          last = byte_offset(offsets, source_position[:end_line], source_position[:end_column])
+          start_line = source_position[:start_line]
+          end_line = source_position[:end_line]
+          # Commonmarker's +end_column+ is the 1-based column of the *last*
+          # byte; an inclusive start column therefore maps to +column - 1+,
+          # while the exclusive span end maps to +column+ exactly.
+          first = offsets[start_line - 1] + source_position[:start_column] - 1
+          last = offsets[end_line - 1] + source_position[:end_column]
           first...last
         end
 
@@ -154,11 +154,15 @@ module Wikinder
           end
         end
 
-        # Quires the GitHub Wiki view on link resolution: the target is not
-        # checked against the actual page set. A wikilink to a missing page
-        # is rendered as a regular link (red-link semantics on the wiki's own
-        # page creator). Validation, if ever wanted, lives at the site layer
-        # where the catalogue of real slugs exists.
+        # Link targets are not checked against the actual page set — a
+        # wikilink to a missing page renders as a regular link (red-link
+        # semantics on the wiki's own page creator). Validation, if ever
+        # wanted, belongs at the site layer where the slug catalogue lives.
+        #
+        # The piped form never special-cases a leading '#': in gollum's one
+        # fixed rule the first thing is the display text, so [[#math|Math]]
+        # renders [#math](/Math). Anchor handling applies only to the
+        # single-part form ([[#anchor]] -> [anchor](#anchor)).
         #: (String) -> String
         def self.resolve_link_target(target)
           return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i

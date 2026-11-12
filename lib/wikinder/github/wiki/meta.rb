@@ -9,8 +9,15 @@ module Wikinder
       # Reads and writes META.md, syncing article rows with git history.
       #
       # Existing rows are kept (author, creation date, aliases are curated
-      # by hand), but modified_date and language are refreshed from git and
-      # rows for missing or deleted pages are rebuilt from history.
+      # by hand), but modified_date is refreshed from git and rows for
+      # missing or deleted pages are rebuilt from history. Language is
+      # detected once, when a row is created, and never refreshed — the
+      # detection is heuristic and flipping it after the fact would silently
+      # rewrite a value a human may already have reviewed.
+      #
+      # Aliases that slugify to a name already used by an existing page are
+      # dropped instead of rendering a redirect there: the existing page
+      # always wins over a generated redirect.
       #
       # With ignore_meta set, every row is rebuilt from history and the
       # previously committed META.md is disregarded.
@@ -86,6 +93,7 @@ module Wikinder
               rows[slug] ||= build_row(wiki, page)
             end
             rows.delete_if { |slug, _| !still_current.include?(slug) }
+            prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
             write(meta_path, rows)
             return rows
           end
@@ -104,8 +112,35 @@ module Wikinder
             rows[slug] = refresh_row(wiki, page, inherited)
           end
 
+          prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
           write(meta_path, rows)
           rows
+        end
+
+        # Drops aliases that slugify to a name already used by an existing
+        # page (generated or ungenerated), or to the row's own slug.
+        #
+        # An alias that resolves to the same slug as an existing page would
+        # produce a redirect file that shadows it — the existing page always
+        # wins. This also removes the stale alias from META.md itself, so a
+        # renamed-away name cannot be re-added by an automated pass, and a
+        # hand-curated alias whose name has since been claimed by another
+        # page is removed instead of shadowing it.
+        #
+        # Comparison is case-insensitive because the output target may live
+        # on a case-insensitive filesystem.
+        #: (Hash[String, meta_row], Array[String], Set[String]) -> void
+        def self.prune_colliding_aliases!(rows, pages, ungenerated_pages)
+          occupied = Set.new(ungenerated_pages.map(&:downcase))
+          pages.each { |page| occupied << File.basename(page, '.md').downcase }
+
+          rows.each_value do |row|
+            row_slug = row[:slug].to_s.downcase
+            row[:aliases] = row[:aliases].reject do |title|
+              slug = Slugs.for_title(title).downcase
+              occupied.include?(slug) || slug == row_slug
+            end
+          end
         end
 
         # Finds the row to inherit for a page, trying the current slug first
