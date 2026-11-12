@@ -25,6 +25,7 @@ module Wikinder
       # @rbs @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
       # @rbs @rename_deltas: Hash[String, String]
       # @rbs @ignore_meta: bool
+      # @rbs @prev_head: String?
 
       attr_reader :head #: String
       attr_reader :ungenerated_pages #: Set[String]
@@ -36,7 +37,9 @@ module Wikinder
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
       # @param options[:ignore_meta] Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
-      #: (String | Pathname, ?Hash[Symbol, Array[String] | Set[String] | bool]) -> void
+      # @param options[:prev_head] SHA of the commit this repo was last read
+      #   at. Used for incremental META.md sync.
+      #: (String | Pathname, ?wiki_options) -> void
       def initialize(path, options = {})
         @path = Pathname(path.to_s).expand_path
         @repo = Rugged::Repository.new(@path.to_s)
@@ -44,6 +47,8 @@ module Wikinder
         @ungenerated_pages = Array(options[:ungenerated_pages] || []).to_set.freeze
         @unlisted_pages = Array(options[:unlisted_pages] || []).to_set.freeze
         @ignore_meta = options[:ignore_meta] == true
+        prev_head = options[:prev_head]
+        @prev_head = prev_head.is_a?(String) ? prev_head : nil
       end
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
@@ -116,6 +121,7 @@ module Wikinder
 
       #: (String) -> Hash[Symbol, Rugged::Commit?]
       def commit_bounds_for(path)
+        path = path.b
         @commit_bounds ||= {} #: Hash[String, Hash[Symbol, Rugged::Commit?]]
         return @commit_bounds[path] if @commit_bounds.key?(path)
 
@@ -135,16 +141,43 @@ module Wikinder
         @commit_bounds[path] = { earliest: earliest, latest: latest }
       end
 
+      # Returns the file paths changed between two refs. A full rebuild
+      # returns nil (meaning "everything changed") so the sync treats every
+      # page as changed and rewrites every row.
+      #: (String?) -> Array[String]?
+      def diff_paths(from_ref)
+        return nil if from_ref.nil? || from_ref == @head
+
+        prev_commit = rev_parse(from_ref)
+        return nil unless prev_commit
+
+        prev_commit.diff(@repo.head.target)
+                   .deltas
+                   .flat_map { |delta| [delta.old_file[:path], delta.new_file[:path]] }
+                   .uniq
+      end
+
+      #: (String) -> Rugged::Commit?
+      def rev_parse(from_ref)
+        @repo.rev_parse(from_ref)
+      rescue Rugged::ReferenceError
+        nil
+      end
+
       # Returns the file paths this page was renamed from, most recent first,
       # based on git rename detection across history.
       #: (String) -> Array[String]
       def rename_history_for(path)
         renames = rename_deltas #: Hash[String, String]
         result = [] #: Array[String]
-        current = path
+        current = path.b
+        visited = [current] #: Array[String]
         until (predecessor = renames[current]).nil?
+          break if visited.include?(predecessor) # guard against rename cycles
+
           result << predecessor
           current = predecessor
+          visited << current
         end
         result
       end
@@ -164,8 +197,11 @@ module Wikinder
               next unless delta.status == :renamed
 
               # keep the earliest predecessor for each target (walked from HEAD,
-              # so first seen wins)
-              map[delta.old_file[:path]] ||= delta.new_file[:path]
+              # so first seen wins). Byte-compare paths like touched? does,
+              # because rugged hands back ASCII-8BIT path strings.
+              child = delta.old_file[:path].b
+              parent = delta.new_file[:path].b
+              map[child] ||= parent
             end
           end
           map
@@ -198,7 +234,7 @@ module Wikinder
       # The wiki repository is flat: all pages live at the repository root,
       # so a single tree lookup resolves the path.
 
-      #: (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
+      #: (String, ?Hash[String, meta_row]) -> String
       def article_front_matter(page_name, meta = {})
         slug = File.basename(page_name, '.md')
         row = meta[slug]
@@ -277,7 +313,7 @@ module Wikinder
         end
       end
 
-      #: (Hash[String, Hash[Symbol, untyped]], String) -> void
+      #: (Hash[String, meta_row], String) -> void
       def write_redirects(meta, target_dir)
         meta.each do |target_slug, row|
           row[:aliases].each do |title|

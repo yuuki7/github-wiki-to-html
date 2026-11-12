@@ -8,6 +8,8 @@ module Wikinder
     # rewrites wiki-specific syntax, and produces YAML front matter
     # with metadata for downstream consumers.
     class Wiki
+      @prev_head: String?
+
       @ignore_meta: bool
 
       @rename_deltas: Hash[String, String]
@@ -30,8 +32,10 @@ module Wikinder
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
       # @param options[:ignore_meta] Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
-      # : (String | Pathname, ?Hash[Symbol, Array[String] | Set[String] | bool]) -> void
-      def initialize: (String | Pathname, ?Hash[Symbol, Array[String] | Set[String] | bool]) -> void
+      # @param options[:prev_head] SHA of the commit this repo was last read
+      #   at. Used for incremental META.md sync.
+      # : (String | Pathname, ?wiki_options) -> void
+      def initialize: (String | Pathname, ?wiki_options) -> void
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       # Builds the entire output tree, writing Markdown files with YAML front matter.
@@ -57,6 +61,15 @@ module Wikinder
       # : (String) -> Hash[Symbol, Rugged::Commit?]
       def commit_bounds_for: (String) -> Hash[Symbol, Rugged::Commit?]
 
+      # Returns the file paths changed between two refs. A full rebuild
+      # returns nil (meaning "everything changed") so the sync treats every
+      # page as changed and rewrites every row.
+      # : (String?) -> Array[String]?
+      def diff_paths: (String?) -> Array[String]?
+
+      # : (String) -> Rugged::Commit?
+      def rev_parse: (String) -> Rugged::Commit?
+
       # Returns the file paths this page was renamed from, most recent first,
       # based on git rename detection across history.
       # : (String) -> Array[String]
@@ -78,8 +91,8 @@ module Wikinder
       # : (Rugged::Commit, String) -> bool
       def touched?: (Rugged::Commit, String) -> bool
 
-      # : (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
-      def article_front_matter: (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
+      # : (String, ?Hash[String, meta_row]) -> String
+      def article_front_matter: (String, ?Hash[String, meta_row]) -> String
 
       # : (String) -> String
       def title_for: (String) -> String
@@ -92,8 +105,8 @@ module Wikinder
       # : (String) -> void
       def write_assets: (String) -> void
 
-      # : (Hash[String, Hash[Symbol, untyped]], String) -> void
-      def write_redirects: (Hash[String, Hash[Symbol, untyped]], String) -> void
+      # : (Hash[String, meta_row], String) -> void
+      def write_redirects: (Hash[String, meta_row], String) -> void
     end
   end
 end

@@ -1,14 +1,16 @@
+type wiki_options = {
+  ?ignore_meta: bool,
+  ?prev_head: String?,
+  ?ungenerated_pages: Set[String],
+  ?unlisted_pages: Set[String]
+}
+
 type meta_row = {
+  slug: String,
+  title: String,
   author: String,
   creation_date: String,
   modified_date: String,
   language: String,
   aliases: Array[String]
-}
-
-type wiki_options = {
-  ?prev_head: String?,
-  ?ignore_meta: bool,
-  ?ungenerated_pages: Set[String],
-  ?unlisted_pages: Set[String]
 }

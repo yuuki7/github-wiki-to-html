@@ -25,6 +25,10 @@ module Rugged
     def head: () -> Ref
     def lookup: (String) -> Blob
     def walk: (String, ?Symbol) -> Enumerator[Commit, void]
+    def rev_parse: (String) -> Commit
+  end
+
+  class ReferenceError < RuntimeError
   end
 
   class Blob

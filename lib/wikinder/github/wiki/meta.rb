@@ -23,12 +23,12 @@ module Wikinder
         ].freeze #: Array[String]
         ALIAS_SEPARATOR = '<br>' #: String
 
-        #: (Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+        #: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
         def self.load(meta_path, ignore_meta: false)
           return {} if ignore_meta
           return {} unless meta_path.exist?
 
-          result = {} #: Hash[String, Hash[Symbol, untyped]]
+          result = {} #: Hash[String, meta_row]
           meta_path.each_line do |line|
             row = parse_row(line.chomp)
             result[row[:slug]] = row if row
@@ -36,7 +36,7 @@ module Wikinder
           result
         end
 
-        #: (String) -> Hash[Symbol, untyped]?
+        #: (String) -> meta_row?
         def self.parse_row(line)
           return nil unless line.start_with?('|') && line.end_with?('|')
 
@@ -63,43 +63,84 @@ module Wikinder
 
         # Syncs META.md with the given pages and returns the merged rows,
         # keyed by slug.
-        #: (Wiki, Array[String], Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
-        def self.sync!(wiki, pages, meta_path, ignore_meta: false)
+        # Reads the rows already present in META.md and merges them with
+        # what git says. With prev_head available, pages untouched since
+        # prev_head keep their row verbatim (incremental sync).
+        #: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
+        def self.sync!(wiki, pages, meta_path, ignore_meta: false, prev_head: nil)
+          # diff_paths returns nil for "full rebuild" (ignore_meta or no valid
+          # prev_head); it returns the exact list of paths touched since
+          # prev_head otherwise.
           previously = load(meta_path, ignore_meta: ignore_meta)
-          rows = {} #: Hash[String, Hash[Symbol, untyped]]
+          rows = {} #: Hash[String, meta_row]
+
+          changed = prev_head.nil? || ignore_meta ? nil : wiki.diff_paths(prev_head)
+
+          if changed && changed.empty?
+            # Nothing in the repo changed. Honour the existing rows as-is,
+            # dropping rows whose pages no longer exist (defensive guard).
+            still_current = Set.new(pages.map { |page| File.basename(page, '.md') })
+            previously.each { |slug, row| rows[slug] = row }
+            pages.each do |page|
+              slug = File.basename(page, '.md')
+              rows[slug] ||= build_row(wiki, page)
+            end
+            rows.delete_if { |slug, _| !still_current.include?(slug) }
+            write(meta_path, rows)
+            return rows
+          end
 
           pages.each do |page|
             slug = File.basename(page, '.md')
-            bounds = wiki.commit_bounds_for(page)
-            last = bounds[:latest]
-            first = bounds[:earliest]
-            renames = wiki.rename_history_for(page)
-            rename_slugs = renames.map { |p| File.basename(p, '.md') }
-            row = previously[slug] || rename_slugs.lazy.map { |s| previously[s] }.compact.first
-            if row
-              # Keep curated fields; refresh what git knows.
-              row = row.dup
-              row[:slug] = slug
-              row[:title] = Slugs.title_for(slug)
-              row[:modified_date] = last.time.utc.iso8601 if last
-              aliases = rename_slugs.map { |s| Slugs.title_for(s) }
-              row[:aliases] = merge_aliases(row[:aliases], aliases)
-            else
-              row = {
-                slug: slug,
-                title: Slugs.title_for(slug),
-                author: first ? first.author[:name] || 'unknown' : 'unknown',
-                creation_date: first ? first.time.utc.iso8601 : 'unknown',
-                modified_date: last ? last.time.utc.iso8601 : 'unknown',
-                language: Language.call(wiki.text_for(page)),
-                aliases: rename_slugs.map { |s| Slugs.title_for(s) }
-              }
-            end
-            rows[slug] = row
+            already = previously.key?(slug)
+            next if changed && already && !changed.include?(page)
+
+            rows[slug] = refresh_row(wiki, page, previously[slug])
           end
 
           write(meta_path, rows)
           rows
+        end
+
+        # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
+        #: (Wiki, String, meta_row?) -> meta_row
+        def self.refresh_row(wiki, page, previous)
+          slug = File.basename(page, '.md')
+          bounds = wiki.commit_bounds_for(page)
+          last = bounds[:latest]
+          renames = wiki.rename_history_for(page)
+          aliases = renames.map { |name| Slugs.title_for(File.basename(name, '.md')) }
+
+          if previous
+            row = previous.dup
+            row[:slug] = slug
+            row[:title] = Slugs.title_for(slug)
+            row[:modified_date] = last.time.utc.iso8601 if last
+            row[:aliases] = merge_aliases(row[:aliases], aliases)
+            return row
+          end
+
+          build_row(wiki, page, bounds, renames)
+        end
+
+        # Builds a fresh row purely from git + text.
+        #: (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
+        def self.build_row(wiki, page, bounds = nil, renames = nil)
+          slug = File.basename(page, '.md')
+          bounds ||= wiki.commit_bounds_for(page)
+          renames ||= wiki.rename_history_for(page)
+          last = bounds[:latest]
+          first = bounds[:earliest]
+
+          {
+            slug: slug,
+            title: Slugs.title_for(slug),
+            author: first ? first.author[:name] || 'unknown' : 'unknown',
+            creation_date: first ? first.time.utc.iso8601 : 'unknown',
+            modified_date: last ? last.time.utc.iso8601 : 'unknown',
+            language: Language.call(wiki.text_for(page)),
+            aliases: renames.map { |name| Slugs.title_for(File.basename(name, '.md')) }
+          }
         end
 
         #: (Array[String], Array[String]) -> Array[String]
@@ -107,7 +148,7 @@ module Wikinder
           (existing + absorbed).uniq.reject(&:empty?)
         end
 
-        #: (Pathname, Hash[String, Hash[Symbol, untyped]]) -> void
+        #: (Pathname, Hash[String, meta_row]) -> void
         def self.write(meta_path, rows)
           sorted = rows.values.sort do |a, b|
             (b[:creation_date] <=> a[:creation_date]).nonzero? || (a[:slug] <=> b[:slug])

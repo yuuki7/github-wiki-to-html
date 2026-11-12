@@ -18,22 +18,33 @@ module Wikinder
 
         ALIAS_SEPARATOR: String
 
-        # : (Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
-        def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+        # : (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
+        def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
 
-        # : (String) -> Hash[Symbol, untyped]?
-        def self.parse_row: (String) -> Hash[Symbol, untyped]?
+        # : (String) -> meta_row?
+        def self.parse_row: (String) -> meta_row?
 
         # Syncs META.md with the given pages and returns the merged rows,
         # keyed by slug.
-        # : (Wiki, Array[String], Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
-        def self.sync!: (Wiki, Array[String], Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+        # Reads the rows already present in META.md and merges them with
+        # what git says. With prev_head available, pages untouched since
+        # prev_head keep their row verbatim (incremental sync).
+        # : (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
+        def self.sync!: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
+
+        # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
+        # : (Wiki, String, meta_row?) -> meta_row
+        def self.refresh_row: (Wiki, String, meta_row?) -> meta_row
+
+        # Builds a fresh row purely from git + text.
+        # : (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
+        def self.build_row: (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
 
         # : (Array[String], Array[String]) -> Array[String]
         def self.merge_aliases: (Array[String], Array[String]) -> Array[String]
 
-        # : (Pathname, Hash[String, Hash[Symbol, untyped]]) -> void
-        def self.write: (Pathname, Hash[String, Hash[Symbol, untyped]]) -> void
+        # : (Pathname, Hash[String, meta_row]) -> void
+        def self.write: (Pathname, Hash[String, meta_row]) -> void
       end
     end
   end
