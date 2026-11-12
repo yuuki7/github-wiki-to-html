@@ -28,7 +28,10 @@ module Rugged
     def rev_parse: (String) -> Commit
   end
 
-  class ReferenceError < RuntimeError
+  class Error < StandardError
+  end
+
+  class ReferenceError < Error
   end
 
   class Blob

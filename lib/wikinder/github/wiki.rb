@@ -63,7 +63,7 @@ module Wikinder
 
         pages = collect_pages
         meta_path = Pathname(@path.to_s) / 'META.md'
-        meta = Meta.sync!(self, pages, meta_path, ignore_meta: @ignore_meta)
+        meta = Meta.sync!(self, pages, meta_path, ignore_meta: @ignore_meta, prev_head: @prev_head)
 
         pages.each do |page|
           front_matter = article_front_matter(page, meta)
@@ -160,7 +160,7 @@ module Wikinder
       #: (String) -> Rugged::Commit?
       def rev_parse(from_ref)
         @repo.rev_parse(from_ref)
-      rescue Rugged::ReferenceError
+      rescue Rugged::Error
         nil
       end
 

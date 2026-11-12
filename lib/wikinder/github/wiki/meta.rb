@@ -93,7 +93,10 @@ module Wikinder
           pages.each do |page|
             slug = File.basename(page, '.md')
             already = previously.key?(slug)
-            next if changed && already && !changed.include?(page)
+            if !changed.nil? && already && changed.none? { |path| path.b == page.b }
+              rows[slug] = previously[slug].dup
+              next
+            end
 
             rows[slug] = refresh_row(wiki, page, previously[slug])
           end
