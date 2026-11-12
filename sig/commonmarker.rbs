@@ -1,13 +1,9 @@
 module Commonmarker
+  def self.parse: (String, options: Hash[Symbol, Hash[Symbol, bool | Integer | String]]) -> Node
+
   class Node
     def type: () -> Symbol
-    def each: () { (Node) -> void } -> untyped
-    def walk: () { (Node) -> void } -> untyped
-    def string_content: () -> String
-    def literal: () -> String
     def source_position: () -> Hash[Symbol, Integer]
+    def walk: () { (Node) -> void } -> void
   end
-
-  def self.parse: (String, options: untyped) -> Node
-  def self.to_html: (String, options: untyped) -> String
 end

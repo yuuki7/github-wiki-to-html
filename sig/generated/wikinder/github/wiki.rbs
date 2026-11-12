@@ -63,8 +63,8 @@ module Wikinder
 
       # The wiki repository is flat: all pages live at the repository root,
       # so a single tree lookup resolves the path.
-      # : (String) -> Rugged::Entry?
-      def tree_entry: (String) -> Rugged::Entry?
+      # : (String) -> Rugged::tree_entry?
+      def tree_entry: (String) -> Rugged::tree_entry?
 
       # : () -> Hash[String, meta_row]
       def parse_meta: () -> Hash[String, meta_row]

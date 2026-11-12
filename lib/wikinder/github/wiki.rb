@@ -140,7 +140,7 @@ module Wikinder
 
       # The wiki repository is flat: all pages live at the repository root,
       # so a single tree lookup resolves the path.
-      #: (String) -> Rugged::Entry?
+      #: (String) -> Rugged::tree_entry?
       def tree_entry(path)
         @repo.head.target.tree[path]
       end

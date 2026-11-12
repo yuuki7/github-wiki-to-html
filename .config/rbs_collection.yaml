@@ -13,8 +13,15 @@ sources:
 # A directory to install the downloaded RBSs
 path: .gem_rbs_collection
 
-# Rugged and WhatLanguage are not published in gem_rbs_collection,
-# so they are covered by the hand-written sig/rugged.rbs and sig/whatlanguage.rbs.
+# Commonmarker is published in gem_rbs_collection only as a v1-targeted,
+# untyped signature, which matches neither the installed gem nor its API.
+# Rugged and WhatLanguage are not published there at all.
+# All three are therefore covered by hand-written signatures under sig/,
+# and are excluded from auto-assignment even if upstream publishes them.
 gems:
   - name: commonmarker
-  - name: strscan
+    ignore: true
+  - name: rugged
+    ignore: true
+  - name: whatlanguage
+    ignore: true

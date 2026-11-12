@@ -1,4 +1,25 @@
 module Rugged
+  type actor = {
+    name: String,
+    email: String,
+    time: Time
+  }
+
+  type tree_entry = {
+    name: String,
+    oid: String,
+    filemode: Integer,
+    type: Symbol
+  }
+
+  type delta_file = {
+    oid: String,
+    path: String,
+    size: Integer,
+    flags: Integer,
+    mode: Integer
+  }
+
   class Repository
     def initialize: (String) -> void
     def head: () -> Ref
@@ -12,30 +33,26 @@ module Rugged
   end
 
   class Tree
-    def []: (String) -> Entry?
-    def walk: (Symbol) { (String, Entry) -> void } -> void
-  end
-
-  class Entry
-    attr_reader oid: String
-    attr_reader type: Symbol
-    attr_reader name: String
-    attr_reader filemode: Integer
-
-    def []: (Symbol) -> untyped
+    def []: (String) -> tree_entry?
+    def walk: (Symbol) { (String, tree_entry) -> void } -> void
   end
 
   class Diff
-    def deltas: () -> Array[untyped]
+    def deltas: () -> Array[Delta]
+
+    class Delta
+      def old_file: () -> delta_file
+      def new_file: () -> delta_file
+    end
   end
 
   class Commit
     def tree: () -> Tree
     def id: () -> String
     def time: () -> Time
-    def author: () -> Hash[Symbol, untyped]
+    def author: () -> actor
     def parents: () -> Array[Commit]
-    def diff: (Commit?) -> untyped
+    def diff: (Commit?) -> Diff
   end
 
   class Ref
