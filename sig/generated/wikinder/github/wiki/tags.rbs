@@ -58,6 +58,11 @@ module Wikinder
         # : (String) -> [String, String]
         def self.split_ref: (String) -> [ String, String ]
 
+        # Quires the GitHub Wiki view on link resolution: the target is not
+        # checked against the actual page set. A wikilink to a missing page
+        # is rendered as a regular link (red-link semantics on the wiki's own
+        # page creator). Validation, if ever wanted, lives at the site layer
+        # where the catalogue of real slugs exists.
         # : (String) -> String
         def self.resolve_link_target: (String) -> String
 

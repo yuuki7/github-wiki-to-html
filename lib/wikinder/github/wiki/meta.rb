@@ -2,8 +2,6 @@
 # rbs_inline: enabled
 
 require 'fileutils'
-require 'pathname'
-require 'commonmarker'
 
 module Wikinder
   module GitHub
@@ -17,7 +15,8 @@ module Wikinder
       # With ignore_meta set, every row is rebuilt from history and the
       # previously committed META.md is disregarded.
       module Meta
-        META_HEADERS = ['Title', 'Author', 'Creation date', 'Modified date', 'Language', 'Aliases'].freeze #: Array[String]
+        META_HEADERS = ['Title', 'Author', 'Creation date',
+                        'Modified date', 'Language', 'Aliases'].freeze #: Array[String]
         META_TABLE_HEADER = [
           "| #{META_HEADERS.join(' | ')} |",
           "| #{Array.new(META_HEADERS.size, '---').join(' | ')} |"
@@ -89,9 +88,9 @@ module Wikinder
               row = {
                 slug: slug,
                 title: Slugs.title_for(slug),
-                author: last&.author&.[](:name) || 'unknown',
-                creation_date: first&.time&.utc&.iso8601 || 'unknown',
-                modified_date: last&.time&.utc&.iso8601 || 'unknown',
+                author: first ? first.author[:name] || 'unknown' : 'unknown',
+                creation_date: first ? first.time.utc.iso8601 : 'unknown',
+                modified_date: last ? last.time.utc.iso8601 : 'unknown',
                 language: Language.call(wiki.text_for(page)),
                 aliases: rename_slugs.map { |s| Slugs.title_for(s) }
               }
@@ -128,7 +127,7 @@ module Wikinder
             lines << "|#{inner}|"
           end
           content = lines.join("\n") << "\n"
-          return meta_path.write(content) if !meta_path.exist? || meta_path.read == content
+          return if meta_path.exist? && meta_path.read == content
 
           meta_path.write(content)
         end

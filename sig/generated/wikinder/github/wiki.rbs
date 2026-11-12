@@ -10,6 +10,8 @@ module Wikinder
     class Wiki
       @ignore_meta: bool
 
+      @rename_deltas: Hash[String, String]
+
       @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
 
       @repo: Rugged::Repository
@@ -60,26 +62,21 @@ module Wikinder
       # : (String) -> Array[String]
       def rename_history_for: (String) -> Array[String]
 
+      # Builds a map of rename deltas across the full history: every file path
+      # that was ever renamed maps to its predecessor path.
+      # : () -> Hash[String, String]
+      def rename_deltas: () -> Hash[String, String]
+
       private
 
       # : (String) -> String
       def render_page: (String) -> String
-
-      # Computes the bounds of commits touching a path over the full history.
-      # Bounds are min/max by commit time; walk order does not matter.
-      # : (String) -> String
-      def author_for: (String) -> String
 
       # : (String) -> String
       def detect_language: (String) -> String
 
       # : (Rugged::Commit, String) -> bool
       def touched?: (Rugged::Commit, String) -> bool
-
-      # The wiki repository is flat: all pages live at the repository root,
-      # so a single tree lookup resolves the path.
-      # : () -> Hash[String, meta_row]
-      def parse_meta: () -> Hash[String, meta_row]
 
       # : (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
       def article_front_matter: (String, ?Hash[String, Hash[Symbol, untyped]]) -> String

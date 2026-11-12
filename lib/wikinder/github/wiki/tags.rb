@@ -133,8 +133,8 @@ module Wikinder
         #: (String) -> [String, String]
         def self.image_parts(ref)
           if ref.include?('|')
-            display, target = ref.split('|', 2).map(&:strip)
-            [target.to_s, display.to_s]
+            target, caption = ref.split('|', 2).map(&:strip)
+            [target.to_s, caption.to_s]
           else
             [ref, File.basename(ref, '.*')]
           end
@@ -154,6 +154,11 @@ module Wikinder
           end
         end
 
+        # Quires the GitHub Wiki view on link resolution: the target is not
+        # checked against the actual page set. A wikilink to a missing page
+        # is rendered as a regular link (red-link semantics on the wiki's own
+        # page creator). Validation, if ever wanted, lives at the site layer
+        # where the catalogue of real slugs exists.
         #: (String) -> String
         def self.resolve_link_target(target)
           return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
@@ -168,7 +173,7 @@ module Wikinder
         def self.image_target?(ref)
           return false if ref.start_with?('#')
 
-          target = ref.include?('|') ? ref.split('|', 2)[1].to_s.strip : ref
+          target = ref.include?('|') ? ref.split('|', 2)[0].to_s.strip : ref
           target.match?(IMAGE_EXTENSIONS)
         end
 

@@ -23,6 +23,7 @@ module Wikinder
       # @rbs @path: Pathname
       # @rbs @repo: Rugged::Repository
       # @rbs @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
+      # @rbs @rename_deltas: Hash[String, String]
       # @rbs @ignore_meta: bool
 
       attr_reader :head #: String
@@ -120,16 +121,16 @@ module Wikinder
 
         earliest = nil #: Rugged::Commit?
         latest = nil #: Rugged::Commit?
+        # Include commits that touched any of the paths this page was
+        # renamed from, so tree/time bounds reflect the history of the
+        # logical page across renames.
+        paths = [path] + rename_history_for(path)
         @repo.walk('HEAD').each do |commit|
-          next unless touched?(commit, path)
+          next unless paths.any? { |candidate| touched?(commit, candidate) }
 
           time = commit.time
-          if earliest.nil? || time < earliest.time
-            earliest = commit
-          end
-          if latest.nil? || time > latest.time
-            latest = commit
-          end
+          earliest = commit if earliest.nil? || time < earliest.time
+          latest = commit if latest.nil? || time > latest.time
         end
         @commit_bounds[path] = { earliest: earliest, latest: latest }
       end
@@ -138,20 +139,37 @@ module Wikinder
       # based on git rename detection across history.
       #: (String) -> Array[String]
       def rename_history_for(path)
-        matches = [] #: Array[String]
-        @repo.walk('HEAD').each do |commit|
-          next if commit.parents.empty?
-
-          diff = commit.diff(commit.parents.first)
-          diff.find_similar!(renames: true)
-          diff.deltas.each do |delta|
-            next unless delta.status == :renamed
-            next unless delta.old_file[:path].b == path.b
-
-            matches << delta.new_file[:path] # commit.diff(parent) reports: old_file = this commit, new_file = parent
-          end
+        renames = rename_deltas #: Hash[String, String]
+        result = [] #: Array[String]
+        current = path
+        until (predecessor = renames[current]).nil?
+          result << predecessor
+          current = predecessor
         end
-        matches
+        result
+      end
+
+      # Builds a map of rename deltas across the full history: every file path
+      # that was ever renamed maps to its predecessor path.
+      #: () -> Hash[String, String]
+      def rename_deltas
+        @rename_deltas ||= begin
+          map = {} #: Hash[String, String]
+          @repo.walk('HEAD').each do |commit|
+            next if commit.parents.empty?
+
+            diff = commit.diff(commit.parents.first)
+            diff.find_similar!(renames: true)
+            diff.deltas.each do |delta|
+              next unless delta.status == :renamed
+
+              # keep the earliest predecessor for each target (walked from HEAD,
+              # so first seen wins)
+              map[delta.old_file[:path]] ||= delta.new_file[:path]
+            end
+          end
+          map
+        end
       end
 
       private
@@ -159,13 +177,6 @@ module Wikinder
       #: (String) -> String
       def render_page(name)
         Tags.render(text_for(name))
-      end
-
-      # Computes the bounds of commits touching a path over the full history.
-      # Bounds are min/max by commit time; walk order does not matter.
-      #: (String) -> String
-      def author_for(path)
-        (commit = commit_bounds_for(path)[:latest]) ? commit.author[:name] || 'unknown' : 'unknown'
       end
 
       #: (String) -> String
@@ -186,41 +197,6 @@ module Wikinder
 
       # The wiki repository is flat: all pages live at the repository root,
       # so a single tree lookup resolves the path.
-      #: () -> Hash[String, meta_row]
-      def parse_meta
-        return {} if @ignore_meta
-
-        path = 'META.md'
-        entry = tree_entry(path)
-        return {} unless entry
-
-        body = @repo.lookup(entry[:oid]).content.force_encoding(Encoding::UTF_8)
-        result = {} #: Hash[String, meta_row]
-        body.each_line.with_index do |line, i|
-          next if i < 2
-
-          row = line.chomp
-          next unless row.start_with?('|') && row.end_with?('|')
-
-          cells = Array(row.split('|', -1)[1..-2]).map(&:strip)
-          next if cells.length < 6
-
-          item_title = cells[0]
-          title_match = item_title.match(/\[\[([^\]]+)\]\]/)
-          next unless title_match
-
-          title = title_match[1].strip
-          slug = Slugs.for_title(title)
-          result[slug] = {
-            author: cells[1],
-            creation_date: cells[2],
-            modified_date: cells[3],
-            language: cells[4],
-            aliases: cells[5].split('<br>').map(&:strip).reject(&:empty?)
-          }
-        end
-        result
-      end
 
       #: (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
       def article_front_matter(page_name, meta = {})
@@ -229,9 +205,27 @@ module Wikinder
         bounds = commit_bounds_for(page_name)
         last = bounds[:latest]
         first = bounds[:earliest]
-        author = row ? row[:author] : (last ? last.author[:name] : 'unknown')
-        creation_date = row ? row[:creation_date] : (first ? first.time.utc.iso8601 : 'unknown')
-        modified_date = row ? row[:modified_date] : (last ? last.time.utc.iso8601 : 'unknown')
+        author = if row
+                   row[:author]
+                 elsif last
+                   last.author[:name]
+                 else
+                   'unknown'
+                 end
+        creation_date = if row
+                          row[:creation_date]
+                        elsif first
+                          first.time.utc.iso8601
+                        else
+                          'unknown'
+                        end
+        modified_date = if row
+                          row[:modified_date]
+                        elsif last
+                          last.time.utc.iso8601
+                        else
+                          'unknown'
+                        end
         language = row ? row[:language] : detect_language(text_for(page_name))
         front_matter = {
           'kind' => 'article',
