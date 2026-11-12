@@ -8,7 +8,9 @@ module Wikinder
     # rewrites wiki-specific syntax, and produces YAML front matter
     # with metadata for downstream consumers.
     class Wiki
-      @earliest: Hash[String, Rugged::Commit?]
+      @ignore_meta: bool
+
+      @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
 
       @repo: Rugged::Repository
 
@@ -24,8 +26,10 @@ module Wikinder
       #
       # @param path [String | Pathname] path to the wiki repository.
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
-      # : (String | Pathname, ?Hash[Symbol, Array[String] | Set[String]]) -> void
-      def initialize: (String | Pathname, ?Hash[Symbol, Array[String] | Set[String]]) -> void
+      # @param options[:ignore_meta] Ignore committed META.md and derive
+      #   authorship metadata from git history instead. Used for testing.
+      # : (String | Pathname, ?Hash[Symbol, Array[String] | Set[String] | bool]) -> void
+      def initialize: (String | Pathname, ?Hash[Symbol, Array[String] | Set[String] | bool]) -> void
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       # Builds the entire output tree, writing Markdown files with YAML front matter.
@@ -40,20 +44,31 @@ module Wikinder
       # : () -> Array[String]
       def collect_pages: () -> Array[String]
 
+      public
+
+      # : (String) -> Rugged::tree_entry?
+      def tree_entry: (String) -> Rugged::tree_entry?
+
       # : (String) -> String
       def text_for: (String) -> String
+
+      # : (String) -> Hash[Symbol, Rugged::Commit?]
+      def commit_bounds_for: (String) -> Hash[Symbol, Rugged::Commit?]
+
+      # Returns the file paths this page was renamed from, most recent first,
+      # based on git rename detection across history.
+      # : (String) -> Array[String]
+      def rename_history_for: (String) -> Array[String]
+
+      private
 
       # : (String) -> String
       def render_page: (String) -> String
 
-      # : (String) -> Rugged::Commit?
-      def earliest_commit_for: (String) -> Rugged::Commit?
-
-      # : () -> String
-      def head_commit_date: () -> String
-
-      # : () -> String
-      def head_author: () -> String
+      # Computes the bounds of commits touching a path over the full history.
+      # Bounds are min/max by commit time; walk order does not matter.
+      # : (String) -> String
+      def author_for: (String) -> String
 
       # : (String) -> String
       def detect_language: (String) -> String
@@ -63,14 +78,11 @@ module Wikinder
 
       # The wiki repository is flat: all pages live at the repository root,
       # so a single tree lookup resolves the path.
-      # : (String) -> Rugged::tree_entry?
-      def tree_entry: (String) -> Rugged::tree_entry?
-
       # : () -> Hash[String, meta_row]
       def parse_meta: () -> Hash[String, meta_row]
 
-      # : (String, ?Hash[String, meta_row]) -> String
-      def article_front_matter: (String, ?Hash[String, meta_row]) -> String
+      # : (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
+      def article_front_matter: (String, ?Hash[String, Hash[Symbol, untyped]]) -> String
 
       # : (String) -> String
       def title_for: (String) -> String
@@ -78,8 +90,13 @@ module Wikinder
       # : (String, String) -> void
       def write_special: (String, String) -> void
 
-      # : (Hash[String, meta_row], String) -> void
-      def write_redirects: (Hash[String, meta_row], String) -> void
+      # Copies image attachments next to the pages so Astro can resolve
+      # relative image references ([[readme.png]] etc.).
+      # : (String) -> void
+      def write_assets: (String) -> void
+
+      # : (Hash[String, Hash[Symbol, untyped]], String) -> void
+      def write_redirects: (Hash[String, Hash[Symbol, untyped]], String) -> void
     end
   end
 end

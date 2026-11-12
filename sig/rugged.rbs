@@ -39,10 +39,12 @@ module Rugged
 
   class Diff
     def deltas: () -> Array[Delta]
+    def find_similar!: (?Hash[Symbol, bool]) -> Diff
 
     class Delta
       def old_file: () -> delta_file
       def new_file: () -> delta_file
+      def status: () -> Symbol
     end
   end
 

@@ -4,8 +4,10 @@
 .yardoc/
 dist/*
 node_modules/
-md/
+md/*
 !dist/Wikinder.html
 !dist/index.html
+!md/Wikinder.md
+!md/Home.md
 .cache/
 site.json

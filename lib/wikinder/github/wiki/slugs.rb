@@ -6,14 +6,12 @@ module Wikinder
     class Wiki
       # Consistent title ↔ slug conversion shared across the suite.
       module Slugs
-        # Map any whitespace punctuation to single hyphens.
+        # Map ASCII spaces to hyphens, mirroring gollum's hyphened_tag_lookup
+        # (path_compare): a literal site <-> filename transform, not collapsing.
+        # Underscores and other punctuation pass through unchanged.
         #: (String) -> String
         def self.for_title(title)
-          out = title.strip
-          out = out.gsub(/[\x00-\x20[:space:]]+/, '-')
-          out = out.tr('_', '-')
-          out = out.gsub(/-+/, '-')
-          out.gsub(/\A-|-\z/, '')
+          title.strip.gsub(' ', '-')
         end
 
         #: (String) -> String

@@ -8,16 +8,23 @@ require 'tmpdir'
 require 'yaml'
 
 RSpec.describe Wikinder::GitHub::Wiki do
-  let(:path) { File.expand_path('../../../../yuukinder.wiki', __dir__) }
+  let(:source_path) { File.expand_path('../../../../yuukinder.wiki', __dir__) }
+  # Tests operate on a throwaway copy of the wiki so that META.md updates
+  # do not touch the real working tree.
+  let(:path) { Dir.mktmpdir('wiki') }
   let(:ungenerated_pages) { Set['Home', 'README', 'LICENSE', 'META', '_Footer'] }
   let(:unlisted_pages) { Set['Wikinder', 'Wikinder-Japan'] }
-  let(:wiki) do
-    options = { ungenerated_pages:, unlisted_pages: }
-    described_class.new(path, options)
-  end
+  let(:default_options) { { ungenerated_pages:, unlisted_pages: } }
+  let(:wiki) { described_class.new(path, default_options) }
+  let(:ignore_meta_wiki) { described_class.new(path, default_options.merge(ignore_meta: true)) }
   let(:target) { Dir.mktmpdir('content') }
 
+  before do
+    FileUtils.cp_r(File.join(source_path, '.'), path)
+  end
+
   after do
+    FileUtils.remove_entry(path)
     FileUtils.remove_entry(target)
   end
 
@@ -62,6 +69,17 @@ RSpec.describe Wikinder::GitHub::Wiki do
         expect(%w[article redirect special]).to include(meta['kind'])
         expect(meta['title']).to be_a(String)
       end
+    end
+
+    # --ignore-meta exercises the git-history fallback for authorship metadata.
+    it 'derives metadata from git history when META.md is ignored' do
+      ignore_meta_wiki.build(target)
+      article = Dir.glob(File.join(target, '*.md')).map { |name| YAML.safe_load(File.read(name).split("---\n")[1]) }
+                .find { |meta| meta['kind'] == 'article' }
+      expect(article['creation_date']).to match(/\A\d{4}-\d{2}-\d{2}T/)
+      expect(article['modified_date']).to match(/\A\d{4}-\d{2}-\d{2}T/)
+      expect(article['author']).to be_a(String)
+      expect(article['author']).not_to be_empty
     end
   end
 end

@@ -1,0 +1,40 @@
+# Generated from lib/wikinder/github/wiki/meta.rb with RBS::Inline
+
+module Wikinder
+  module GitHub
+    class Wiki
+      # Reads and writes META.md, syncing article rows with git history.
+      #
+      # Existing rows are kept (author, creation date, aliases are curated
+      # by hand), but modified_date and language are refreshed from git and
+      # rows for missing or deleted pages are rebuilt from history.
+      #
+      # With ignore_meta set, every row is rebuilt from history and the
+      # previously committed META.md is disregarded.
+      module Meta
+        META_HEADERS: Array[String]
+
+        META_TABLE_HEADER: Array[String]
+
+        ALIAS_SEPARATOR: String
+
+        # : (Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+        def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+
+        # : (String) -> Hash[Symbol, untyped]?
+        def self.parse_row: (String) -> Hash[Symbol, untyped]?
+
+        # Syncs META.md with the given pages and returns the merged rows,
+        # keyed by slug.
+        # : (Wiki, Array[String], Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+        def self.sync!: (Wiki, Array[String], Pathname, ?ignore_meta: bool) -> Hash[String, Hash[Symbol, untyped]]
+
+        # : (Array[String], Array[String]) -> Array[String]
+        def self.merge_aliases: (Array[String], Array[String]) -> Array[String]
+
+        # : (Pathname, Hash[String, Hash[Symbol, untyped]]) -> void
+        def self.write: (Pathname, Hash[String, Hash[Symbol, untyped]]) -> void
+      end
+    end
+  end
+end

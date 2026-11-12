@@ -9,88 +9,143 @@ module Wikinder
       # Converts the GitHub Wiki Markdown dialect to standard GFM Markdown.
       #
       # Wikilinks use the double-bracket syntax: [[Page]], [[Page|Display]],
-      # [#anchor](#anchor), images reuse the same form: ![[image.png]].
-      # Standard Markdown is passed through.
+      # images either use ![[image.png]] or reference a file by its image
+      # extension: [[image.png]] is taken to be an image.
       #
-      # Fenced code blocks and inline code spans are preserved verbatim
-      # through placeholder exchange so their contents are untouched.
+      # Wiki links become standard Markdown links, except when they appear
+      # in raw HTML blocks, where the Markdown pipeline would not process
+      # them. References inside code spans, code blocks, math spans, and
+      # raw HTML blocks are handled separately from the rest of the document.
       module Tags
         WIKILINK_PATTERN = /!?\[\[([^\[\]\n]{1,400})\]\]/
-        OPEN_PLACEHOLDER = "\x00CODEX_"
-        CLOSE_PLACEHOLDER = "_CODEX\x00"
+        IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|svg)([?#].*)?\z/i
 
         #: (String) -> String
         def self.render(source)
+          offsets = line_offsets(source)
+          segments = typed_ranges(source, offsets)
+          rewrite(source, segments)
+        end
+
+        #: (String) -> Array[Integer]
+        def self.line_offsets(source)
           offsets = [] #: Array[Integer]
           pos = 0
           source.each_line do |line|
             offsets << pos
             pos += line.bytesize
           end
+          offsets
+        end
 
-          ranges = [] #: Array[Range[Integer]]
+        #: (Array[Integer], Integer, Integer) -> Integer
+        def self.byte_offset(offsets, line_number, column)
+          offsets[line_number - 1] + column - 1
+        end
+
+        # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
+        #: (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
+        def self.typed_ranges(source, offsets)
+          ranges = [] #: Array[[Range[Integer], Symbol]]
           Commonmarker.parse(source, options: { extension: { math_dollars: true, math_code: true } }).walk do |node|
-            sp = node.source_position
             type = node.type.to_s
-            next unless %w[code code_block].include?(type)
-
-            first = offsets[sp[:start_line] - 1] + sp[:start_column] - 1
-            last  = offsets[sp[:end_line] - 1] + sp[:end_column]
-            ranges << (first...last) if last >= first
+            sp = node.source_position
+            case type
+            when 'code', 'code_block', 'math'
+              ranges << [range_for(offsets, sp), :code]
+            when 'html_block'
+              ranges << [range_for(offsets, sp), :html]
+            end
           end
-          ranges.sort_by!(&:begin)
+          ranges.sort_by! { |range, _| [range.begin, range.end] }
+          ranges
+        end
 
-          markers = {} #: Hash[String, String]
-          scratch = +''
-          last_end = 0
-          ranges.each do |range|
-            marker = "#{OPEN_PLACEHOLDER}#{markers.size}#{CLOSE_PLACEHOLDER}"
-            markers[marker] = byteslice_range(source, range)
-            scratch << byteslice_range(source, last_end...range.begin)
-            scratch << marker
-            last_end = range.end
+        #: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
+        def self.range_for(offsets, source_position)
+          first = byte_offset(offsets, source_position[:start_line], source_position[:start_column])
+          last = byte_offset(offsets, source_position[:end_line], source_position[:end_column])
+          first...last
+        end
+
+        # Rebuild the source from typed segments, rewriting links in the gaps.
+        #: (String, Array[[Range[Integer], Symbol]]) -> String
+        def self.rewrite(source, segments)
+          out = +''
+          position = 0
+          segments.each do |range, mode|
+            next if range.end <= position # nested segment, already covered
+
+            out << rewrite_fragment(source.byteslice(position...range.begin) || '', :markdown)
+            out << rewrite_fragment(source.byteslice(range) || '', mode)
+            position = range.end
           end
-          scratch << byteslice_tail(source, last_end)
+          out << rewrite_fragment(source.byteslice(position..) || '', :markdown)
+          out
+        end
 
-          # Rewrite any wikilinks / images outside code spans
-          scratch = scratch.gsub(WIKILINK_PATTERN) do
+        # Rewrite wikilinks in a source fragment.
+        #: (String, Symbol) -> String
+        def self.rewrite_fragment(text, mode)
+          return text if mode == :code
+
+          text.gsub(WIKILINK_PATTERN) do
             match = Regexp.last_match
             raise 'gsub block without match data' if match.nil?
 
             inner = match[1].to_s.strip
-            if match[0].to_s.start_with?('!')
-              render_image(inner)
+            if match[0].to_s.start_with?('!') || image_target?(inner)
+              render_image(inner, mode)
+            elsif mode == :html
+              render_html_anchor(inner)
             else
-              render_anchor(inner)
+              render_markdown_anchor(inner)
             end
           end
-
-          # Restore code regions verbatim
-          markers.each do |marker, verbatim|
-            scratch = scratch.gsub(marker, verbatim)
-          end
-
-          scratch
         end
 
+        # --- Link rendering
+
         #: (String) -> String
-        def self.render_anchor(ref)
+        def self.render_markdown_anchor(ref)
           href, label = split_ref(ref)
-          "<a href=\"#{escape(href)}\">#{escape(label)}</a>"
+          "[#{escape_markdown_text(label)}](#{escape_markdown_url(href)})"
         end
 
         #: (String) -> String
-        def self.render_image(ref)
-          alt = File.basename(ref, '.*')
-          "![#{escape(alt)}](#{escape(ref)})"
+        def self.render_html_anchor(ref)
+          href, label = split_ref(ref)
+          "<a href=\"#{escape_attr(href)}\">#{escape_html_text(label)}</a>"
+        end
+
+        # Images keep the same shape in both modes.
+        #: (String, Symbol) -> String
+        def self.render_image(ref, mode)
+          target, alt = image_parts(ref)
+          alt = File.basename(target, '.*') if alt.to_s.empty?
+          if mode == :html
+            "<img src=\"#{escape_attr(target)}\" alt=\"#{escape_attr(alt)}\" />"
+          else
+            "![#{escape_markdown_text(alt)}](#{escape_markdown_url(target)})"
+          end
+        end
+
+        #: (String) -> [String, String]
+        def self.image_parts(ref)
+          if ref.include?('|')
+            display, target = ref.split('|', 2).map(&:strip)
+            [target.to_s, display.to_s]
+          else
+            [ref, File.basename(ref, '.*')]
+          end
         end
 
         #: (String) -> [String, String]
         def self.split_ref(ref)
           if ref.include?('|')
-            parts = ref.split('|', 2).map(&:strip)
-            text = parts[0].to_s
-            target = parts[1].to_s
+            text, target = ref.split('|', 2).map(&:strip)
+            target = target.to_s
+            text = text.to_s
             [resolve_link_target(target), text]
           elsif ref.start_with?('#')
             [ref, ref.delete_prefix('#')]
@@ -106,22 +161,36 @@ module Wikinder
           return target if target.start_with?('#')
 
           name = target.end_with?('.md') ? target.sub(/\.md\z/, '') : target
-          slug = Slugs.for_title(name)
-          "/#{slug}"
+          "/#{Slugs.for_title(name)}"
         end
 
-        #: (String, Range[Integer]) -> String
-        def self.byteslice_range(source, range)
-          source.byteslice(range) or raise 'commonmarker offset out of range'
+        #: (String) -> bool
+        def self.image_target?(ref)
+          return false if ref.start_with?('#')
+
+          target = ref.include?('|') ? ref.split('|', 2)[1].to_s.strip : ref
+          target.match?(IMAGE_EXTENSIONS)
         end
 
-        #: (String, Integer) -> String
-        def self.byteslice_tail(source, start)
-          source.byteslice(start..) or ''
+        # --- Escaping
+
+        #: (String) -> String
+        def self.escape_html_text(text)
+          text.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('"', '&quot;')
         end
 
         #: (String) -> String
-        def self.escape(text) = text.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('"', '&quot;')
+        def self.escape_attr(text) = escape_html_text(text)
+
+        #: (String) -> String
+        def self.escape_markdown_text(text) = text.gsub('\\', '\\\\').gsub('[', '\\[').gsub(']', '\\]')
+
+        # Markdown link URLs are terminated by a closing parenthesis;
+        # angle brackets allow spaces and parens in the destination.
+        #: (String) -> String
+        def self.escape_markdown_url(url)
+          url.include?(')') || url.include?(' ') || url.include?('(') ? "<#{url}>" : url
+        end
       end
     end
   end

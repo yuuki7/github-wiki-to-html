@@ -6,26 +6,54 @@ module Wikinder
       # Converts the GitHub Wiki Markdown dialect to standard GFM Markdown.
       #
       # Wikilinks use the double-bracket syntax: [[Page]], [[Page|Display]],
-      # [#anchor](#anchor), images reuse the same form: ![[image.png]].
-      # Standard Markdown is passed through.
+      # images either use ![[image.png]] or reference a file by its image
+      # extension: [[image.png]] is taken to be an image.
       #
-      # Fenced code blocks and inline code spans are preserved verbatim
-      # through placeholder exchange so their contents are untouched.
+      # Wiki links become standard Markdown links, except when they appear
+      # in raw HTML blocks, where the Markdown pipeline would not process
+      # them. References inside code spans, code blocks, math spans, and
+      # raw HTML blocks are handled separately from the rest of the document.
       module Tags
         WIKILINK_PATTERN: ::Regexp
 
-        OPEN_PLACEHOLDER: ::String
-
-        CLOSE_PLACEHOLDER: ::String
+        IMAGE_EXTENSIONS: ::Regexp
 
         # : (String) -> String
         def self.render: (String) -> String
 
-        # : (String) -> String
-        def self.render_anchor: (String) -> String
+        # : (String) -> Array[Integer]
+        def self.line_offsets: (String) -> Array[Integer]
+
+        # : (Array[Integer], Integer, Integer) -> Integer
+        def self.byte_offset: (Array[Integer], Integer, Integer) -> Integer
+
+        # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
+        # : (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
+        def self.typed_ranges: (String, Array[Integer]) -> Array[[ Range[Integer], Symbol ]]
+
+        # : (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
+        def self.range_for: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
+
+        # Rebuild the source from typed segments, rewriting links in the gaps.
+        # : (String, Array[[Range[Integer], Symbol]]) -> String
+        def self.rewrite: (String, Array[[ Range[Integer], Symbol ]]) -> String
+
+        # Rewrite wikilinks in a source fragment.
+        # : (String, Symbol) -> String
+        def self.rewrite_fragment: (String, Symbol) -> String
 
         # : (String) -> String
-        def self.render_image: (String) -> String
+        def self.render_markdown_anchor: (String) -> String
+
+        # : (String) -> String
+        def self.render_html_anchor: (String) -> String
+
+        # Images keep the same shape in both modes.
+        # : (String, Symbol) -> String
+        def self.render_image: (String, Symbol) -> String
+
+        # : (String) -> [String, String]
+        def self.image_parts: (String) -> [ String, String ]
 
         # : (String) -> [String, String]
         def self.split_ref: (String) -> [ String, String ]
@@ -33,14 +61,22 @@ module Wikinder
         # : (String) -> String
         def self.resolve_link_target: (String) -> String
 
-        # : (String, Range[Integer]) -> String
-        def self.byteslice_range: (String, Range[Integer]) -> String
-
-        # : (String, Integer) -> String
-        def self.byteslice_tail: (String, Integer) -> String
+        # : (String) -> bool
+        def self.image_target?: (String) -> bool
 
         # : (String) -> String
-        def self.escape: (String) -> String
+        def self.escape_html_text: (String) -> String
+
+        # : (String) -> String
+        def self.escape_attr: (String) -> String
+
+        # : (String) -> String
+        def self.escape_markdown_text: (String) -> String
+
+        # Markdown link URLs are terminated by a closing parenthesis;
+        # angle brackets allow spaces and parens in the destination.
+        # : (String) -> String
+        def self.escape_markdown_url: (String) -> String
       end
     end
   end
