@@ -30,6 +30,7 @@ module Wikinder
       # @rbs @rename_deltas: Hash[String, String]
       # @rbs @rename_cache: Hash[[Rugged::Commit, Rugged::Commit], Array[Rugged::Diff::Delta]]
       # @rbs @diffs: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
+      # @rbs @link_index: Hash[Symbol, Hash[String, String]]?
       # @rbs @tree: Rugged::Tree
       # @rbs @ignore_meta: bool
       # @rbs @prev_head: String?
@@ -439,7 +440,32 @@ module Wikinder
 
       #: (String) -> String
       def render_page(name)
-        Tags.render(text_for(name))
+        Tags.render(text_for(name), link_index: link_index)
+      end
+
+      # The wiki's link index: every page and image asset at the
+      # repository root, for canonicalizing wikilink targets the way
+      # GitHub Wiki resolves them (see Tags.build_link_index). Pages are
+      # all .md files here, generated or not — resolution is about what
+      # exists in the wiki, not about what this build emits.
+      #: () -> Hash[Symbol, Hash[String, String]]
+      def link_index
+        @link_index ||= begin
+          page_slugs = [] #: Array[String]
+          asset_names = [] #: Array[String]
+          image_extensions = %w[.png .jpg .jpeg .gif .webp .svg]
+          @tree.walk(:preorder) do |root, entry|
+            next unless entry[:type] == :blob
+            next unless root.empty? # subdirectory files are unsupported and ignored
+
+            name = entry[:name]
+            next if name.start_with?('.') # dotfiles are never wiki pages or assets
+
+            page_slugs << File.basename(name, '.md') if name.end_with?('.md')
+            asset_names << name if image_extensions.include?(File.extname(name).downcase)
+          end
+          Tags.build_link_index(page_slugs, asset_names)
+        end
       end
 
       #: (String) -> String

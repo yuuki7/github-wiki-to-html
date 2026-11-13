@@ -28,8 +28,32 @@ module Wikinder
 
         IMAGE_EXTENSIONS: ::Regexp
 
+        # : (String, ?link_index: Hash[Symbol, Hash[String, String]]?) -> String
+        def self.render: (String, ?link_index: Hash[Symbol, Hash[String, String]]?) -> String
+
+        # Builds the lookup used to canonicalize link targets against a
+        # wiki's actual pages and files. Each map holds every name under
+        # its exact spelling first and then under a folded key (spaces
+        # become hyphens, compared case-insensitively), mirroring how
+        # GitHub Wiki resolves internal links: [[my page]] and [[MY-PAGE]]
+        # both find the page whose file is "My-Page.md", and the link is
+        # emitted with the found page's own spelling. Names that collide
+        # only after folding keep the first page in the order given.
+        # : (Array[String], Array[String]) -> Hash[Symbol, Hash[String, String]]
+        def self.build_link_index: (Array[String], Array[String]) -> Hash[Symbol, Hash[String, String]]
+
+        # : (Array[String]) -> Hash[String, String]
+        def self.build_name_index: (Array[String]) -> Hash[String, String]
+
+        # The folded comparison key: spaces become hyphens and case is
+        # folded, as in gollum's path_compare with its hyphened and
+        # case-insensitive tag lookups enabled.
         # : (String) -> String
-        def self.render: (String) -> String
+        def self.fold_key: (String) -> String
+
+        # Exact spelling wins; the folded key is the fallback.
+        # : (Hash[String, String], String) -> String?
+        def self.index_lookup: (Hash[String, String], String) -> String?
 
         # : (String) -> Array[Integer]
         def self.line_offsets: (String) -> Array[Integer]
@@ -38,8 +62,8 @@ module Wikinder
         # either the verbatim source bytes (for tags/code/inline HTML that
         # stay as written) or a rewritten fragment — Nokogiri output for
         # raw HTML blocks.
-        # : (String, Array[Integer]) -> Array[[Range[Integer], String]]
-        def self.typed_ranges: (String, Array[Integer]) -> Array[[ Range[Integer], String ]]
+        # : (String, Array[Integer], Hash[Symbol, Hash[String, String]]?) -> Array[[Range[Integer], String]]
+        def self.typed_ranges: (String, Array[Integer], Hash[Symbol, Hash[String, String]]?) -> Array[[ Range[Integer], String ]]
 
         # Rewrites wikilinks in a page's raw HTML blocks. The blocks are
         # joined with unique comment markers and parsed as one HTML5
@@ -52,8 +76,8 @@ module Wikinder
         # <script> spanning several blocks — each block is rewritten on
         # its own instead, so the result is never worse than per-block
         # parsing.
-        # : (Array[String]) -> Array[String]
-        def self.rewrite_html_stream: (Array[String]) -> Array[String]
+        # : (Array[String], Hash[Symbol, Hash[String, String]]?) -> Array[String]
+        def self.rewrite_html_stream: (Array[String], Hash[Symbol, Hash[String, String]]?) -> Array[String]
 
         # Splits a serialized HTML stream at the gap markers, returning one
         # string per original block, or nil when the markers did not all
@@ -72,59 +96,63 @@ module Wikinder
         # Rewrites wikilinks in the text nodes of a parsed fragment.
         # Raw-text element contents (script, style, textarea, title) are
         # left verbatim, as are attribute values.
-        # : (Nokogiri::XML::DocumentFragment) -> void
-        def self.rewrite_fragment_text_nodes: (Nokogiri::XML::DocumentFragment) -> void
+        # : (Nokogiri::XML::DocumentFragment, Hash[Symbol, Hash[String, String]]?) -> void
+        def self.rewrite_fragment_text_nodes: (Nokogiri::XML::DocumentFragment, Hash[Symbol, Hash[String, String]]?) -> void
 
         # Rewrites wikilinks in a single HTML block: parses with Nokogiri,
         # splits each text node at wikilinks, producing anchor/image
         # elements. Used for pages whose blocks cannot be joined (see
         # rewrite_html_stream).
-        # : (String) -> String
-        def self.rewrite_html_block: (String) -> String
+        # : (String, Hash[Symbol, Hash[String, String]]?) -> String
+        def self.rewrite_html_block: (String, Hash[Symbol, Hash[String, String]]?) -> String
 
         # : (Nokogiri::XML::Node) -> bool
         def self.inside_raw_text?: (Nokogiri::XML::Node) -> bool
 
-        # : (Nokogiri::XML::Node) -> void
-        def self.split_and_replace_wikilinks: (Nokogiri::XML::Node) -> void
+        # : (Nokogiri::XML::Node, Hash[Symbol, Hash[String, String]]?) -> void
+        def self.split_and_replace_wikilinks: (Nokogiri::XML::Node, Hash[Symbol, Hash[String, String]]?) -> void
 
-        # : (Nokogiri::XML::Document, MatchData) -> Nokogiri::XML::Node
-        def self.build_element: (Nokogiri::XML::Document, MatchData) -> Nokogiri::XML::Node
+        # : (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
+        def self.build_element: (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
 
-        # : (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
-        def self.build_anchor: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+        # : (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
+        def self.build_anchor: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
 
-        # : (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
-        def self.build_image: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+        # : (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
+        def self.build_image: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
 
         # : (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
         def self.range_for: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
 
         # Rebuild the source from typed segments, splicing gaps through the
         # Markdown rewriter.
-        # : (String, Array[[Range[Integer], String]]) -> String
-        def self.rewrite: (String, Array[[ Range[Integer], String ]]) -> String
+        # : (String, Array[[Range[Integer], String]], Hash[Symbol, Hash[String, String]]?) -> String
+        def self.rewrite: (String, Array[[ Range[Integer], String ]], Hash[Symbol, Hash[String, String]]?) -> String
 
         # Rewrite wikilinks in a Markdown source fragment.
-        # : (String) -> String
-        def self.rewrite_fragment: (String) -> String
+        # : (String, Hash[Symbol, Hash[String, String]]?) -> String
+        def self.rewrite_fragment: (String, Hash[Symbol, Hash[String, String]]?) -> String
 
-        # : (String) -> String
-        def self.render_markdown_anchor: (String) -> String
+        # : (String, Hash[Symbol, Hash[String, String]]?) -> String
+        def self.render_markdown_anchor: (String, Hash[Symbol, Hash[String, String]]?) -> String
 
-        # : (String) -> String
-        def self.render_image: (String) -> String
+        # : (String, Hash[Symbol, Hash[String, String]]?) -> String
+        def self.render_image: (String, Hash[Symbol, Hash[String, String]]?) -> String
 
         # : (String) -> [String, String]
         def self.image_parts: (String) -> [ String, String ]
 
-        # : (String) -> [String, String]
-        def self.split_ref: (String) -> [ String, String ]
+        # : (String, Hash[Symbol, Hash[String, String]]?) -> [String, String]
+        def self.split_ref: (String, Hash[Symbol, Hash[String, String]]?) -> [ String, String ]
 
-        # Link targets are not checked against the actual page set — a
-        # wikilink to a missing page renders as a regular link (red-link
-        # semantics on the wiki's own page creator). Validation, if ever
-        # wanted, belongs at the site layer where the slug catalogue lives.
+        # When the caller supplies the wiki's link index, a target that
+        # names an existing page is canonicalized to that page's own
+        # spelling — GitHub Wiki resolves internal links leniently
+        # (spaces/hyphens folded, case-insensitive), so the written form
+        # need not match the file name. A target that matches nothing is
+        # rendered as a regular link in its written form: marking missing
+        # pages (Gollum's "absent" class in HTML output) has no place in
+        # Markdown output and belongs, if anywhere, to the site layer.
         #
         # The piped form never special-cases a leading '#': in gollum's one
         # fixed rule the first thing is the display text, so [[#math|Math]]
@@ -136,8 +164,14 @@ module Wikinder
         # The path is percent-encoded for URL-unsafe ASCII characters
         # (e.g. "a?b" becomes "a%3Fb") but left as-is for non-ASCII, so
         # links remain human-readable for UTF-8 slugs.
-        # : (String) -> String
-        def self.resolve_link_target: (String) -> String
+        # : (String, Hash[Symbol, Hash[String, String]]?) -> String
+        def self.resolve_link_target: (String, Hash[Symbol, Hash[String, String]]?) -> String
+
+        # Canonicalizes an image/file target against the link index, the
+        # same lenient lookup pages get; unmatched targets pass through
+        # as written.
+        # : (Hash[Symbol, Hash[String, String]]?, String) -> String
+        def self.canonical_file_name: (Hash[Symbol, Hash[String, String]]?, String) -> String
 
         # Percent-encodes ASCII characters that are unsafe in a URL path
         # segment; leaves non-ASCII (UTF-8 IRI) characters alone so that

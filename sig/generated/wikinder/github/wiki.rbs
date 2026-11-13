@@ -18,6 +18,8 @@ module Wikinder
 
       @tree: Rugged::Tree
 
+      @link_index: Hash[Symbol, Hash[String, String]]?
+
       @diffs: Hash[[ Rugged::Commit, Rugged::Commit ], Rugged::Diff]
 
       @rename_cache: Hash[[ Rugged::Commit, Rugged::Commit ], Array[Rugged::Diff::Delta]]
@@ -168,6 +170,14 @@ module Wikinder
 
       # : (String) -> String
       def render_page: (String) -> String
+
+      # The wiki's link index: every page and image asset at the
+      # repository root, for canonicalizing wikilink targets the way
+      # GitHub Wiki resolves them (see Tags.build_link_index). Pages are
+      # all .md files here, generated or not — resolution is about what
+      # exists in the wiki, not about what this build emits.
+      # : () -> Hash[Symbol, Hash[String, String]]
+      def link_index: () -> Hash[Symbol, Hash[String, String]]
 
       # : (String) -> String
       def detect_language: (String) -> String

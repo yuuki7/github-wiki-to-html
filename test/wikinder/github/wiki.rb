@@ -290,6 +290,59 @@ RSpec.describe Wikinder::GitHub::Wiki do
       expect(output).to include('<a href="/Link">Link</a>')
     end
 
+    # GitHub Wiki resolves internal links against the real page set,
+    # folding spaces to hyphens and comparing case-insensitively; the
+    # emitted link uses the found page's own spelling.
+    it 'canonicalizes page targets against the link index' do
+      tags = Wikinder::GitHub::Wiki::Tags
+      index = tags.build_link_index(%w[My-Page Bear-Arithmetic], ['kuma.png'])
+      expect(tags.render('[[my page]]', link_index: index)).to include('[my page](/My-Page)')
+      expect(tags.render('[[BEAR-ARITHMETIC]]', link_index: index)).to include('(/Bear-Arithmetic)')
+      expect(tags.render('[[label|my-page]]', link_index: index)).to include('[label](/My-Page)')
+    end
+
+    it 'leaves targets that match no page in their written form' do
+      index = Wikinder::GitHub::Wiki::Tags.build_link_index(['My-Page'], [])
+      output = Wikinder::GitHub::Wiki::Tags.render('[[Missing Page]]', link_index: index)
+      expect(output).to include('[Missing Page](/Missing-Page)')
+    end
+
+    it 'canonicalizes image targets against the link index' do
+      index = Wikinder::GitHub::Wiki::Tags.build_link_index([], ['Kuma.png'])
+      output = Wikinder::GitHub::Wiki::Tags.render('![[kuma.png]]', link_index: index)
+      expect(output).to include('(Kuma.png)')
+    end
+
+    it 'canonicalizes anchors inside HTML blocks against the link index' do
+      index = Wikinder::GitHub::Wiki::Tags.build_link_index(['Bear'], [])
+      output = Wikinder::GitHub::Wiki::Tags.render("<td>Founder of [[bear]]</td>\n", link_index: index)
+      expect(output).to include('<a href="/Bear">bear</a>')
+    end
+
+    # Building a wiki resolves wikilinks against that wiki's own pages,
+    # so loosely written links land on the real page.
+    it 'canonicalizes wikilinks against the built wiki pages' do
+      scratch = Dir.mktmpdir('canon-wiki')
+      begin
+        system('git', 'init', '-q', chdir: scratch)
+        File.write(File.join(scratch, 'My-Page.md'), "target\n")
+        File.write(File.join(scratch, 'Index.md'), "See [[my page]] and [[MY-PAGE]].\n")
+        system('git', 'add', '-f', '.', chdir: scratch)
+        system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'initial', chdir: scratch)
+        out = Dir.mktmpdir('canon-out')
+        begin
+          described_class.new(scratch, { ungenerated_pages: Set['META'], unlisted_pages: Set[] }).build(out)
+          built = File.read(File.join(out, 'Index.md'))
+          expect(built).to include('[my page](/My-Page)')
+          expect(built).to include('[MY-PAGE](/My-Page)')
+        ensure
+          FileUtils.remove_entry(out)
+        end
+      ensure
+        FileUtils.remove_entry(scratch)
+      end
+    end
+
     # A rename history with multiple chained renames must restore every ancestor alias.
     it 'restores rename aliases across multiple levels' do
       scratch = Dir.mktmpdir('chain-wiki')
