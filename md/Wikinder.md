@@ -10,7 +10,7 @@ listed: false
 ---
 
 <table>
-  <tr>
+  <tbody><tr>
     <th scope="row">Founder</th>
     <td><a href="/bear">bear</a></td>
   </tr>
@@ -24,7 +24,7 @@ listed: false
       <a href="https://linktr.ee/wikinder">linktr.ee/wikinder</a>
     </td>
   </tr>
-</table>
+</tbody></table>
 
 - [Japan](/Wikinder-Japan)
 

@@ -171,7 +171,6 @@ module Wikinder
               rows[slug] ||= refresh_row(wiki, page, inherited_row(wiki, previously, page, slug))
             end
             rows.delete_if { |slug, _| !still_current.include?(slug) }
-            rows.delete_if { |slug, _| !still_current.include?(slug) }
             prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
             write(meta_path, rows)
             return rows

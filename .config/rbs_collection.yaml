@@ -21,6 +21,7 @@ path: .gem_rbs_collection
 gems:
   - name: commonmarker
     ignore: true
+  - name: nokogiri
   - name: rugged
     ignore: true
   - name: whatlanguage

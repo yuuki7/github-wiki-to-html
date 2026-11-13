@@ -251,7 +251,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     # Wiki image extension detection in HTML blocks renders raw HTML images.
     it 'renders pipe images inside raw HTML as HTML images' do
       output = Wikinder::GitHub::Wiki::Tags.render("<td>![[kuma.png]]</td>\n")
-      expect(output).to include('<img src="kuma.png" alt="kuma" />')
+      expect(output).to include('<img src="kuma.png" alt="kuma">')
     end
 
     # Regression anchors: raw HTML tables keep reading as anchors.
@@ -417,23 +417,24 @@ RSpec.describe Wikinder::GitHub::Wiki do
       )
     end
 
-    # Two pages with the same basename would collide at the flat output
-    # root — one must be kept deterministically and the other skipped.
-    it 'keeps exactly one page when basenames collide, and warns' do
+    # GitHub Wiki is flat and does not support subdirectories, so nested
+    # files are silently unsupported — no page, no asset, no error.
+    it 'silently ignores pages and assets in subdirectories' do
       system('git', 'init', '-q', '--initial-branch=main', chdir: scratch)
-      FileUtils.mkdir_p(File.join(scratch, 'a'))
-      FileUtils.mkdir_p(File.join(scratch, 'b'))
-      File.write(File.join(scratch, 'a', 'Guide.md'), "a guide\n")
-      File.write(File.join(scratch, 'b', 'Guide.md'), "b guide\n")
+      File.write(File.join(scratch, 'Root.md'), "page\n")
+      FileUtils.mkdir_p(File.join(scratch, 'nested', 'deep'))
+      File.write(File.join(scratch, 'nested', 'Nest.md'), "nested page\n")
+      File.write(File.join(scratch, 'nested', 'deep', 'Deep.md'), "deep page\n")
+      File.binwrite(File.join(scratch, 'nested', 'deep', 'image.png'), 'png'.b)
       git('add', '-A')
-      git('commit', '-qm', 'seed')
+      git('commit', '-qm', 'nested content')
 
       target = Dir.mktmpdir('robust-out')
       begin
         expect { Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target) }
-          .to output(/duplicate page name/).to_stderr
-        expect(Dir.children(target).grep(/Guide/)).to eq(['Guide.md'])
-        expect(File.read(File.join(target, 'Guide.md'))).to include('a guide')
+          .not_to output(/.+/).to_stderr
+        expect(Dir.children(target).sort).to eq(['Root.md'])
+        expect(Dir.children(target)).to all(satisfy { |name| !name.include?('/') })
       ensure
         FileUtils.remove_entry(target)
       end
@@ -485,29 +486,6 @@ RSpec.describe Wikinder::GitHub::Wiki do
           .to output(/unsafe alias/).to_stderr
         expect(File.exist?(File.join(target, '..', 'escape.md'))).to be(false)
         expect(File.read(File.join(scratch, 'META.md'))).not_to include('../escape')
-      ensure
-        FileUtils.remove_entry(target)
-      end
-    end
-
-    # Stale subdirectory assets must be removed on the next build.
-    it 'removes subdirectory assets removed from the repo, leaving empty dirs cleaned' do
-      system('git', 'init', '-q', '--initial-branch=main', chdir: scratch)
-      File.write(File.join(scratch, 'page.md'), "page\n")
-      FileUtils.mkdir_p(File.join(scratch, 'inner', 'deep'))
-      File.binwrite(File.join(scratch, 'inner', 'deep', 'image.png'), 'png'.b)
-      git('add', '-A')
-      git('commit', '-qm', 'add asset')
-
-      target = Dir.mktmpdir('robust-out')
-      begin
-        Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target)
-        expect(File.exist?(File.join(target, 'inner', 'deep', 'image.png'))).to be(true)
-
-        git('rm', '-q', 'inner/deep/image.png')
-        git('commit', '-qm', 'remove asset')
-        Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target)
-        expect(File.exist?(File.join(target, 'inner', 'deep', 'image.png'))).to be(false)
       ensure
         FileUtils.remove_entry(target)
       end

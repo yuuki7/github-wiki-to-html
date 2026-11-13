@@ -19,6 +19,10 @@ module Wikinder
     # The wiki repository contains .md files; this class enumerates them,
     # rewrites wiki-specific syntax, and produces YAML front matter
     # with metadata for downstream consumers.
+    #
+    # GitHub Wiki is flat: it has no notion of nested page directories, and
+    # pages are addressed by name only. Subdirectory blobs are therefore
+    # silently unsupported — they are ignored entirely.
     class Wiki
       # @rbs @path: Pathname
       # @rbs @repo: Rugged::Repository
@@ -62,8 +66,7 @@ module Wikinder
       # can therefore leave previous-generation and new files mixed, but
       # never a torn individual file. After the write, files the new build
       # no longer produces are removed (keeping anything unrelated to the
-      # build untouched); subdirectory assets are tracked by
-      # <target_dir>/.assets-manifest for the same cleanup.
+      # build untouched).
       #: (String) -> void
       def build(target_dir)
         outputs = compute_outputs
@@ -83,7 +86,6 @@ module Wikinder
         end
 
         cleanup_stale_files(target_dir, outputs)
-        write_assets_manifest(target_dir, outputs)
       end
 
       private
@@ -108,67 +110,13 @@ module Wikinder
       # keeping unrelated files in target_dir untouched.
       #: (String, Hash[String, String]) -> void
       def cleanup_stale_files(target_dir, outputs)
-        keep = Set.new(outputs.keys.reject { |key| key.include?('/') })
+        keep = Set.new(outputs.keys)
         %w[*.md *.png *.jpg *.jpeg *.gif *.webp *.svg].each do |pattern|
           Dir.glob(File.join(target_dir, pattern)).each do |path|
             next if keep.include?(File.basename(path))
 
             FileUtils.rm_f(path)
           end
-        end
-
-        stale = read_assets_manifest(target_dir) - outputs.keys
-        stale.each do |relative|
-          path = File.join(target_dir, relative)
-          FileUtils.rm_f(path)
-          prune_empty_directories(File.dirname(path), target_dir)
-        end
-      end
-
-      # Removes directories that became empty because their stale assets
-      # were deleted, walking up but never above target_dir.
-      #: (String, String) -> void
-      def prune_empty_directories(directory, stop_at)
-        path = directory
-        while path.start_with?(stop_at) && path != stop_at && File.directory?(path)
-          break unless Dir.empty?(path)
-
-          Dir.rmdir(path)
-          path = File.dirname(path)
-        end
-      rescue SystemCallError
-        nil
-      end
-
-      #: (String) -> String
-      def assets_manifest_path(target_dir)
-        File.join(target_dir, '.assets-manifest')
-      end
-
-      #: (String) -> Array[String]
-      def read_assets_manifest(target_dir)
-        path = assets_manifest_path(target_dir)
-        return [] unless File.exist?(path)
-
-        lines = File.readlines(path).map(&:chomp).reject(&:empty?)
-        lines.reject { |line| line.start_with?('/') || line.include?('..') }
-      rescue SystemCallError
-        []
-      end
-
-      # Records the asset outputs of this build so they can be located for
-      # stale-file cleanup on the next build (covers subdirectory assets,
-      # which root-level glob patterns never see).
-      #: (String, Hash[String, String]) -> void
-      def write_assets_manifest(target_dir, outputs)
-        assets = outputs.keys.select do |key|
-          %w[.png .jpg .jpeg .gif .webp .svg].include?(File.extname(key).downcase)
-        end
-        path = assets_manifest_path(target_dir)
-        if assets.empty?
-          FileUtils.rm_f(path)
-        else
-          File.write(path, "#{assets.sort.join("\n")}\n")
         end
       end
 
@@ -206,10 +154,11 @@ module Wikinder
         image_extensions = %w[.png .jpg .jpeg .gif .webp .svg]
         @repo.head.target.tree.walk(:preorder) do |root, entry|
           next unless entry[:type] == :blob
+          next unless root.empty? # subdirectory assets are unsupported and ignored
 
-          path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
+          path = entry[:name]
           next unless image_extensions.include?(File.extname(path).downcase)
-          next if File.basename(path).start_with?('.') # dotfiles are never wiki assets
+          next if path.start_with?('.') # dotfiles are never wiki assets
 
           outputs[path] = @repo.lookup(entry[:oid]).content
         end
@@ -273,10 +222,11 @@ module Wikinder
         result = [] #: Array[String]
         @repo.head.target.tree.walk(:preorder) do |root, entry|
           next unless entry[:type] == :blob
+          next unless root.empty? # subdirectory files are unsupported and ignored
 
-          path = root.empty? ? entry[:name] : "#{root}/#{entry[:name]}"
+          path = entry[:name]
           next unless path.end_with?('.md')
-          next if File.basename(path).start_with?('.') # dotfiles are never wiki pages
+          next if path.start_with?('.') # dotfiles are never wiki pages
 
           slug = File.basename(path, '.md')
           next unless Slugs.safe?(slug)
@@ -285,38 +235,15 @@ module Wikinder
           result << path
         end
         result.sort!
-
-        # Two pages with the same basename would collide at the flat output
-        # root. Keep the first deterministically (after sorting) and warn.
-        duplicates = result.group_by { |path| File.basename(path, '.md') }
-                           .select { |_slug, paths| paths.size > 1 }
-        duplicates.each_value do |paths|
-          warn "duplicate page name #{paths.join(', ')}; keeping #{paths.first}"
-          paths.drop(1).each { |loser| result.delete(loser) }
-        end
-        result
       end
 
       public
 
-      # Looks up a path inside the HEAD tree, descending through subtrees
-      # byte-exactly. Rugged's `tree["a/b.md"]` only flattens a single
-      # directory, so wikis pushed with subdirectories need this instead.
+      # Looks up a path in the HEAD tree. GitHub Wiki is flat, so a plain
+      # tree lookup always suffices.
       #: (String, ?tree: Rugged::Tree?) -> Rugged::tree_entry?
       def tree_entry(path, tree: nil)
-        parts = path.split('/').reject(&:empty?)
-        return nil if parts.empty?
-
-        current = tree || @repo.head.target.tree
-        parts.each do |part|
-          entry = current[part]
-          return nil if entry.nil?
-          return entry if part == parts.last
-          return nil if entry[:type] != :tree
-
-          current = @repo.lookup(entry[:oid])
-        end
-        nil
+        (tree || @repo.head.target.tree)[path]
       end
 
       #: (String) -> String
@@ -404,27 +331,23 @@ module Wikinder
         @rename_deltas ||= begin
           map = {} #: Hash[String, String]
           @repo.walk('HEAD').each do |commit|
-            next if commit.parents.empty?
+            commit.parents.each do |parent|
+              diff = commit.diff(parent)
+              diff.find_similar!(renames: true)
+              diff.deltas.each do |delta|
+                next unless delta.status == :renamed
 
-            diff = commit.diff(commit.parents.first)
-            diff.find_similar!(renames: true)
-            diff.deltas.each do |delta|
-              next unless delta.status == :renamed
-
-              # Rugged's +a.diff(b)+ treats +a+ as the *old* side and +b+ as the
-              # *new* side, so +commit.diff(parent)+ is chronologically
-              # reversed. Do not "fix" the argument order — doing so inverts
-              # the whole map and every dependent lookup fails silently.
-              #
-              # For status :renamed, old_file is the *newer* path (the
-              # commit's side) and new_file is the *older* one, so the map
-              # reads "current name -> name it was renamed from". Everything
-              # is walked from HEAD, so first seen wins. Byte-compare paths
-              # like touched? does, because rugged hands back ASCII-8BIT
-              # path strings.
-              newer = delta.old_file[:path].b
-              older = delta.new_file[:path].b
-              map[newer] ||= older
+                # Rugged's +commit.diff(parent)+ reports the commit side as
+                # old_file and the parent side as new_file (chronologically
+                # reversed). The rename map therefore reads "current name ->
+                # name it was renamed from". First seen wins; walked from
+                # HEAD so the most recent rename is recorded first. Byte-compare
+                # paths like touched? does, because rugged hands back
+                # ASCII-8BIT path strings.
+                newer = delta.old_file[:path].b
+                older = delta.new_file[:path].b
+                map[newer] ||= older
+              end
             end
           end
           map
@@ -444,13 +367,12 @@ module Wikinder
       #: (Rugged::Commit, String) -> bool
       def touched?(commit, path)
         parents = commit.parents
-        if parents.empty?
-          # The root commit touches exactly the paths it introduced.
-          return !tree_entry(path, tree: commit.tree).nil?
-        end
+        return !tree_entry(path, tree: commit.tree).nil? if parents.empty?
 
-        commit.diff(parents.first).deltas.any? do |delta|
-          delta.new_file[:path].b == path.b || delta.old_file[:path].b == path.b
+        parents.any? do |parent|
+          commit.diff(parent).deltas.any? do |delta|
+            delta.new_file[:path].b == path.b || delta.old_file[:path].b == path.b
+          end
         end
       end
 

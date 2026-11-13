@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 gem 'base64', '~> 0.3.0'
 gem 'commonmarker', '~> 2.10.1'
+gem 'nokogiri', '~> 1.19'
 gem 'rugged', '~> 1.9'
 gem 'whatlanguage', '~> 3.0'
 

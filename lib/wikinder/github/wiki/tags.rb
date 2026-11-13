@@ -2,6 +2,8 @@
 # rbs_inline: enabled
 
 require 'commonmarker'
+require 'nokogiri'
+require 'nokogiri/html5'
 
 module Wikinder
   module GitHub
@@ -14,9 +16,14 @@ module Wikinder
       #
       # Wiki links become standard Markdown links, except when they appear
       # in raw HTML blocks, where the Markdown pipeline would not process
-      # them. References inside code spans, code blocks, math spans, and
-      # raw HTML blocks are handled separately from the rest of the document.
+      # them. Raw HTML blocks are handed to Nokogiri (HTML5 parser) so text
+      # between tags can be rewritten with raw HTML anchors and verbatim
+      # parts — tags, attributes, scripts, styles, comments — pass through
+      # untouched.
       module Tags
+        # Elements treated as raw text by HTML5 — their contents are not
+        # recursively parsed, so wikilinks there must not be rewritten.
+        RAW_TEXT_ELEMENTS = %w[script style textarea title].freeze #: Array[String]
         WIKILINK_PATTERN = /!?\[\[([^\[\]\n]{1,400})\]\]/
         IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|svg)([?#].*)?\z/i
 
@@ -38,59 +45,99 @@ module Wikinder
           offsets
         end
 
-        # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
-        # Tag syntax inside raw HTML blocks is protected by PROTECTED_HTML
-        # (script/comment/style bodies included); inline tags anywhere are
-        # protected as html_inline code ranges below.
-        #: Regexp
-        PROTECTED_HTML = %r{<!--.*?-->|<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[a-zA-Z/!?][^>]*>}im
-
-        #: (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
+        # The segments are [[range, replacement_string]]. The replacement is
+        # either the verbatim source bytes (for tags/code/inline HTML that
+        # stay as written) or a rewritten fragment — Nokogiri output for
+        # raw HTML blocks.
+        #: (String, Array[Integer]) -> Array[[Range[Integer], String]]
         def self.typed_ranges(source, offsets)
-          ranges = [] #: Array[[Range[Integer], Symbol]]
+          ranges = [] #: Array[[Range[Integer], String]]
           Commonmarker.parse(source, options: { extension: { math_dollars: true, math_code: true } }).walk do |node|
             type = node.type.to_s
             sp = node.source_position
             case type
             when 'code', 'code_block', 'math', 'html_inline'
-              # Inline tags stay verbatim (with their attributes); their
-              # inner text runs through the normal Markdown pipeline.
-              ranges << [range_for(offsets, sp), :code]
+              # Inline HTML tag — verbatim (attrs stay exactly as written).
+              sp_range = range_for(offsets, sp)
+              ranges << [sp_range, source.byteslice(sp_range).to_s]
             when 'html_block'
-              html_fragments(source, range_for(offsets, sp)).each { |fragment, mode| ranges << [fragment, mode] }
+              sp_range = range_for(offsets, sp)
+              ranges << [sp_range, rewrite_html_block(source.byteslice(sp_range).to_s)]
             end
           end
-          ranges.sort_by! { |range, _| [range.begin, range.end] }
+          ranges.sort_by! { |range, _replacement| range.begin }
           ranges
         end
 
-        # Splits an html_block range into :code subranges (comments,
-        # script/style bodies, individual tags with their attributes) and
-        # :html gaps between them. Everything inside a tag — including its
-        # attributes — stays verbatim; wiki syntax in text between tags is
-        # rewritten as raw HTML anchors.
-        #: (String, Range[Integer]) -> Array[[Range[Integer], Symbol]]
-        def self.html_fragments(source, html_range)
-          fragments = [] #: Array[[Range[Integer], Symbol]]
-          # Work on raw bytes so regex match offsets are byte offsets —
-          # matching UTF-8 text would yield character offsets, corrupting
-          # multibyte content.
-          block = (source.byteslice(html_range) || '').dup.force_encoding(Encoding::BINARY)
-          cursor = 0
+        # Rewrites wikilinks in an HTML block: parses with Nokogiri and
+        # splits each text node at wikilinks, producing anchor/image elements.
+        # Raw-text element contents (script, style, textarea, title) are
+        # left verbatim, as are attribute values.
+        #: (String) -> String
+        def self.rewrite_html_block(fragment_text)
+          raw = fragment_text.dup.force_encoding(Encoding::UTF_8)
+          fragment = Nokogiri::HTML5.fragment(raw)
+          fragment.traverse do |node|
+            next unless node.text?
+            next if inside_raw_text?(node)
 
-          block.to_enum(:scan, PROTECTED_HTML).each do
-            match = Regexp.last_match
-            next if match.nil?
-
-            guard_start = match.begin(0) || 0
-            guard_end = match.end(0) || 0
-            next_start = html_range.begin + guard_start
-            fragments << [(html_range.begin + cursor)...next_start, :html] if guard_start > cursor
-            fragments << [(html_range.begin + guard_start)...(html_range.begin + guard_end), :code]
-            cursor = guard_end
+            split_and_replace_wikilinks(node)
           end
-          fragments << [(html_range.begin + cursor)...html_range.end, :html] if cursor < block.length
-          fragments
+          fragment.to_html
+        end
+
+        #: (Nokogiri::XML::Node) -> bool
+        def self.inside_raw_text?(node)
+          node.ancestors.any? { |ancestor| RAW_TEXT_ELEMENTS.include?(ancestor.name.downcase) }
+        end
+
+        #: (Nokogiri::XML::Node) -> void
+        def self.split_and_replace_wikilinks(node)
+          text = node.content
+          return unless text.include?('[[')
+
+          document = node.document
+          nodes = [] #: Array[Nokogiri::XML::Node]
+          rest = text.dup
+          while (match = rest.match(WIKILINK_PATTERN))
+            pre = rest[0...match.begin(0)]
+            nodes << Nokogiri::XML::Text.new(pre, document) if pre.is_a?(String) && !pre.empty?
+
+            nodes << build_element(document, match)
+            rest = rest[match.end(0)..]
+          end
+          nodes << Nokogiri::XML::Text.new(rest, document) if rest.is_a?(String) && !rest.empty?
+          return if nodes.empty?
+
+          node.replace(Nokogiri::XML::NodeSet.new(document, nodes))
+        end
+
+        #: (Nokogiri::XML::Document, MatchData) -> Nokogiri::XML::Node
+        def self.build_element(document, match)
+          inner = match[1].to_s.strip
+          if match[0].to_s.start_with?('!') || image_target?(inner)
+            build_image(document, inner)
+          else
+            build_anchor(document, inner)
+          end
+        end
+
+        #: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+        def self.build_anchor(document, inner)
+          href, label = split_ref(inner)
+          element = document.create_element('a')
+          element['href'] = href
+          element.content = label
+          element
+        end
+
+        #: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+        def self.build_image(document, inner)
+          target, alt = image_parts(inner)
+          element = document.create_element('img')
+          element['src'] = target
+          element['alt'] = alt.to_s.empty? ? File.basename(target, '.*') : alt
+          element
         end
 
         #: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
@@ -105,23 +152,22 @@ module Wikinder
           first...last
         end
 
-        # Rebuild the source from typed segments, rewriting links in the gaps.
-        #: (String, Array[[Range[Integer], Symbol]]) -> String
+        # Rebuild the source from typed segments, splicing gaps through the
+        # Markdown rewriter.
+        #: (String, Array[[Range[Integer], String]]) -> String
         def self.rewrite(source, segments)
           out = +''
           position = 0
-          segments.each do |range, mode|
-            next if range.end <= position # nested segment, already covered
-
+          segments.each do |range, content|
             out << rewrite_fragment(source.byteslice(position...range.begin) || '', :markdown)
-            out << rewrite_fragment(source.byteslice(range) || '', mode)
+            out << content
             position = range.end
           end
           out << rewrite_fragment(source.byteslice(position..) || '', :markdown)
           out
         end
 
-        # Rewrite wikilinks in a source fragment.
+        # Rewrite wikilinks in a Markdown source fragment.
         #: (String, Symbol) -> String
         def self.rewrite_fragment(text, mode)
           return text if mode == :code
@@ -133,15 +179,13 @@ module Wikinder
             inner = match[1].to_s.strip
             if match[0].to_s.start_with?('!') || image_target?(inner)
               render_image(inner, mode)
-            elsif mode == :html
-              render_html_anchor(inner)
             else
               render_markdown_anchor(inner)
             end
           end
         end
 
-        # --- Link rendering
+        # --- Link rendering, Markdown mode
 
         #: (String) -> String
         def self.render_markdown_anchor(ref)
@@ -149,22 +193,11 @@ module Wikinder
           "[#{escape_markdown_text(label)}](#{escape_markdown_url(href)})"
         end
 
-        #: (String) -> String
-        def self.render_html_anchor(ref)
-          href, label = split_ref(ref)
-          "<a href=\"#{escape_attr(href)}\">#{escape_html_text(label)}</a>"
-        end
-
-        # Images keep the same shape in both modes.
         #: (String, Symbol) -> String
-        def self.render_image(ref, mode)
+        def self.render_image(ref, _mode = :markdown)
           target, alt = image_parts(ref)
           alt = File.basename(target, '.*') if alt.to_s.empty?
-          if mode == :html
-            "<img src=\"#{escape_attr(target)}\" alt=\"#{escape_attr(alt)}\" />"
-          else
-            "![#{escape_markdown_text(alt)}](#{escape_markdown_url(target)})"
-          end
+          "![#{escape_markdown_text(alt)}](#{escape_markdown_url(target)})"
         end
 
         #: (String) -> [String, String]
@@ -231,9 +264,6 @@ module Wikinder
         def self.escape_html_text(text)
           text.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('"', '&quot;')
         end
-
-        #: (String) -> String
-        def self.escape_attr(text) = escape_html_text(text)
 
         #: (String) -> String
         def self.escape_markdown_text(text) = text.gsub('\\', '\\\\').gsub('[', '\\[').gsub(']', '\\]')

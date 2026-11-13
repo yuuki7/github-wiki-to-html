@@ -11,9 +11,15 @@ module Wikinder
       #
       # Wiki links become standard Markdown links, except when they appear
       # in raw HTML blocks, where the Markdown pipeline would not process
-      # them. References inside code spans, code blocks, math spans, and
-      # raw HTML blocks are handled separately from the rest of the document.
+      # them. Raw HTML blocks are handed to Nokogiri (HTML5 parser) so text
+      # between tags can be rewritten with raw HTML anchors and verbatim
+      # parts — tags, attributes, scripts, styles, comments — pass through
+      # untouched.
       module Tags
+        # Elements treated as raw text by HTML5 — their contents are not
+        # recursively parsed, so wikilinks there must not be rewritten.
+        RAW_TEXT_ELEMENTS: Array[String]
+
         WIKILINK_PATTERN: ::Regexp
 
         IMAGE_EXTENSIONS: ::Regexp
@@ -24,42 +30,50 @@ module Wikinder
         # : (String) -> Array[Integer]
         def self.line_offsets: (String) -> Array[Integer]
 
-        # Typed ranges: :code (verbatim) or :html (rewrite as raw HTML).
-        # Tag syntax inside raw HTML blocks is protected by PROTECTED_HTML
-        # (script/comment/style bodies included); inline tags anywhere are
-        # protected as html_inline code ranges below.
-        # : Regexp
-        PROTECTED_HTML: ::Regexp
+        # The segments are [[range, replacement_string]]. The replacement is
+        # either the verbatim source bytes (for tags/code/inline HTML that
+        # stay as written) or a rewritten fragment — Nokogiri output for
+        # raw HTML blocks.
+        # : (String, Array[Integer]) -> Array[[Range[Integer], String]]
+        def self.typed_ranges: (String, Array[Integer]) -> Array[[ Range[Integer], String ]]
 
-        # : (String, Array[Integer]) -> Array[[Range[Integer], Symbol]]
-        def self.typed_ranges: (String, Array[Integer]) -> Array[[ Range[Integer], Symbol ]]
+        # Rewrites wikilinks in an HTML block: parses with Nokogiri and
+        # splits each text node at wikilinks, producing anchor/image elements.
+        # Raw-text element contents (script, style, textarea, title) are
+        # left verbatim, as are attribute values.
+        # : (String) -> String
+        def self.rewrite_html_block: (String) -> String
 
-        # Splits an html_block range into :code subranges (comments,
-        # script/style bodies, individual tags with their attributes) and
-        # :html gaps between them. Everything inside a tag — including its
-        # attributes — stays verbatim; wiki syntax in text between tags is
-        # rewritten as raw HTML anchors.
-        # : (String, Range[Integer]) -> Array[[Range[Integer], Symbol]]
-        def self.html_fragments: (String, Range[Integer]) -> Array[[ Range[Integer], Symbol ]]
+        # : (Nokogiri::XML::Node) -> bool
+        def self.inside_raw_text?: (Nokogiri::XML::Node) -> bool
+
+        # : (Nokogiri::XML::Node) -> void
+        def self.split_and_replace_wikilinks: (Nokogiri::XML::Node) -> void
+
+        # : (Nokogiri::XML::Document, MatchData) -> Nokogiri::XML::Node
+        def self.build_element: (Nokogiri::XML::Document, MatchData) -> Nokogiri::XML::Node
+
+        # : (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+        def self.build_anchor: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+
+        # : (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+        def self.build_image: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
 
         # : (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
         def self.range_for: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
 
-        # Rebuild the source from typed segments, rewriting links in the gaps.
-        # : (String, Array[[Range[Integer], Symbol]]) -> String
-        def self.rewrite: (String, Array[[ Range[Integer], Symbol ]]) -> String
+        # Rebuild the source from typed segments, splicing gaps through the
+        # Markdown rewriter.
+        # : (String, Array[[Range[Integer], String]]) -> String
+        def self.rewrite: (String, Array[[ Range[Integer], String ]]) -> String
 
-        # Rewrite wikilinks in a source fragment.
+        # Rewrite wikilinks in a Markdown source fragment.
         # : (String, Symbol) -> String
         def self.rewrite_fragment: (String, Symbol) -> String
 
         # : (String) -> String
         def self.render_markdown_anchor: (String) -> String
 
-        # : (String) -> String
-        def self.render_html_anchor: (String) -> String
-
-        # Images keep the same shape in both modes.
         # : (String, Symbol) -> String
         def self.render_image: (String, Symbol) -> String
 
@@ -89,9 +103,6 @@ module Wikinder
 
         # : (String) -> String
         def self.escape_html_text: (String) -> String
-
-        # : (String) -> String
-        def self.escape_attr: (String) -> String
 
         # : (String) -> String
         def self.escape_markdown_text: (String) -> String
