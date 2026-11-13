@@ -12,6 +12,8 @@ module Wikinder
     # pages are addressed by name only. Subdirectory blobs are therefore
     # silently unsupported — they are ignored entirely.
     class Wiki
+      @site_language: String?
+
       @prev_head: String?
 
       @ignore_meta: bool
@@ -48,6 +50,10 @@ module Wikinder
       #   authorship metadata from git history instead. Used for testing.
       # @param options[:prev_head] SHA of the commit this repo was last read
       #   at. Used for incremental META.md sync.
+      # @param options[:site_language] The site's language, stamped onto
+      #   special pages. Site metadata is the caller's business (the
+      #   conversion CLI maintains it); the module never reads a site
+      #   file itself and never detects a language for site parts.
       # : (String | Pathname, ?wiki_options) -> void
       def initialize: (String | Pathname, ?wiki_options) -> void
 
@@ -99,6 +105,10 @@ module Wikinder
       # : (String) -> String
       def render_page_with_context: (String) -> String
 
+      # Special pages are site parts, not articles: their language is
+      # the site's language as supplied by the caller, never a language
+      # detected from the body. When the caller supplies none, the key
+      # is omitted rather than invented.
       # : (String, String) -> String
       def special_output: (String, String) -> String
 

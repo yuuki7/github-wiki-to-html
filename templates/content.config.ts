@@ -24,7 +24,6 @@ const pages = defineCollection({
       title: z.string(),
       slug: z.string(),
       target_slug: z.string(),
-      language: z.string(),
     }),
     z.object({
       kind: z.literal('special'),

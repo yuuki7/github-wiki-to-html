@@ -33,6 +33,7 @@ module Wikinder
       # @rbs @tree: Rugged::Tree
       # @rbs @ignore_meta: bool
       # @rbs @prev_head: String?
+      # @rbs @site_language: String?
 
       attr_reader :head #: String
       attr_reader :ungenerated_pages #: Set[String]
@@ -50,6 +51,10 @@ module Wikinder
       #   authorship metadata from git history instead. Used for testing.
       # @param options[:prev_head] SHA of the commit this repo was last read
       #   at. Used for incremental META.md sync.
+      # @param options[:site_language] The site's language, stamped onto
+      #   special pages. Site metadata is the caller's business (the
+      #   conversion CLI maintains it); the module never reads a site
+      #   file itself and never detects a language for site parts.
       #: (String | Pathname, ?wiki_options) -> void
       def initialize(path, options = {})
         @path = Pathname(path.to_s).expand_path
@@ -65,6 +70,8 @@ module Wikinder
         @ignore_meta = options[:ignore_meta] == true
         prev_head = options[:prev_head]
         @prev_head = prev_head.is_a?(String) ? prev_head : nil
+        site_language = options[:site_language]
+        @site_language = site_language.is_a?(String) ? site_language : nil
       end
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
@@ -199,15 +206,20 @@ module Wikinder
         raise "could not render page #{page}: #{e.class}: #{e.message}"
       end
 
+      # Special pages are site parts, not articles: their language is
+      # the site's language as supplied by the caller, never a language
+      # detected from the body. When the caller supplies none, the key
+      # is omitted rather than invented.
       #: (String, String) -> String
       def special_output(name, file_name)
         front_matter = {
           'kind' => 'special',
           'title' => title_for(name),
-          'slug' => name,
-          'language' => 'en'
-        }.to_yaml
-        "#{front_matter}---\n\n#{render_page_with_context(file_name)}"
+          'slug' => name
+        } #: Hash[String, String]
+        language = @site_language
+        front_matter['language'] = language if language
+        "#{front_matter.to_yaml}---\n\n#{render_page_with_context(file_name)}"
       end
 
       #: (Hash[String, meta_row], Set[String]) -> Hash[String, String]
@@ -219,12 +231,14 @@ module Wikinder
             downcased = alias_slug.downcase
             next if occupied_slugs.include?(downcased) || downcased == target_slug.downcase
 
+            # A redirect has no body, so it carries no language: language
+            # is a property of content, and a stub has none. Consumers
+            # that need one resolve it from the target page.
             front_matter = {
               'kind' => 'redirect',
               'title' => title,
               'slug' => alias_slug,
-              'target_slug' => target_slug,
-              'language' => row[:language]
+              'target_slug' => target_slug
             }.to_yaml
             outputs["#{alias_slug}.md"] = "#{front_matter}---\n\n"
           end

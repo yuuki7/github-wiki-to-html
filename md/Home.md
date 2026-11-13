@@ -2,7 +2,7 @@
 kind: special
 title: Home
 slug: Home
-language: en
+language: ja
 ---
 
 [About](/Wikinder) · [Linktree](https://linktr.ee/wikinder)

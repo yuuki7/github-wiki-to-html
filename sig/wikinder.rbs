@@ -1,6 +1,7 @@
 type wiki_options = {
   ?ignore_meta: bool,
   ?prev_head: String?,
+  ?site_language: String?,
   ?ungenerated_pages: Set[String],
   ?unlisted_pages: Set[String]
 }

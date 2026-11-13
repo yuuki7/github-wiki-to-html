@@ -19,6 +19,9 @@ export type HomeProps = BaseProps & {
   isHome?: true;
 };
 
-export type RedirectProps = BaseProps & {
+export type RedirectProps = Omit<BaseProps, "language"> & {
+  // A redirect stub's only text is the English word "Redirect", so the
+  // component itself supplies the language; callers do not pass one.
+  language?: string;
   targetSlug: string;
 };

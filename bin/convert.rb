@@ -15,12 +15,11 @@ UNGENERATED_PAGES = Set['Home', 'README', 'LICENSE', 'META', '_Footer'].freeze
 # Pages not listed on the home page.
 UNLISTED_PAGES = Set['Wikinder', 'Wikinder-Japan'].freeze
 
-# Site-wide name and wiki URL.
-SITE_NAME = 'Wikinder'
-WIKI_URL = 'https://github.com/yuuki7/yuukinder/wiki'
-
 # Output directory for the generated markdown.
 MD_DIR = '../md'
+
+# Site metadata (name, wiki URL, language), maintained by hand.
+SITE_PATH = '../site.json'
 
 # Previous wiki HEAD used for incremental META.md sync.
 CACHE_PATH = '../.cache/head'
@@ -34,6 +33,10 @@ OptionParser.new do |opts|
 end.parse!
 
 Dir.chdir(__dir__) do
+  # The site's language lives in the site metadata; the converter only
+  # receives the value, never the file.
+  site = File.exist?(SITE_PATH) ? JSON.parse(File.read(SITE_PATH)) : {}
+
   # Read the previous HEAD for incremental META.md sync.
   prev_head = nil
   if File.exist?(CACHE_PATH)
@@ -47,11 +50,11 @@ Dir.chdir(__dir__) do
       ungenerated_pages: UNGENERATED_PAGES,
       unlisted_pages: UNLISTED_PAGES,
       ignore_meta: options[:ignore_meta],
-      prev_head: prev_head
+      prev_head: prev_head,
+      site_language: site['language']
     }
   )
   wiki.build(MD_DIR)
   FileUtils.mkdir_p(File.dirname(CACHE_PATH))
   File.write(CACHE_PATH, "#{wiki.head}\n")
-  File.write('../site.json', "#{JSON.pretty_generate({ name: SITE_NAME, wiki_url: WIKI_URL })}\n")
 end

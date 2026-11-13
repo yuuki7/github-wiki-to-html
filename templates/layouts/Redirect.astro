@@ -4,7 +4,7 @@ import type { RedirectProps } from "../types";
 
 type Props = RedirectProps;
 
-const { title, language, className, targetSlug } = Astro.props;
+const { title, language = "en", className, targetSlug } = Astro.props;
 const target = `/${encodeURIComponent(targetSlug)}`;
 ---
 

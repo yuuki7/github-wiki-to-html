@@ -10,4 +10,3 @@ md/*
 !md/Wikinder.md
 !md/Home.md
 .cache/
-site.json

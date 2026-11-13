@@ -33,11 +33,7 @@ const rendered = isRedirect ? null : await render(entry);
 ---
 
 {isRedirect ? (
-  <Redirect
-    title={entry.data.title}
-    language={entry.data.language}
-    targetSlug={entry.data.target_slug}
-  />
+  <Redirect title={entry.data.title} targetSlug={entry.data.target_slug} />
 ) : (
   <IndividualPage
     title={entry.data.title}

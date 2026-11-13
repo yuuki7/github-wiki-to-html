@@ -54,6 +54,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
         canonical = kinds.select { |d| d['kind'] == 'article' }.map { |d| d['slug'] }
         kinds.select { |d| d['kind'] == 'redirect' }.each do |d|
           expect(canonical).to include(d['target_slug'])
+          # A redirect is a stub with no body, so it has no language.
+          expect(d).not_to have_key('language')
         end
       end
     end
@@ -65,6 +67,31 @@ RSpec.describe Wikinder::GitHub::Wiki do
         %w[Home _Footer].each do |name|
           expect(File.exist?(File.join(target, "#{name}.md"))).to be(true)
         end
+      end
+    end
+
+    # Special pages are site parts, not articles: their language is the
+    # site language the caller supplies — never a detection result —
+    # and the key is omitted when the caller supplies none.
+    it 'takes the language of special pages from the caller-supplied site language' do
+      scratch = Dir.mktmpdir('special-lang-wiki')
+      out = Dir.mktmpdir('special-lang-out')
+      begin
+        system('git', 'init', '-q', '--initial-branch=main', chdir: scratch)
+        File.write(File.join(scratch, 'Home.md'), "# Home\n\nAn English home page.\n")
+        system('git', 'add', '-A', chdir: scratch)
+        system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'home', chdir: scratch)
+
+        with_site = { ungenerated_pages: Set[], unlisted_pages: Set[], site_language: 'ja' }
+        described_class.new(scratch, with_site).build(out)
+        expect(File.read(File.join(out, 'Home.md'))).to include('language: ja')
+
+        described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(out)
+        front_matter = YAML.safe_load(File.read(File.join(out, 'Home.md')).split("---\n")[1])
+        expect(front_matter).not_to have_key('language')
+      ensure
+        FileUtils.remove_entry(scratch)
+        FileUtils.remove_entry(out)
       end
     end
 
