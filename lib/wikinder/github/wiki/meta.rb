@@ -114,10 +114,8 @@ module Wikinder
           # A single empty cell is a stray blank line, not a header row.
           return nil if cells.length == 1 && cells[0].empty?
 
-          if cells[0] == 'Title'
-            warn 'META.md: skipping table header row (Title)'
-            return nil
-          end
+          # The header row is a normal part of every META.md; skip it quietly.
+          return nil if cells[0] == 'Title'
 
           if cells.length < META_HEADERS.length
             warn "META.md: ignoring row with too few cells#{location}"

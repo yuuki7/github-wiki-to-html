@@ -414,10 +414,11 @@ module Wikinder
         deleted_md = deleted_deltas.map { |d| utf8_path(d.old_file[:path]) }
         added_md = added_deltas.map { |d| utf8_path(d.new_file[:path]) }
 
+        unmatched_deleted = deleted_md - marked_renames.to_a
         unmatched_added = added_md - marked_renames.to_a
-        return if deleted_md.empty? || unmatched_added.empty?
+        return if unmatched_deleted.empty? || unmatched_added.empty?
 
-        deleted_list = deleted_md.uniq.join(', ')
+        deleted_list = unmatched_deleted.uniq.join(', ')
         added_list = unmatched_added.uniq.join(', ')
         warn 'git could not link this rename: ' \
              "#{added_list} seems to succeed #{deleted_list} after a heavy rewrite; " \
