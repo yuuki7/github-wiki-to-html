@@ -63,7 +63,7 @@ In order of precedence:
 
 Settled questions — do not re-litigate:
 
-- Wikilink pipe order is `[[Display|Target]]`; piped images are the reverse (`[[Path|Caption]]`). Verified on the live GitHub wiki and against gollum-lib's own tests; the MediaWiki-style phrasing in docs.github.com is misleading.
+- Wikilink pipe order is `[[Display|Target]]`; piped images are the reverse (`[[Path|Caption]]`). Verified against gollum-lib's own tests (positional parsing — `reverse_links` applies only to creole/mediawiki) and consistent with live-wiki rendering.
 - Rugged's `a.diff(b)` treats `a` as the old side, so `commit.diff(parent)` is chronologically reversed — the rename-map comment in `wiki.rb` is correct as written.
 - CommonMarker 2.x `source_position` values are 1-based byte columns; `end_column` is the column of the last byte, inclusive.
 
