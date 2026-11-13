@@ -319,6 +319,77 @@ RSpec.describe Wikinder::GitHub::Wiki do
       expect(output).to include('<a href="/Bear">bear</a>')
     end
 
+    # GitHub Wiki does not treat '!' as an image marker — the image
+    # decision is made by the target's extension alone — so before a
+    # page link the bang stays as literal text.
+    it 'renders ![[Page]] as a literal bang followed by a page link' do
+      tags = Wikinder::GitHub::Wiki::Tags
+      index = tags.build_link_index(['Yuuki'], [])
+      expect(tags.render('![[yuuki]]', link_index: index)).to eq('![yuuki](/Yuuki)')
+    end
+
+    it 'keeps the bang as text before page anchors inside HTML blocks' do
+      output = Wikinder::GitHub::Wiki::Tags.render("<td>![[bear]]</td>\n")
+      expect(output).to include('!<a href="/bear">bear</a>')
+    end
+
+    # Only the first two pipe segments carry meaning (gollum's
+    # parse_tag_parts); the rest are discarded, never part of the URL.
+    it 'ignores pipe segments past the second' do
+      tags = Wikinder::GitHub::Wiki::Tags
+      expect(tags.render('[[a|b|c]]')).to eq('[a](/b)')
+      expect(tags.render('[[kuma.png|cap|extra]]')).to include('![cap](kuma.png)')
+    end
+
+    # A trailing empty segment disappears with the split, leaving an
+    # ordinary link — not a link to the site root.
+    it 'treats a trailing empty pipe segment as an ordinary link' do
+      expect(Wikinder::GitHub::Wiki::Tags.render('[[Other|]]')).to include('[Other](/Other)')
+    end
+
+    # GitHub Wiki leaves [[_TOC_]] and [[__TOC__]] unconverted (literal
+    # brackets around emphasized text), so they pass through verbatim.
+    it 'passes [[_TOC_]] and [[__TOC__]] through verbatim' do
+      tags = Wikinder::GitHub::Wiki::Tags
+      expect(tags.render('[[_TOC_]]')).to eq('[[_TOC_]]')
+      expect(tags.render('[[__TOC__]]')).to eq('[[__TOC__]]')
+      expect(tags.render("<p>[[_TOC_]]</p>\n")).to include('[[_TOC_]]')
+    end
+
+    # There is no length cap on a tag body; long labels still convert.
+    it 'converts wikilinks whose label runs past 400 characters' do
+      label = 'x' * 450
+      output = Wikinder::GitHub::Wiki::Tags.render("[[#{label}|Page]]")
+      expect(output).to include('](/Page)')
+    end
+
+    # The unlinked-rename warning names only the delete+add pair git
+    # could not link; a rename detected in the same commit stays out.
+    it 'warns only about the delete+add pair a rename cannot explain' do
+      scratch = Dir.mktmpdir('warn-wiki')
+      begin
+        system('git', 'init', '-q', chdir: scratch)
+        File.write(File.join(scratch, 'Old.md'), "content\n")
+        File.write(File.join(scratch, 'Gone.md'), "gone\n")
+        system('git', 'add', '-f', '.', chdir: scratch)
+        system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'initial', chdir: scratch)
+        system('git', 'mv', 'Old.md', 'Renamed.md', chdir: scratch)
+        FileUtils.rm(File.join(scratch, 'Gone.md'))
+        File.write(File.join(scratch, 'New.md'), "completely different\n")
+        system('git', 'add', '-f', '-A', '.', chdir: scratch)
+        system('git', '-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-qm', 'rename+del+add', chdir: scratch)
+        out = Dir.mktmpdir('warn-out')
+        begin
+          expected = /could not link this rename: New\.md seems to succeed Gone\.md/
+          wiki = described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] })
+          expect { wiki.build(out) }.to output(expected).to_stderr
+        ensure
+          FileUtils.remove_entry(out)
+        end
+      ensure
+        FileUtils.remove_entry(scratch)
+      end
+    end
     # Building a wiki resolves wikilinks against that wiki's own pages,
     # so loosely written links land on the real page.
     it 'canonicalizes wikilinks against the built wiki pages' do

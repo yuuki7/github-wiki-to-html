@@ -28,7 +28,6 @@ module Wikinder
       # @rbs @repo: Rugged::Repository
       # @rbs @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
       # @rbs @rename_deltas: Hash[String, String]
-      # @rbs @rename_cache: Hash[[Rugged::Commit, Rugged::Commit], Array[Rugged::Diff::Delta]]
       # @rbs @diffs: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
       # @rbs @link_index: Hash[Symbol, Hash[String, String]]?
       # @rbs @tree: Rugged::Tree
@@ -334,16 +333,6 @@ module Wikinder
         @diffs[[commit, parent]] ||= commit.diff(parent)
       end
 
-      #: (Rugged::Commit, Rugged::Commit) -> Array[Rugged::Diff::Delta]
-      def cached_rename_deltas(commit, parent)
-        @rename_cache ||= {} #: Hash[[Rugged::Commit, Rugged::Commit], Array[Rugged::Diff::Delta]]
-        @rename_cache[[commit, parent]] ||= begin
-          d = commit.diff(parent)
-          d.find_similar!(renames: true)
-          d.deltas
-        end
-      end
-
       # Returns the file paths this page was renamed from, most recent first,
       # based on git rename detection across history.
       #: (String) -> Array[String]
@@ -369,15 +358,22 @@ module Wikinder
       # that is the most likely shape of a rename+rewrite that git cannot
       # link statistically. The wiki schema can only pick one answer when
       # similarity is low, so the author should curate the alias by hand.
+      #
+      # One diff is computed per (commit, parent) pair and shared with
+      # touched? through cached_diff. The plain delta list is snapshotted
+      # before find_similar! runs, because similarity detection consumes
+      # exactly the added/deleted pairs warn_unlinked_rename looks for.
       #: () -> Hash[String, String]
       def rename_deltas
         @rename_deltas ||= begin
           map = {} #: Hash[String, String]
           @repo.walk('HEAD').each do |commit|
             commit.parents.each do |parent|
-              deltas = cached_rename_deltas(commit, parent)
+              diff = cached_diff(commit, parent)
+              plain = plain_delta_paths(diff)
+              diff.find_similar!(renames: true)
               marked_renames = Set.new
-              deltas.each do |delta|
+              diff.deltas.each do |delta|
                 next unless delta.status == :renamed
 
                 # Rugged's +commit.diff(parent)+ reports the commit side as
@@ -396,10 +392,20 @@ module Wikinder
                 marked_renames.add(newer)
                 marked_renames.add(older)
               end
-              warn_unlinked_rename(parent, commit, marked_renames)
+              warn_unlinked_rename(plain, marked_renames)
             end
           end
           map
+        end
+      end
+
+      # Snapshots a diff's [status, path] pairs before rename detection
+      # rewrites them. Paths are normalised to UTF-8 like the rename
+      # map's, so they can be compared against it directly.
+      #: (Rugged::Diff) -> Array[[Symbol, String]]
+      def plain_delta_paths(diff)
+        diff.deltas.map do |delta|
+          [delta.status, delta.old_file[:path].to_s.dup.force_encoding(Encoding::UTF_8)]
         end
       end
 
@@ -407,13 +413,20 @@ module Wikinder
       # another .md file, and the git rename detector found no link between
       # them. This is the usual telltale shape of "rename and fully rewrite".
       # Has no effect on the returned rows; only diagnostics.
-      #: (Rugged::Commit, Rugged::Commit, Set[String]) -> void
-      def warn_unlinked_rename(parent, commit, marked_renames)
-        forward = parent.diff(commit)
-        deleted_deltas = forward.deltas.select { |d| d.status == :deleted && md?(d.old_file[:path]) }
-        added_deltas = forward.deltas.select { |d| d.status == :added && md?(d.new_file[:path]) }
-        deleted_md = deleted_deltas.map { |d| utf8_path(d.old_file[:path]) }
-        added_md = added_deltas.map { |d| utf8_path(d.new_file[:path]) }
+      #
+      # +plain+ is the pre-similarity snapshot of the reversed diff
+      # (commit side as old), so a forward deletion appears as :added
+      # and a forward addition as :deleted.
+      #: (Array[[Symbol, String]], Set[String]) -> void
+      def warn_unlinked_rename(plain, marked_renames)
+        deleted_md = [] #: Array[String]
+        added_md = [] #: Array[String]
+        plain.each do |status, path|
+          next unless md?(path)
+
+          deleted_md << path if status == :added
+          added_md << path if status == :deleted
+        end
 
         unmatched_deleted = deleted_md - marked_renames.to_a
         unmatched_added = added_md - marked_renames.to_a
@@ -429,11 +442,6 @@ module Wikinder
       #: (String) -> bool
       def md?(path)
         path.end_with?('.md')
-      end
-
-      #: (String) -> String
-      def utf8_path(path)
-        path.dup.force_encoding(Encoding::UTF_8)
       end
 
       private

@@ -29,7 +29,11 @@ module Wikinder
         # Elements treated as raw text by HTML5 — their contents are not
         # recursively parsed, so wikilinks there must not be rewritten.
         RAW_TEXT_ELEMENTS = %w[script style textarea title].freeze #: Array[String]
-        WIKILINK_PATTERN = /!?\[\[([^\[\]\n]{1,400})\]\]/
+        TOC_LITERALS = %w[_TOC_ __TOC__].freeze #: Array[String]
+        # No length cap on the tag body: gollum sets none, and the label of
+        # a piped link can legitimately run long. The negated class keeps
+        # the scan linear, and a match can never span lines.
+        WIKILINK_PATTERN = /!?\[\[([^\[\]\n]+)\]\]/
         IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|svg)([?#].*)?\z/i
 
         #: (String, ?link_index: Hash[Symbol, Hash[String, String]]?) -> String
@@ -216,7 +220,7 @@ module Wikinder
             pre = rest[0...match.begin(0)]
             nodes << Nokogiri::XML::Text.new(pre, document) if pre.is_a?(String) && !pre.empty?
 
-            nodes << build_element(document, match, link_index)
+            nodes.concat(build_elements(document, match, link_index))
             rest = rest[match.end(0)..]
           end
           nodes << Nokogiri::XML::Text.new(rest, document) if rest.is_a?(String) && !rest.empty?
@@ -225,14 +229,32 @@ module Wikinder
           node.replace(Nokogiri::XML::NodeSet.new(document, nodes))
         end
 
-        #: (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
-        def self.build_element(document, match, link_index)
+        # Whether a target is an image is decided by its extension
+        # alone — in gollum the leading '!' is not an image marker at
+        # all. It is consumed when the target is an image (the usual
+        # embed spelling); before a page link it stays as literal text,
+        # so ![[Page]] renders as "!" followed by a link to Page.
+        #: (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Array[Nokogiri::XML::Node]
+        def self.build_elements(document, match, link_index)
           inner = match[1].to_s.strip
-          if match[0].to_s.start_with?('!') || image_target?(inner)
-            build_image(document, inner, link_index)
+          if toc_literal?(inner)
+            [Nokogiri::XML::Text.new(match[0].to_s, document)]
+          elsif image_target?(inner)
+            [build_image(document, inner, link_index)]
+          elsif match[0].to_s.start_with?('!')
+            [Nokogiri::XML::Text.new('!', document), build_anchor(document, inner, link_index)]
           else
-            build_anchor(document, inner, link_index)
+            [build_anchor(document, inner, link_index)]
           end
+        end
+
+        # GitHub Wiki leaves [[_TOC_]] and [[__TOC__]] unconverted —
+        # they render as literal brackets around emphasized text — so
+        # the converter passes them through untouched rather than
+        # turning them into links.
+        #: (String) -> bool
+        def self.toc_literal?(inner)
+          TOC_LITERALS.include?(inner)
         end
 
         #: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
@@ -289,8 +311,12 @@ module Wikinder
             raise 'gsub block without match data' if match.nil?
 
             inner = match[1].to_s.strip
-            if match[0].to_s.start_with?('!') || image_target?(inner)
+            if toc_literal?(inner)
+              match[0].to_s
+            elsif image_target?(inner)
               render_image(inner, link_index)
+            elsif match[0].to_s.start_with?('!')
+              "!#{render_markdown_anchor(inner, link_index)}"
             else
               render_markdown_anchor(inner, link_index)
             end
@@ -313,27 +339,41 @@ module Wikinder
           "![#{escape_markdown_text(alt)}](#{escape_markdown_url(target)})"
         end
 
+        # Gollum reads the part after the pipe as image options
+        # (width=100, frame, ...). Standard Markdown cannot express
+        # them, so — by established design — the converter treats that
+        # part as the image's alt text instead of dropping it entirely.
+        # Segments past the second are ignored, as in gollum's
+        # parse_tag_parts.
         #: (String) -> [String, String]
         def self.image_parts(ref)
-          if ref.include?('|')
-            target, caption = ref.split('|', 2).map(&:strip)
-            [target.to_s, caption.to_s]
+          parts = ref.split('|').map(&:strip)
+          if parts.size >= 2
+            [parts[0].to_s, parts[1].to_s]
           else
-            [ref, File.basename(ref, '.*')]
+            target = parts[0].to_s
+            [target, File.basename(target, '.*')]
           end
         end
 
+        # Only the first two pipe segments are used, as in gollum's
+        # parse_tag_parts; anything past the second is discarded, and a
+        # trailing empty segment disappears with the split, so
+        # [[Page|]] is an ordinary link to Page.
         #: (String, Hash[Symbol, Hash[String, String]]?) -> [String, String]
         def self.split_ref(ref, link_index)
-          if ref.include?('|')
-            text, target = ref.split('|', 2).map(&:strip)
-            target = target.to_s
-            text = text.to_s
+          parts = ref.split('|').map(&:strip)
+          if parts.size >= 2
+            text = parts[0].to_s
+            target = parts[1].to_s
             [resolve_link_target(target, link_index), text]
-          elsif ref.start_with?('#')
-            [ref, ref.delete_prefix('#')]
           else
-            [resolve_link_target(ref, link_index), ref]
+            single = parts[0].to_s
+            if single.start_with?('#')
+              [single, single.delete_prefix('#')]
+            else
+              [resolve_link_target(single, link_index), single]
+            end
           end
         end
 

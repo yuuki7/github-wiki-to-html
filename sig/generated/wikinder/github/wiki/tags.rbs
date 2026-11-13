@@ -24,6 +24,11 @@ module Wikinder
         # recursively parsed, so wikilinks there must not be rewritten.
         RAW_TEXT_ELEMENTS: Array[String]
 
+        TOC_LITERALS: Array[String]
+
+        # No length cap on the tag body: gollum sets none, and the label of
+        # a piped link can legitimately run long. The negated class keeps
+        # the scan linear, and a match can never span lines.
         WIKILINK_PATTERN: ::Regexp
 
         IMAGE_EXTENSIONS: ::Regexp
@@ -112,8 +117,20 @@ module Wikinder
         # : (Nokogiri::XML::Node, Hash[Symbol, Hash[String, String]]?) -> void
         def self.split_and_replace_wikilinks: (Nokogiri::XML::Node, Hash[Symbol, Hash[String, String]]?) -> void
 
-        # : (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
-        def self.build_element: (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
+        # Whether a target is an image is decided by its extension
+        # alone — in gollum the leading '!' is not an image marker at
+        # all. It is consumed when the target is an image (the usual
+        # embed spelling); before a page link it stays as literal text,
+        # so ![[Page]] renders as "!" followed by a link to Page.
+        # : (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Array[Nokogiri::XML::Node]
+        def self.build_elements: (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -> Array[Nokogiri::XML::Node]
+
+        # GitHub Wiki leaves [[_TOC_]] and [[__TOC__]] unconverted —
+        # they render as literal brackets around emphasized text — so
+        # the converter passes them through untouched rather than
+        # turning them into links.
+        # : (String) -> bool
+        def self.toc_literal?: (String) -> bool
 
         # : (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
         def self.build_anchor: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -> Nokogiri::XML::Node
@@ -139,9 +156,19 @@ module Wikinder
         # : (String, Hash[Symbol, Hash[String, String]]?) -> String
         def self.render_image: (String, Hash[Symbol, Hash[String, String]]?) -> String
 
+        # Gollum reads the part after the pipe as image options
+        # (width=100, frame, ...). Standard Markdown cannot express
+        # them, so — by established design — the converter treats that
+        # part as the image's alt text instead of dropping it entirely.
+        # Segments past the second are ignored, as in gollum's
+        # parse_tag_parts.
         # : (String) -> [String, String]
         def self.image_parts: (String) -> [ String, String ]
 
+        # Only the first two pipe segments are used, as in gollum's
+        # parse_tag_parts; anything past the second is discarded, and a
+        # trailing empty segment disappears with the split, so
+        # [[Page|]] is an ordinary link to Page.
         # : (String, Hash[Symbol, Hash[String, String]]?) -> [String, String]
         def self.split_ref: (String, Hash[Symbol, Hash[String, String]]?) -> [ String, String ]
 

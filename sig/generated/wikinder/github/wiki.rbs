@@ -22,8 +22,6 @@ module Wikinder
 
       @diffs: Hash[[ Rugged::Commit, Rugged::Commit ], Rugged::Diff]
 
-      @rename_cache: Hash[[ Rugged::Commit, Rugged::Commit ], Array[Rugged::Diff::Delta]]
-
       @rename_deltas: Hash[String, String]
 
       @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
@@ -135,9 +133,6 @@ module Wikinder
       # : (Rugged::Commit, Rugged::Commit) -> Rugged::Diff
       def cached_diff: (Rugged::Commit, Rugged::Commit) -> Rugged::Diff
 
-      # : (Rugged::Commit, Rugged::Commit) -> Array[Rugged::Diff::Delta]
-      def cached_rename_deltas: (Rugged::Commit, Rugged::Commit) -> Array[Rugged::Diff::Delta]
-
       # Returns the file paths this page was renamed from, most recent first,
       # based on git rename detection across history.
       # : (String) -> Array[String]
@@ -150,21 +145,33 @@ module Wikinder
       # that is the most likely shape of a rename+rewrite that git cannot
       # link statistically. The wiki schema can only pick one answer when
       # similarity is low, so the author should curate the alias by hand.
+      #
+      # One diff is computed per (commit, parent) pair and shared with
+      # touched? through cached_diff. The plain delta list is snapshotted
+      # before find_similar! runs, because similarity detection consumes
+      # exactly the added/deleted pairs warn_unlinked_rename looks for.
       # : () -> Hash[String, String]
       def rename_deltas: () -> Hash[String, String]
+
+      # Snapshots a diff's [status, path] pairs before rename detection
+      # rewrites them. Paths are normalised to UTF-8 like the rename
+      # map's, so they can be compared against it directly.
+      # : (Rugged::Diff) -> Array[[Symbol, String]]
+      def plain_delta_paths: (Rugged::Diff) -> Array[[ Symbol, String ]]
 
       # Emits a one-line warning when the commit deletes an .md file and adds
       # another .md file, and the git rename detector found no link between
       # them. This is the usual telltale shape of "rename and fully rewrite".
       # Has no effect on the returned rows; only diagnostics.
-      # : (Rugged::Commit, Rugged::Commit, Set[String]) -> void
-      def warn_unlinked_rename: (Rugged::Commit, Rugged::Commit, Set[String]) -> void
+      #
+      # +plain+ is the pre-similarity snapshot of the reversed diff
+      # (commit side as old), so a forward deletion appears as :added
+      # and a forward addition as :deleted.
+      # : (Array[[Symbol, String]], Set[String]) -> void
+      def warn_unlinked_rename: (Array[[ Symbol, String ]], Set[String]) -> void
 
       # : (String) -> bool
       def md?: (String) -> bool
-
-      # : (String) -> String
-      def utf8_path: (String) -> String
 
       private
 
