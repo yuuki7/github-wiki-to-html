@@ -236,6 +236,9 @@ module Wikinder
         # Handles [[File.md#anchor]] explicitly: the anchor fragment must
         # survive intact while only the page path component loses .md.
         # A leading '#' is an in-page anchor and passes through unchanged.
+        # The path is percent-encoded for URL-unsafe ASCII characters
+        # (e.g. "a?b" becomes "a%3Fb") but left as-is for non-ASCII, so
+        # links remain human-readable for UTF-8 slugs.
         #: (String) -> String
         def self.resolve_link_target(target)
           return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
@@ -246,8 +249,17 @@ module Wikinder
           path = fragment[0] || ''
           anchor = fragment[1]
           name = path.end_with?('.md') ? path.sub(/\.md\z/, '') : path
-          resolved = "/#{Slugs.for_title(name)}"
+          resolved = "/#{escape_url_path(Slugs.for_title(name))}"
           anchor ? "#{resolved}##{anchor}" : resolved
+        end
+
+        # Percent-encodes ASCII characters that are unsafe in a URL path
+        # segment; leaves non-ASCII (UTF-8 IRI) characters alone so that
+        # Japanese slugs remain readable. Mirrors what a typical SSG/Astro
+        # does when generating out/ from the markdown tree.
+        #: (String) -> String
+        def self.escape_url_path(path)
+          path.gsub(/[^\u{80}-\u{10FFFF}A-Za-z0-9\-._~,]/) { |c| format('%%%02X', c.ord) }
         end
 
         #: (String) -> bool

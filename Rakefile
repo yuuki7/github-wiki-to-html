@@ -21,8 +21,11 @@ task :check do
 end
 
 RSpec::Core::RakeTask.new(:test) do |t|
-  t.rspec_opts = '--options .config/.rspec'
+  # The pattern must live here: an unset pattern makes the task inject its
+  # built-in default (spec/**/*_spec.rb) ahead of anything in the options
+  # file, which wins the conflict and matches nothing.
   t.pattern = 'test/**/*.rb'
+  t.rspec_opts = '--options .config/.rspec'
 end
 
 desc 'Generate HTML from Markdown'

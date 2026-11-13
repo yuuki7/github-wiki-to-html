@@ -16,6 +16,12 @@ module Wikinder
 
       @ignore_meta: bool
 
+      @tree: Rugged::Tree
+
+      @diffs: Hash[[ Rugged::Commit, Rugged::Commit ], Rugged::Diff]
+
+      @rename_cache: Hash[[ Rugged::Commit, Rugged::Commit ], Array[Rugged::Diff::Delta]]
+
       @rename_deltas: Hash[String, String]
 
       @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
@@ -34,9 +40,10 @@ module Wikinder
       #
       # @param path [String | Pathname] path to the wiki repository.
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
-      #   ungenerated_pages defaults to Set['META'] — this tool manages
-      #   META.md itself, so treating it as an ordinary page would generate
-      #   a garbage article from it; pass Set[] explicitly to opt out.
+      #   ungenerated_pages defaults to Set['Home', 'README', 'LICENSE',
+      #   'META', '_Footer'] — the same set the conversion CLI passes —
+      #   so Home/_Footer are not emitted as ordinary articles by default.
+      #   Pass Set['META'] (or any subset) explicitly to opt out of each.
       # @param options[:ignore_meta] Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
       # @param options[:prev_head] SHA of the commit this repo was last read
@@ -64,8 +71,14 @@ module Wikinder
       # : (String, Hash[String, String]) -> void
       def verify_confined!: (String, Hash[String, String]) -> void
 
-      # Removes stale generated files no longer produced by this build,
-      # keeping unrelated files in target_dir untouched.
+      # Removes stale generated files no longer produced by this build.
+      #
+      # The output directory is assumed to be exclusively this tool's
+      # destination — anything matching the generated extensions (Markdown
+      # or common image types) that the current build did not produce is
+      # removed, along with `.tmp.<pid>` stragglers from a crash-during-write.
+      # Files with other extensions (e.g. site assets shared with the SSG)
+      # are left untouched.
       # : (String, Hash[String, String]) -> void
       def cleanup_stale_files: (String, Hash[String, String]) -> void
 
@@ -117,6 +130,12 @@ module Wikinder
       # : (String) -> Rugged::Commit?
       def rev_parse: (String) -> Rugged::Commit?
 
+      # : (Rugged::Commit, Rugged::Commit) -> Rugged::Diff
+      def cached_diff: (Rugged::Commit, Rugged::Commit) -> Rugged::Diff
+
+      # : (Rugged::Commit, Rugged::Commit) -> Array[Rugged::Diff::Delta]
+      def cached_rename_deltas: (Rugged::Commit, Rugged::Commit) -> Array[Rugged::Diff::Delta]
+
       # Returns the file paths this page was renamed from, most recent first,
       # based on git rename detection across history.
       # : (String) -> Array[String]
@@ -124,8 +143,26 @@ module Wikinder
 
       # Builds a map of rename deltas across the full history: every file path
       # that was ever renamed maps to its predecessor path.
+      # Additionally, surface a warning when a single commit deletes one
+      # .md file and adds another .md file with no detectable rename —
+      # that is the most likely shape of a rename+rewrite that git cannot
+      # link statistically. The wiki schema can only pick one answer when
+      # similarity is low, so the author should curate the alias by hand.
       # : () -> Hash[String, String]
       def rename_deltas: () -> Hash[String, String]
+
+      # Emits a one-line warning when the commit deletes an .md file and adds
+      # another .md file, and the git rename detector found no link between
+      # them. This is the usual telltale shape of "rename and fully rewrite".
+      # Has no effect on the returned rows; only diagnostics.
+      # : (Rugged::Commit, Rugged::Commit, Set[String]) -> void
+      def warn_unlinked_rename: (Rugged::Commit, Rugged::Commit, Set[String]) -> void
+
+      # : (String) -> bool
+      def md?: (String) -> bool
+
+      # : (String) -> String
+      def utf8_path: (String) -> String
 
       private
 

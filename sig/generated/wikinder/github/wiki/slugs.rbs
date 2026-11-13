@@ -18,9 +18,10 @@ module Wikinder
 
         # Returns true when +slug+ is usable as the natural path segment of
         # a generated page or redirect: no directory separators, no parent
-        # references, never hidden or empty. Such names can still appear as
-        # titles, but may not emit path segments that escape the output
-        # directory or collapse onto site routes.
+        # references, never hidden or empty, and reasonable size to write
+        # to a filesystem without hitting name length limits. Such names
+        # can still appear as titles, but may not emit path segments that
+        # escape the output directory or collapse onto site routes.
         # : (String) -> bool
         def self.safe?: (String) -> bool
       end

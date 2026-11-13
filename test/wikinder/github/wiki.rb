@@ -4,6 +4,7 @@
 # RBS and Steep already guarantee field presence and value types, so this
 # file does not enumerate fields. Only invariants types cannot express remain.
 
+require_relative '../../spec_helper'
 require 'tmpdir'
 require 'yaml'
 

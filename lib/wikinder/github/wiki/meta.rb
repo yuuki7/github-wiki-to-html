@@ -88,6 +88,9 @@ module Wikinder
 
           result = {} #: Hash[String, meta_row]
           meta_path.each_line.with_index(1) do |line, index|
+            # Strip invalid bytes up-front so the parser never raises
+            # Encoding::CompatibilityError on a hand-corrupted line.
+            line = line.scrub("\u{FFFD}")
             row = parse_row(line.chomp, index)
             next unless row
 
@@ -108,7 +111,13 @@ module Wikinder
           cells = split_cells(line)
           return nil if cells.empty?
           return nil if cells.all? { |cell| cell.match?(/\A-+\z/) }
-          return nil if cells[0] == 'Title' || (cells.length == 1 && cells[0].empty?)
+          # A single empty cell is a stray blank line, not a header row.
+          return nil if cells.length == 1 && cells[0].empty?
+
+          if cells[0] == 'Title'
+            warn 'META.md: skipping table header row (Title)'
+            return nil
+          end
 
           if cells.length < META_HEADERS.length
             warn "META.md: ignoring row with too few cells#{location}"

@@ -28,6 +28,9 @@ module Wikinder
       # @rbs @repo: Rugged::Repository
       # @rbs @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
       # @rbs @rename_deltas: Hash[String, String]
+      # @rbs @rename_cache: Hash[[Rugged::Commit, Rugged::Commit], Array[Rugged::Diff::Delta]]
+      # @rbs @diffs: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
+      # @rbs @tree: Rugged::Tree
       # @rbs @ignore_meta: bool
       # @rbs @prev_head: String?
 
@@ -39,9 +42,10 @@ module Wikinder
       #
       # @param path [String | Pathname] path to the wiki repository.
       # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
-      #   ungenerated_pages defaults to Set['META'] — this tool manages
-      #   META.md itself, so treating it as an ordinary page would generate
-      #   a garbage article from it; pass Set[] explicitly to opt out.
+      #   ungenerated_pages defaults to Set['Home', 'README', 'LICENSE',
+      #   'META', '_Footer'] — the same set the conversion CLI passes —
+      #   so Home/_Footer are not emitted as ordinary articles by default.
+      #   Pass Set['META'] (or any subset) explicitly to opt out of each.
       # @param options[:ignore_meta] Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
       # @param options[:prev_head] SHA of the commit this repo was last read
@@ -51,7 +55,12 @@ module Wikinder
         @path = Pathname(path.to_s).expand_path
         @repo = Rugged::Repository.new(@path.to_s)
         @head = @repo.head.target_id
-        @ungenerated_pages = Array(options.fetch(:ungenerated_pages) { Set['META'] }).to_set.freeze
+        # Capture the tree once so walking / lookup during build does not
+        # change mid-build (the wiki could otherwise move under a build).
+        @tree = (@repo.rev_parse(@head) || @repo.head.target).tree
+        @ungenerated_pages = Array(
+          options.fetch(:ungenerated_pages) { Set['Home', 'README', 'LICENSE', 'META', '_Footer'] }
+        ).to_set.freeze
         @unlisted_pages = Array(options[:unlisted_pages] || []).to_set.freeze
         @ignore_meta = options[:ignore_meta] == true
         prev_head = options[:prev_head]
@@ -106,12 +115,18 @@ module Wikinder
         end
       end
 
-      # Removes stale generated files no longer produced by this build,
-      # keeping unrelated files in target_dir untouched.
+      # Removes stale generated files no longer produced by this build.
+      #
+      # The output directory is assumed to be exclusively this tool's
+      # destination — anything matching the generated extensions (Markdown
+      # or common image types) that the current build did not produce is
+      # removed, along with `.tmp.<pid>` stragglers from a crash-during-write.
+      # Files with other extensions (e.g. site assets shared with the SSG)
+      # are left untouched.
       #: (String, Hash[String, String]) -> void
       def cleanup_stale_files(target_dir, outputs)
         keep = Set.new(outputs.keys)
-        %w[*.md *.png *.jpg *.jpeg *.gif *.webp *.svg].each do |pattern|
+        %w[*.md *.png *.jpg *.jpeg *.gif *.webp *.svg *.tmp.*].each do |pattern|
           Dir.glob(File.join(target_dir, pattern)).each do |path|
             next if keep.include?(File.basename(path))
 
@@ -152,7 +167,7 @@ module Wikinder
         redirect_outputs(meta, occupied).each { |relative, content| outputs[relative] = content }
 
         image_extensions = %w[.png .jpg .jpeg .gif .webp .svg]
-        @repo.head.target.tree.walk(:preorder) do |root, entry|
+        @tree.walk(:preorder) do |root, entry|
           next unless entry[:type] == :blob
           next unless root.empty? # subdirectory assets are unsupported and ignored
 
@@ -220,7 +235,7 @@ module Wikinder
       #: () -> Array[String]
       def collect_pages
         result = [] #: Array[String]
-        @repo.head.target.tree.walk(:preorder) do |root, entry|
+        @tree.walk(:preorder) do |root, entry|
           next unless entry[:type] == :blob
           next unless root.empty? # subdirectory files are unsupported and ignored
 
@@ -243,7 +258,7 @@ module Wikinder
       # tree lookup always suffices.
       #: (String, ?tree: Rugged::Tree?) -> Rugged::tree_entry?
       def tree_entry(path, tree: nil)
-        (tree || @repo.head.target.tree)[path]
+        (tree || @tree)[path]
       end
 
       #: (String) -> String
@@ -251,18 +266,21 @@ module Wikinder
         entry = tree_entry(name)
         return '' unless entry
 
-        content = @repo.lookup(entry[:oid]).content.force_encoding(Encoding::UTF_8)
+        content = @repo.lookup(entry[:oid]).content
+        # Normalise CR and CRLF line endings; the Commonmarker parser walks
+        # \r\n and bare \r as distinct line separators, so CR-only files
+        # would otherwise crash range_for with offsets past the end of
+        # line_offsets. This mirrors Gollum's Wiki#normalize.
+        content = content.gsub(/\r\n?/, "\n")
+        content = content.force_encoding(Encoding::UTF_8)
         return content if content.valid_encoding?
 
-        # Replace invalid byte sequences with U+FFFD so a single bad page
-        # never aborts the whole build — but say so, loudly.
         warn "text_for: #{name} contains invalid UTF-8; invalid bytes were replaced with U+FFFD"
         content.scrub
       end
 
       #: (String) -> Hash[Symbol, Rugged::Commit?]
       def commit_bounds_for(path)
-        path = path.b
         @commit_bounds ||= {} #: Hash[String, Hash[Symbol, Rugged::Commit?]]
         return @commit_bounds[path] if @commit_bounds.key?(path)
 
@@ -293,7 +311,10 @@ module Wikinder
         prev_commit = rev_parse(from_ref)
         return nil unless prev_commit
 
-        prev_commit.diff(@repo.head.target)
+        head_commit = @repo.rev_parse(@head)
+        return nil unless head_commit
+
+        prev_commit.diff(head_commit)
                    .deltas
                    .flat_map { |delta| [delta.old_file[:path], delta.new_file[:path]] }
                    .uniq
@@ -306,13 +327,29 @@ module Wikinder
         nil
       end
 
+      #: (Rugged::Commit, Rugged::Commit) -> Rugged::Diff
+      def cached_diff(commit, parent)
+        @diffs ||= {} #: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
+        @diffs[[commit, parent]] ||= commit.diff(parent)
+      end
+
+      #: (Rugged::Commit, Rugged::Commit) -> Array[Rugged::Diff::Delta]
+      def cached_rename_deltas(commit, parent)
+        @rename_cache ||= {} #: Hash[[Rugged::Commit, Rugged::Commit], Array[Rugged::Diff::Delta]]
+        @rename_cache[[commit, parent]] ||= begin
+          d = commit.diff(parent)
+          d.find_similar!(renames: true)
+          d.deltas
+        end
+      end
+
       # Returns the file paths this page was renamed from, most recent first,
       # based on git rename detection across history.
       #: (String) -> Array[String]
       def rename_history_for(path)
         renames = rename_deltas #: Hash[String, String]
         result = [] #: Array[String]
-        current = path.b
+        current = path #: String
         visited = [current] #: Array[String]
         until (predecessor = renames[current]).nil?
           break if visited.include?(predecessor) # guard against rename cycles
@@ -326,32 +363,75 @@ module Wikinder
 
       # Builds a map of rename deltas across the full history: every file path
       # that was ever renamed maps to its predecessor path.
+      # Additionally, surface a warning when a single commit deletes one
+      # .md file and adds another .md file with no detectable rename —
+      # that is the most likely shape of a rename+rewrite that git cannot
+      # link statistically. The wiki schema can only pick one answer when
+      # similarity is low, so the author should curate the alias by hand.
       #: () -> Hash[String, String]
       def rename_deltas
         @rename_deltas ||= begin
           map = {} #: Hash[String, String]
           @repo.walk('HEAD').each do |commit|
             commit.parents.each do |parent|
-              diff = commit.diff(parent)
-              diff.find_similar!(renames: true)
-              diff.deltas.each do |delta|
+              deltas = cached_rename_deltas(commit, parent)
+              marked_renames = Set.new
+              deltas.each do |delta|
                 next unless delta.status == :renamed
 
                 # Rugged's +commit.diff(parent)+ reports the commit side as
                 # old_file and the parent side as new_file (chronologically
                 # reversed). The rename map therefore reads "current name ->
                 # name it was renamed from". First seen wins; walked from
-                # HEAD so the most recent rename is recorded first. Byte-compare
-                # paths like touched? does, because rugged hands back
-                # ASCII-8BIT path strings.
-                newer = delta.old_file[:path].b
-                older = delta.new_file[:path].b
+                # HEAD so the most recent rename is recorded first.
+                #
+                # The paths are normalised to valid UTF-8 here so all
+                # downstream consumers (slug/alias handling, front-matter
+                # YAML) can treat them as plain Strings without ever having
+                # to worry about ASCII-8BIT.
+                newer = delta.old_file[:path].dup.force_encoding(Encoding::UTF_8)
+                older = delta.new_file[:path].dup.force_encoding(Encoding::UTF_8)
                 map[newer] ||= older
+                marked_renames.add(newer)
+                marked_renames.add(older)
               end
+              warn_unlinked_rename(parent, commit, marked_renames)
             end
           end
           map
         end
+      end
+
+      # Emits a one-line warning when the commit deletes an .md file and adds
+      # another .md file, and the git rename detector found no link between
+      # them. This is the usual telltale shape of "rename and fully rewrite".
+      # Has no effect on the returned rows; only diagnostics.
+      #: (Rugged::Commit, Rugged::Commit, Set[String]) -> void
+      def warn_unlinked_rename(parent, commit, marked_renames)
+        forward = parent.diff(commit)
+        deleted_deltas = forward.deltas.select { |d| d.status == :deleted && md?(d.old_file[:path]) }
+        added_deltas = forward.deltas.select { |d| d.status == :added && md?(d.new_file[:path]) }
+        deleted_md = deleted_deltas.map { |d| utf8_path(d.old_file[:path]) }
+        added_md = added_deltas.map { |d| utf8_path(d.new_file[:path]) }
+
+        unmatched_added = added_md - marked_renames.to_a
+        return if deleted_md.empty? || unmatched_added.empty?
+
+        deleted_list = deleted_md.uniq.join(', ')
+        added_list = unmatched_added.uniq.join(', ')
+        warn 'git could not link this rename: ' \
+             "#{added_list} seems to succeed #{deleted_list} after a heavy rewrite; " \
+             'alias must be set in META.md manually'
+      end
+
+      #: (String) -> bool
+      def md?(path)
+        path.end_with?('.md')
+      end
+
+      #: (String) -> String
+      def utf8_path(path)
+        path.dup.force_encoding(Encoding::UTF_8)
       end
 
       private
@@ -369,9 +449,10 @@ module Wikinder
         parents = commit.parents
         return !tree_entry(path, tree: commit.tree).nil? if parents.empty?
 
+        path_b = path.b
         parents.any? do |parent|
-          commit.diff(parent).deltas.any? do |delta|
-            delta.new_file[:path].b == path.b || delta.old_file[:path].b == path.b
+          cached_diff(commit, parent).deltas.any? do |delta|
+            delta.new_file[:path].b == path_b || delta.old_file[:path].b == path_b
           end
         end
       end
@@ -392,7 +473,7 @@ module Wikinder
         author = if row
                    row[:author]
                  elsif last
-                   last.author[:name]
+                   last.author[:name] || 'unknown'
                  else
                    'unknown'
                  end
