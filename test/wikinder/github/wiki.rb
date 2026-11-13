@@ -348,11 +348,17 @@ RSpec.describe Wikinder::GitHub::Wiki do
 
     # GitHub Wiki does not treat '!' as an image marker — the image
     # decision is made by the target's extension alone — so before a
-    # page link the bang stays as literal text.
+    # page link the bang stays as literal text. Because the output is
+    # itself Markdown, the bang is escaped: left bare, the downstream
+    # render would re-parse it as an image.
     it 'renders ![[Page]] as a literal bang followed by a page link' do
       tags = Wikinder::GitHub::Wiki::Tags
       index = tags.build_link_index(['Yuuki'], [])
-      expect(tags.render('![[yuuki]]', link_index: index)).to eq('![yuuki](/Yuuki)')
+      output = tags.render('![[yuuki]]', link_index: index)
+      expect(output).to eq('\\![yuuki](/Yuuki)')
+      html = Commonmarker.to_html(output)
+      expect(html).to include('<a href="/Yuuki">yuuki</a>')
+      expect(html).not_to include('<img')
     end
 
     it 'keeps the bang as text before page anchors inside HTML blocks' do

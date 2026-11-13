@@ -316,7 +316,10 @@ module Wikinder
             elsif image_target?(inner)
               render_image(inner, link_index)
             elsif match[0].to_s.start_with?('!')
-              "!#{render_markdown_anchor(inner, link_index)}"
+              # The output is itself Markdown, so a bare '!' in front of
+              # the link would be re-parsed downstream as an image. The
+              # escape keeps it the literal text GitHub renders.
+              "\\!#{render_markdown_anchor(inner, link_index)}"
             else
               render_markdown_anchor(inner, link_index)
             end
