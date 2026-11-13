@@ -261,6 +261,35 @@ RSpec.describe Wikinder::GitHub::Wiki do
       expect(output).to include('<a href="/bear">bear</a>')
     end
 
+    # Regression: a <details> element spanning several HTML blocks (blank
+    # lines split it into an opening block, Markdown, and a closing block)
+    # used to be closed at the end of its first block when each block was
+    # parsed on its own, and its real closing tag was dropped.
+    it 'keeps <details> elements spanning multiple HTML blocks intact' do
+      source = "<details>\n<summary>[show]</summary>\n\nBody [[Bear]] text\n\n</details>\n"
+      output = Wikinder::GitHub::Wiki::Tags.render(source)
+      expect(output).to eq("<details>\n<summary>[show]</summary>\n\nBody [Bear](/Bear) text\n\n</details>\n")
+    end
+
+    # Wikilinks in the text of an HTML block that a later block closes are
+    # still rewritten as raw HTML anchors.
+    it 'rewrites wikilinks inside an HTML element closed by a later block' do
+      source = "<details>\n<summary>About [[bear]]</summary>\n\ntext\n\n</details>\n"
+      output = Wikinder::GitHub::Wiki::Tags.render(source)
+      expect(output).to include('<summary>About <a href="/bear">bear</a></summary>')
+      expect(output.scan('</details>').size).to eq(1)
+    end
+
+    # When the gap markers cannot survive the joint parse (here the first
+    # block ends inside a quoted attribute), per-block rewriting takes
+    # over and no marker text leaks into the output.
+    it 'never leaks gap markers into the output' do
+      source = "<div>\n<span title=\"abc\n\ntext\n\n<p>hi [[Link]]</p>\n"
+      output = Wikinder::GitHub::Wiki::Tags.render(source)
+      expect(output).not_to include('wikinder-gap')
+      expect(output).to include('<a href="/Link">Link</a>')
+    end
+
     # A rename history with multiple chained renames must restore every ancestor alias.
     it 'restores rename aliases across multiple levels' do
       scratch = Dir.mktmpdir('chain-wiki')
@@ -626,6 +655,12 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
   it 'warns and skips rows with too few cells' do
     expect { described_class.parse_row('| [[x]] | |') }.to output(/too few cells/).to_stderr
     expect(described_class.parse_row('| [[x]] | |')).to be_nil
+  end
+
+  it 'skips the header row silently' do
+    line = '| Title | Author | Creation date | Modified date | Language | Aliases |'
+    expect { described_class.parse_row(line) }.not_to output.to_stderr
+    expect(described_class.parse_row(line)).to be_nil
   end
 
   it 'warns when a row has no [[Title]] cell' do

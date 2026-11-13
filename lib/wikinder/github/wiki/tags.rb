@@ -4,6 +4,7 @@
 require 'commonmarker'
 require 'nokogiri'
 require 'nokogiri/html5'
+require 'securerandom'
 
 module Wikinder
   module GitHub
@@ -16,10 +17,14 @@ module Wikinder
       #
       # Wiki links become standard Markdown links, except when they appear
       # in raw HTML blocks, where the Markdown pipeline would not process
-      # them. Raw HTML blocks are handed to Nokogiri (HTML5 parser) so text
-      # between tags can be rewritten with raw HTML anchors and verbatim
-      # parts — tags, attributes, scripts, styles, comments — pass through
-      # untouched.
+      # them. All raw HTML blocks of a page are parsed together as a single
+      # HTML5 stream (Nokogiri), because constructs such as <details>
+      # routinely span several blocks separated by blank lines — parsing
+      # each block in isolation would auto-close elements that a later
+      # block closes and drop their closing tags. Wikilinks in text nodes
+      # are rewritten as raw HTML anchors; everything else is reserialized
+      # by the parser, which normalizes the markup (supplying an implied
+      # <tbody>, for example) rather than preserving the source bytes.
       module Tags
         # Elements treated as raw text by HTML5 — their contents are not
         # recursively parsed, so wikilinks there must not be rewritten.
@@ -52,6 +57,7 @@ module Wikinder
         #: (String, Array[Integer]) -> Array[[Range[Integer], String]]
         def self.typed_ranges(source, offsets)
           ranges = [] #: Array[[Range[Integer], String]]
+          html_blocks = [] #: Array[[Range[Integer], String]]
           Commonmarker.parse(source, options: { extension: { math_dollars: true, math_code: true } }).walk do |node|
             type = node.type.to_s
             sp = node.source_position
@@ -62,27 +68,94 @@ module Wikinder
               ranges << [sp_range, source.byteslice(sp_range).to_s]
             when 'html_block'
               sp_range = range_for(offsets, sp)
-              ranges << [sp_range, rewrite_html_block(source.byteslice(sp_range).to_s)]
+              html_blocks << [sp_range, source.byteslice(sp_range).to_s]
             end
+          end
+          rewrite_html_stream(html_blocks.map { |_range, text| text }).each_with_index do |rewritten, index|
+            range, _text = html_blocks[index]
+            ranges << [range, rewritten] if range
           end
           ranges.sort_by! { |range, _replacement| range.begin }
           ranges
         end
 
-        # Rewrites wikilinks in an HTML block: parses with Nokogiri and
-        # splits each text node at wikilinks, producing anchor/image elements.
+        # Rewrites wikilinks in a page's raw HTML blocks. The blocks are
+        # joined with unique comment markers and parsed as one HTML5
+        # stream, so an element opened in one block can be closed in a
+        # later one; after rewriting, the stream is split at the markers
+        # again. Content the parser moved across a marker (an unclosed
+        # element before the first block, auto-closures after the last)
+        # is folded into the nearest block. If a marker does not survive
+        # the round trip — it can be swallowed as raw text, e.g. by a
+        # <script> spanning several blocks — each block is rewritten on
+        # its own instead, so the result is never worse than per-block
+        # parsing.
+        #: (Array[String]) -> Array[String]
+        def self.rewrite_html_stream(blocks)
+          return [] if blocks.empty?
+
+          marker = gap_marker(blocks)
+          stream = +''
+          blocks.each_with_index { |text, index| stream << "<!--#{marker}:#{index}-->" << text }
+          stream << "<!--#{marker}:#{blocks.size}-->"
+          fragment = parse_fragment(stream)
+          rewrite_fragment_text_nodes(fragment)
+          pieces = split_stream(fragment.to_html, marker, blocks.size)
+          return blocks.map { |text| rewrite_html_block(text) } if pieces.nil?
+
+          pieces
+        end
+
+        # Splits a serialized HTML stream at the gap markers, returning one
+        # string per original block, or nil when the markers did not all
+        # survive in order.
+        #: (String, String, Integer) -> Array[String]?
+        def self.split_stream(serialized, marker, count)
+          parts = serialized.split(/<!--#{Regexp.escape(marker)}:(\d+)-->/, -1)
+          return nil unless parts.size == (2 * count) + 3
+          return nil unless (1...parts.size).step(2).map { |i| parts[i].to_i } == (0..count).to_a
+
+          pieces = (0...count).map { |index| parts[(2 * index) + 2].to_s }
+          pieces[0] = "#{parts[0]}#{pieces[0]}"
+          pieces[count - 1] = "#{pieces[count - 1]}#{parts[(2 * count) + 2]}"
+          pieces
+        end
+
+        # A comment token that appears in none of the blocks, so joining
+        # blocks with it cannot collide with page content.
+        #: (Array[String]) -> String
+        def self.gap_marker(blocks)
+          marker = 'wikinder-gap'
+          marker = "#{marker}-#{SecureRandom.hex(4)}" while blocks.any? { |text| text.include?(marker) }
+          marker
+        end
+
+        #: (String) -> Nokogiri::XML::DocumentFragment
+        def self.parse_fragment(text)
+          Nokogiri::HTML5.fragment(text.dup.force_encoding(Encoding::UTF_8))
+        end
+
+        # Rewrites wikilinks in the text nodes of a parsed fragment.
         # Raw-text element contents (script, style, textarea, title) are
         # left verbatim, as are attribute values.
-        #: (String) -> String
-        def self.rewrite_html_block(fragment_text)
-          raw = fragment_text.dup.force_encoding(Encoding::UTF_8)
-          fragment = Nokogiri::HTML5.fragment(raw)
+        #: (Nokogiri::XML::DocumentFragment) -> void
+        def self.rewrite_fragment_text_nodes(fragment)
           fragment.traverse do |node|
             next unless node.text?
             next if inside_raw_text?(node)
 
             split_and_replace_wikilinks(node)
           end
+        end
+
+        # Rewrites wikilinks in a single HTML block: parses with Nokogiri,
+        # splits each text node at wikilinks, producing anchor/image
+        # elements. Used for pages whose blocks cannot be joined (see
+        # rewrite_html_stream).
+        #: (String) -> String
+        def self.rewrite_html_block(fragment_text)
+          fragment = parse_fragment(fragment_text)
+          rewrite_fragment_text_nodes(fragment)
           fragment.to_html
         end
 
@@ -159,26 +232,24 @@ module Wikinder
           out = +''
           position = 0
           segments.each do |range, content|
-            out << rewrite_fragment(source.byteslice(position...range.begin) || '', :markdown)
+            out << rewrite_fragment(source.byteslice(position...range.begin) || '')
             out << content
             position = range.end
           end
-          out << rewrite_fragment(source.byteslice(position..) || '', :markdown)
+          out << rewrite_fragment(source.byteslice(position..) || '')
           out
         end
 
         # Rewrite wikilinks in a Markdown source fragment.
-        #: (String, Symbol) -> String
-        def self.rewrite_fragment(text, mode)
-          return text if mode == :code
-
+        #: (String) -> String
+        def self.rewrite_fragment(text)
           text.gsub(WIKILINK_PATTERN) do
             match = Regexp.last_match
             raise 'gsub block without match data' if match.nil?
 
             inner = match[1].to_s.strip
             if match[0].to_s.start_with?('!') || image_target?(inner)
-              render_image(inner, mode)
+              render_image(inner)
             else
               render_markdown_anchor(inner)
             end
@@ -193,8 +264,8 @@ module Wikinder
           "[#{escape_markdown_text(label)}](#{escape_markdown_url(href)})"
         end
 
-        #: (String, Symbol) -> String
-        def self.render_image(ref, _mode = :markdown)
+        #: (String) -> String
+        def self.render_image(ref)
           target, alt = image_parts(ref)
           alt = File.basename(target, '.*') if alt.to_s.empty?
           "![#{escape_markdown_text(alt)}](#{escape_markdown_url(target)})"
@@ -271,11 +342,6 @@ module Wikinder
         end
 
         # --- Escaping
-
-        #: (String) -> String
-        def self.escape_html_text(text)
-          text.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('"', '&quot;')
-        end
 
         #: (String) -> String
         def self.escape_markdown_text(text) = text.gsub('\\', '\\\\').gsub('[', '\\[').gsub(']', '\\]')
