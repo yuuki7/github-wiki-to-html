@@ -1,3 +1,4 @@
 -o docs
 --markup markdown
 --tag rbs
+--exclude sig/.*
