@@ -110,6 +110,9 @@
 <p>The wiki repository contains .md files; this class enumerates them,
 rewrites wiki-specific syntax, and produces YAML front matter
 with metadata for downstream consumers.</p>
+<p>GitHub Wiki is flat: it has no notion of nested page directories, and
+pages are addressed by name only. Subdirectory blobs are therefore
+silently unsupported — they are ignored entirely.</p>
 
   </div>
 </div>
@@ -252,28 +255,6 @@ with metadata for downstream consumers.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#assets_manifest_path-instance_method" title="#assets_manifest_path (instance method)">#<strong>assets_manifest_path</strong>(target_dir)  &#x21d2; String </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'><p>: (String) -&gt; String.</p></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
       <a href="#build-instance_method" title="#build (instance method)">#<strong>build</strong>(target_dir)  &#x21d2; void </a>
     
 
@@ -296,6 +277,28 @@ with metadata for downstream consumers.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#cached_diff-instance_method" title="#cached_diff (instance method)">#<strong>cached_diff</strong>(commit, parent)  &#x21d2; Rugged::Diff </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>: (Rugged::Commit, Rugged::Commit) -&gt; Rugged::Diff.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#cleanup_stale_files-instance_method" title="#cleanup_stale_files (instance method)">#<strong>cleanup_stale_files</strong>(target_dir, outputs)  &#x21d2; void </a>
     
 
@@ -310,7 +313,7 @@ with metadata for downstream consumers.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Removes stale generated files no longer produced by this build, keeping unrelated files in target_dir untouched.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Removes stale generated files no longer produced by this build.</p></div></span>
   
 </li>
 
@@ -474,7 +477,7 @@ with metadata for downstream consumers.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#prune_empty_directories-instance_method" title="#prune_empty_directories (instance method)">#<strong>prune_empty_directories</strong>(directory, stop_at)  &#x21d2; void </a>
+      <a href="#link_index-instance_method" title="#link_index (instance method)">#<strong>link_index</strong>  &#x21d2; Hash[Symbol, Hash[String, String]] </a>
     
 
     
@@ -488,7 +491,7 @@ with metadata for downstream consumers.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Removes directories that became empty because their stale assets were deleted, walking up but never above target_dir.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>The wiki's link index: every page and image asset at the repository root, for canonicalizing wikilink targets the way GitHub Wiki resolves them (see Tags.build_link_index).</p></div></span>
   
 </li>
 
@@ -496,7 +499,7 @@ with metadata for downstream consumers.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#read_assets_manifest-instance_method" title="#read_assets_manifest (instance method)">#<strong>read_assets_manifest</strong>(target_dir)  &#x21d2; Array[String] </a>
+      <a href="#md%3F-instance_method" title="#md? (instance method)">#<strong>md?</strong>(path)  &#x21d2; Boolean </a>
     
 
     
@@ -510,7 +513,29 @@ with metadata for downstream consumers.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String) -&gt; <a href="String">Array</a>.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (String) -&gt; bool.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#plain_delta_paths-instance_method" title="#plain_delta_paths (instance method)">#<strong>plain_delta_paths</strong>(diff)  &#x21d2; Array[[ Symbol, String ]] </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Snapshots a diff's [status, path] pairs before rename detection rewrites them.</p></div></span>
   
 </li>
 
@@ -664,7 +689,7 @@ with metadata for downstream consumers.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String, String) -&gt; String.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Special pages are site parts, not articles: their language is the site's language as supplied by the caller, never a language detected from the body.</p></div></span>
   
 </li>
 
@@ -752,7 +777,7 @@ with metadata for downstream consumers.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Looks up a path inside the HEAD tree, descending through subtrees byte-exactly.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Looks up a path in the HEAD tree.</p></div></span>
   
 </li>
 
@@ -782,7 +807,7 @@ with metadata for downstream consumers.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#write_assets_manifest-instance_method" title="#write_assets_manifest (instance method)">#<strong>write_assets_manifest</strong>(target_dir, outputs)  &#x21d2; void </a>
+      <a href="#warn_unlinked_rename-instance_method" title="#warn_unlinked_rename (instance method)">#<strong>warn_unlinked_rename</strong>(plain, marked_renames)  &#x21d2; void </a>
     
 
     
@@ -796,7 +821,7 @@ with metadata for downstream consumers.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Records the asset outputs of this build so they can be located for stale-file cleanup on the next build (covers subdirectory assets, which root-level glob patterns never see).</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Emits a one-line warning when the commit deletes an .md file and adds another .md file, and the git rename detector found no link between them.</p></div></span>
   
 </li>
 
@@ -855,9 +880,10 @@ with metadata for downstream consumers.</p>
       
         &mdash;
         <div class='inline'><p>unlisted_pages/ungenerated_pages Sets.
-ungenerated_pages defaults to <a href="'META'">Set</a> — this tool manages
-META.md itself, so treating it as an ordinary page would generate
-a garbage article from it; pass <a href="">Set</a> explicitly to opt out.</p></div>
+ungenerated_pages defaults to Set['Home', 'README', 'LICENSE',
+'META', '_Footer'] — the same set the conversion CLI passes —
+so Home/_Footer are not emitted as ordinary articles by default.
+Pass <a href="'META'">Set</a> (or any subset) explicitly to opt out of each.</p></div>
       
     </li>
   
@@ -897,6 +923,25 @@ at. Used for incremental META.md sync.</p></div>
   
     <li>
       
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>:site_language</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The site's language, stamped onto
+special pages. Site metadata is the caller's business (the
+conversion CLI maintains it); the module never reads a site
+file itself and never detects a language for site parts.</p></div>
+      
+    </li>
+  
+    <li>
+      
         <span class='name'></span>
       
       
@@ -926,29 +971,43 @@ at. Used for incremental META.md sync.</p></div>
       <pre class="lines">
 
 
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55</pre>
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 46</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 59</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@path</span> <span class='op'>=</span> <span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span>
   <span class='ivar'>@repo</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Rugged.html" title="Rugged (module)">Rugged</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Rugged/Repository.html" title="Rugged::Repository (class)">Repository</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Rugged/Repository.html#initialize-instance_method" title="Rugged::Repository#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
   <span class='ivar'>@head</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_target_id'>target_id</span>
-  <span class='ivar'>@ungenerated_pages</span> <span class='op'>=</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:ungenerated_pages</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='const'>Set</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>META</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_set'>to_set</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
+  <span class='comment'># Capture the tree once so walking / lookup during build does not
+</span>  <span class='comment'># change mid-build (the wiki could otherwise move under a build).
+</span>  <span class='ivar'>@tree</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='ivar'>@head</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span>
+  <span class='ivar'>@ungenerated_pages</span> <span class='op'>=</span> <span class='const'>Array</span><span class='lparen'>(</span>
+    <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:ungenerated_pages</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='const'>Set</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Home</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>README</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>LICENSE</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>META</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>_Footer</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+  <span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_set'>to_set</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
   <span class='ivar'>@unlisted_pages</span> <span class='op'>=</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:unlisted_pages</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_set'>to_set</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
   <span class='ivar'>@ignore_meta</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:ignore_meta</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='kw'>true</span>
   <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:prev_head</span><span class='rbracket'>]</span>
   <span class='ivar'>@prev_head</span> <span class='op'>=</span> <span class='id identifier rubyid_prev_head'>prev_head</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>:</span> <span class='kw'>nil</span>
+  <span class='id identifier rubyid_site_language'>site_language</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:site_language</span><span class='rbracket'>]</span>
+  <span class='ivar'>@site_language</span> <span class='op'>=</span> <span class='id identifier rubyid_site_language'>site_language</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_site_language'>site_language</span> <span class='op'>:</span> <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1041,6 +1100,36 @@ at. Used for incremental META.md sync.</p></div>
       
       
         
+        <div class='inline'><p>@diffs: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@link_index: Hash[Symbol, Hash[String, String]]?</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@tree: Rugged::Tree</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
         <div class='inline'><p>@ignore_meta: bool</p></div>
       
     </li>
@@ -1055,6 +1144,16 @@ at. Used for incremental META.md sync.</p></div>
       
     </li>
   
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@site_language: String?</p></div>
+      
+    </li>
+  
 </ul>
 
 </div><table class="source_code">
@@ -1063,12 +1162,12 @@ at. Used for incremental META.md sync.</p></div>
       <pre class="lines">
 
 
-30
-31
-32</pre>
+38
+39
+40</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 30</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 38</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_head'>head</span>
   <span class='ivar'>@head</span>
@@ -1117,12 +1216,12 @@ at. Used for incremental META.md sync.</p></div>
       <pre class="lines">
 
 
-31
-32
-33</pre>
+39
+40
+41</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 39</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_ungenerated_pages'>ungenerated_pages</span>
   <span class='ivar'>@ungenerated_pages</span>
@@ -1171,12 +1270,12 @@ at. Used for incremental META.md sync.</p></div>
       <pre class="lines">
 
 
-32
-33
-34</pre>
+40
+41
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 40</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unlisted_pages'>unlisted_pages</span>
   <span class='ivar'>@unlisted_pages</span>
@@ -1256,52 +1355,52 @@ at. Used for incremental META.md sync.</p></div>
       <pre class="lines">
 
 
-461
-462
-463
-464
-465
-466
-467
-468
-469
-470
-471
-472
-473
-474
-475
-476
-477
-478
-479
-480
-481
-482
-483
-484
-485
-486
-487
-488
-489
-490
-491
-492
-493
-494
-495
-496
-497
-498
-499
-500
-501
-502
-503</pre>
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552
+553
+554
+555</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 461</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 513</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_article_front_matter'>article_front_matter</span><span class='lparen'>(</span><span class='id identifier rubyid_page_name'>page_name</span><span class='comma'>,</span> <span class='id identifier rubyid_meta'>meta</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_page_name'>page_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1315,7 +1414,7 @@ at. Used for incremental META.md sync.</p></div>
   <span class='id identifier rubyid_author'>author</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_row'>row</span>
              <span class='id identifier rubyid_row'>row</span><span class='lbracket'>[</span><span class='symbol'>:author</span><span class='rbracket'>]</span>
            <span class='kw'>elsif</span> <span class='id identifier rubyid_last'>last</span>
-             <span class='id identifier rubyid_last'>last</span><span class='period'>.</span><span class='id identifier rubyid_author'>author</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span>
+             <span class='id identifier rubyid_last'>last</span><span class='period'>.</span><span class='id identifier rubyid_author'>author</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span>
            <span class='kw'>else</span>
              <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span>
            <span class='kw'>end</span>
@@ -1352,73 +1451,6 @@ at. Used for incremental META.md sync.</p></div>
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="assets_manifest_path-instance_method">
-  
-    #<strong>assets_manifest_path</strong>(target_dir)  &#x21d2; <tt>String</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    <p>: (String) -&gt; String</p>
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'></span>
-      
-      
-        <span class='type'>(<tt>String</tt>)</span>
-      
-      
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>String</tt>)</span>
-      
-      
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-144
-145
-146</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 144</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_assets_manifest_path'>assets_manifest_path</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
-  <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.assets-manifest</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
   <h3 class="signature " id="build-instance_method">
   
     #<strong>build</strong>(target_dir)  &#x21d2; <tt>void</tt> 
@@ -1436,8 +1468,7 @@ same-directory temporary file atomically renamed into place. A crash
 can therefore leave previous-generation and new files mixed, but
 never a torn individual file. After the write, files the new build
 no longer produces are removed (keeping anything unrelated to the
-build untouched); subdirectory assets are tracked by
-&lt;target_dir&gt;/.assets-manifest for the same cleanup.
+build untouched).
 : (String) -&gt; void</p>
 
   </div>
@@ -1466,29 +1497,28 @@ build untouched); subdirectory assets are tracked by
       <pre class="lines">
 
 
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87</pre>
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 68</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 87</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_outputs'>outputs</span> <span class='op'>=</span> <span class='id identifier rubyid_compute_outputs'>compute_outputs</span>
@@ -1508,7 +1538,86 @@ build untouched); subdirectory assets are tracked by
   <span class='kw'>end</span>
 
   <span class='id identifier rubyid_cleanup_stale_files'>cleanup_stale_files</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_write_assets_manifest'>write_assets_manifest</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="cached_diff-instance_method">
+  
+    #<strong>cached_diff</strong>(commit, parent)  &#x21d2; <tt><span class='object_link'><a href="../../Rugged/Diff.html" title="Rugged::Diff (class)">Rugged::Diff</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>: (Rugged::Commit, Rugged::Commit) -&gt; Rugged::Diff</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Rugged/Commit.html" title="Rugged::Commit (class)">Rugged::Commit</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Rugged/Commit.html" title="Rugged::Commit (class)">Rugged::Commit</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Rugged/Diff.html" title="Rugged::Diff (class)">Rugged::Diff</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+345
+346
+347
+348</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 345</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
+  <span class='ivar'>@diffs</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
+</span>  <span class='ivar'>@diffs</span><span class='lbracket'>[</span><span class='lbracket'>[</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rbracket'>]</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1526,8 +1635,13 @@ build untouched); subdirectory assets are tracked by
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p class="note returns_void">This method returns an undefined value.</p><p>Removes stale generated files no longer produced by this build,
-keeping unrelated files in target_dir untouched.
+    <p class="note returns_void">This method returns an undefined value.</p><p>Removes stale generated files no longer produced by this build.</p>
+<p>The output directory is assumed to be exclusively this tool's
+destination — anything matching the generated extensions (Markdown
+or common image types) that the current build did not produce is
+removed, along with <code>.tmp.&lt;pid&gt;</code> stragglers from a crash-during-write.
+Files with other extensions (e.g. site assets shared with the SSG)
+are left untouched.
 : (String, Hash[String, String]) -&gt; void</p>
 
   </div>
@@ -1567,42 +1681,28 @@ keeping unrelated files in target_dir untouched.
       <pre class="lines">
 
 
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125
-126</pre>
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 110</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 134</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_cleanup_stale_files'>cleanup_stale_files</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_keep'>keep</span> <span class='op'>=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_outputs'>outputs</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span> <span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
-  <span class='qwords_beg'>%w[</span><span class='tstring_content'>*.md</span><span class='words_sep'> </span><span class='tstring_content'>*.png</span><span class='words_sep'> </span><span class='tstring_content'>*.jpg</span><span class='words_sep'> </span><span class='tstring_content'>*.jpeg</span><span class='words_sep'> </span><span class='tstring_content'>*.gif</span><span class='words_sep'> </span><span class='tstring_content'>*.webp</span><span class='words_sep'> </span><span class='tstring_content'>*.svg</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_pattern'>pattern</span><span class='op'>|</span>
+  <span class='id identifier rubyid_keep'>keep</span> <span class='op'>=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_outputs'>outputs</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='rparen'>)</span>
+  <span class='qwords_beg'>%w[</span><span class='tstring_content'>*.md</span><span class='words_sep'> </span><span class='tstring_content'>*.png</span><span class='words_sep'> </span><span class='tstring_content'>*.jpg</span><span class='words_sep'> </span><span class='tstring_content'>*.jpeg</span><span class='words_sep'> </span><span class='tstring_content'>*.gif</span><span class='words_sep'> </span><span class='tstring_content'>*.webp</span><span class='words_sep'> </span><span class='tstring_content'>*.svg</span><span class='words_sep'> </span><span class='tstring_content'>*.tmp.*</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_pattern'>pattern</span><span class='op'>|</span>
     <span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_glob'>glob</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_pattern'>pattern</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_path'>path</span><span class='op'>|</span>
       <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_keep'>keep</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='rparen'>)</span>
 
       <span class='const'>FileUtils</span><span class='period'>.</span><span class='id identifier rubyid_rm_f'>rm_f</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
-  <span class='kw'>end</span>
-
-  <span class='id identifier rubyid_stale'>stale</span> <span class='op'>=</span> <span class='id identifier rubyid_read_assets_manifest'>read_assets_manifest</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span> <span class='op'>-</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span>
-  <span class='id identifier rubyid_stale'>stale</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_relative'>relative</span><span class='op'>|</span>
-    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_relative'>relative</span><span class='rparen'>)</span>
-    <span class='const'>FileUtils</span><span class='period'>.</span><span class='id identifier rubyid_rm_f'>rm_f</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_prune_empty_directories'>prune_empty_directories</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_dirname'>dirname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1647,45 +1747,37 @@ keeping unrelated files in target_dir untouched.
       <pre class="lines">
 
 
-272
-273
-274
-275
-276
-277
-278
-279
-280
-281
-282
-283
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295
-296
-297
-298</pre>
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 272</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 250</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_collect_pages'>collect_pages</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
-</span>  <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_target'>target</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='symbol'>:preorder</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_entry'>entry</span><span class='op'>|</span>
+</span>  <span class='ivar'>@tree</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='symbol'>:preorder</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_entry'>entry</span><span class='op'>|</span>
     <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='symbol'>:blob</span>
-
-    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='embexpr_end'>}</span><span class='tstring_content'>/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='comment'># subdirectory files are unsupported and ignored
+</span>
+    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span>
     <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='kw'>next</span> <span class='kw'>if</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki pages
+    <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki pages
 </span>
     <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
     <span class='kw'>next</span> <span class='kw'>unless</span> <span class='const'><span class='object_link'><a href="Wiki/Slugs.html" title="Wikinder::GitHub::Wiki::Slugs (module)">Slugs</a></span></span><span class='period'>.</span><span class='id identifier rubyid_safe?'><span class='object_link'><a href="Wiki/Slugs.html#safe%3F-class_method" title="Wikinder::GitHub::Wiki::Slugs.safe? (method)">safe?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
@@ -1694,16 +1786,6 @@ keeping unrelated files in target_dir untouched.
     <span class='id identifier rubyid_result'>result</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span>
   <span class='kw'>end</span>
   <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_sort!'>sort!</span>
-
-  <span class='comment'># Two pages with the same basename would collide at the flat output
-</span>  <span class='comment'># root. Keep the first deterministically (after sorting) and warn.
-</span>  <span class='id identifier rubyid_duplicates'>duplicates</span> <span class='op'>=</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_group_by'>group_by</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_path'>path</span><span class='op'>|</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-                     <span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid__slug'>_slug</span><span class='comma'>,</span> <span class='id identifier rubyid_paths'>paths</span><span class='op'>|</span> <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>1</span> <span class='rbrace'>}</span>
-  <span class='id identifier rubyid_duplicates'>duplicates</span><span class='period'>.</span><span class='id identifier rubyid_each_value'>each_value</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_paths'>paths</span><span class='op'>|</span>
-    <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>duplicate page name </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>; keeping </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-    <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_drop'>drop</span><span class='lparen'>(</span><span class='int'>1</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_loser'>loser</span><span class='op'>|</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_loser'>loser</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-  <span class='kw'>end</span>
-  <span class='id identifier rubyid_result'>result</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1762,32 +1844,30 @@ keeping unrelated files in target_dir untouched.
       <pre class="lines">
 
 
-337
-338
-339
-340
-341
-342
-343
-344
-345
-346
-347
-348
-349
-350
-351
-352
-353
-354
-355
-356</pre>
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 337</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 297</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_commit_bounds_for'>commit_bounds_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
   <span class='ivar'>@commit_bounds</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, Hash[Symbol, Rugged::Commit?]]
 </span>  <span class='kw'>return</span> <span class='ivar'>@commit_bounds</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='ivar'>@commit_bounds</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
 
@@ -1852,6 +1932,36 @@ purely in memory.
       <pre class="lines">
 
 
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
 180
 181
 182
@@ -1861,39 +1971,10 @@ purely in memory.
 186
 187
 188
-189
-190
-191
-192
-193
-194
-195
-196
-197
-198
-199
-200
-201
-202
-203
-204
-205
-206
-207
-208
-209
-210
-211
-212
-213
-214
-215
-216
-217
-218</pre>
+189</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 180</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 150</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_compute_outputs'>compute_outputs</span>
   <span class='id identifier rubyid_outputs'>outputs</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, String]
@@ -1922,12 +2003,13 @@ purely in memory.
   <span class='id identifier rubyid_redirect_outputs'>redirect_outputs</span><span class='lparen'>(</span><span class='id identifier rubyid_meta'>meta</span><span class='comma'>,</span> <span class='id identifier rubyid_occupied'>occupied</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_relative'>relative</span><span class='comma'>,</span> <span class='id identifier rubyid_content'>content</span><span class='op'>|</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='lbracket'>[</span><span class='id identifier rubyid_relative'>relative</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_content'>content</span> <span class='rbrace'>}</span>
 
   <span class='id identifier rubyid_image_extensions'>image_extensions</span> <span class='op'>=</span> <span class='qwords_beg'>%w[</span><span class='tstring_content'>.png</span><span class='words_sep'> </span><span class='tstring_content'>.jpg</span><span class='words_sep'> </span><span class='tstring_content'>.jpeg</span><span class='words_sep'> </span><span class='tstring_content'>.gif</span><span class='words_sep'> </span><span class='tstring_content'>.webp</span><span class='words_sep'> </span><span class='tstring_content'>.svg</span><span class='tstring_end'>]</span></span>
-  <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_target'>target</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='symbol'>:preorder</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_entry'>entry</span><span class='op'>|</span>
+  <span class='ivar'>@tree</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='symbol'>:preorder</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_entry'>entry</span><span class='op'>|</span>
     <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='symbol'>:blob</span>
-
-    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='embexpr_end'>}</span><span class='tstring_content'>/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='comment'># subdirectory assets are unsupported and ignored
+</span>
+    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span>
     <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_image_extensions'>image_extensions</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_extname'>extname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span><span class='rparen'>)</span>
-    <span class='kw'>next</span> <span class='kw'>if</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki assets
+    <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki assets
 </span>
     <span class='id identifier rubyid_outputs'>outputs</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:oid</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span>
   <span class='kw'>end</span>
@@ -1991,10 +2073,10 @@ purely in memory.
       <pre class="lines">
 
 
-442</pre>
+494</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 442</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 494</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_detect_language'>detect_language</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Wiki/Language.html" title="Wikinder::GitHub::Wiki::Language (module)">Language</a></span></span><span class='period'>.</span><span class='id identifier rubyid_call'><span class='object_link'><a href="Wiki/Language.html#call-class_method" title="Wikinder::GitHub::Wiki::Language.call (method)">call</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span></pre>
     </td>
@@ -2057,21 +2139,24 @@ page as changed and rewrites every row.
       <pre class="lines">
 
 
-362
-363
-364
-365
-366
-367
-368
-369
-370
-371
-372
-373</pre>
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 362</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 321</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diff_paths'>diff_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_from_ref'>from_ref</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -2080,7 +2165,10 @@ page as changed and rewrites every row.
   <span class='id identifier rubyid_prev_commit'>prev_commit</span> <span class='op'>=</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_prev_commit'>prev_commit</span>
 
-  <span class='id identifier rubyid_prev_commit'>prev_commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_head_commit'>head_commit</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='ivar'>@head</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_head_commit'>head_commit</span>
+
+  <span class='id identifier rubyid_prev_commit'>prev_commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='id identifier rubyid_head_commit'>head_commit</span><span class='rparen'>)</span>
              <span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span>
              <span class='period'>.</span><span class='id identifier rubyid_flat_map'>flat_map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span> <span class='lbracket'>[</span><span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
              <span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span>
@@ -2155,14 +2243,14 @@ page path so a crash mid-build identifies the file responsible.
       <pre class="lines">
 
 
-223
-224
-225
-226
-227</pre>
+194
+195
+196
+197
+198</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 223</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 194</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_front_matter_with_context'>front_matter_with_context</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='id identifier rubyid_meta'>meta</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_article_front_matter'>article_front_matter</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='id identifier rubyid_meta'>meta</span><span class='rparen'>)</span>
@@ -2175,9 +2263,9 @@ page path so a crash mid-build identifies the file responsible.
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="prune_empty_directories-instance_method">
+  <h3 class="signature " id="link_index-instance_method">
   
-    #<strong>prune_empty_directories</strong>(directory, stop_at)  &#x21d2; <tt>void</tt> 
+    #<strong>link_index</strong>  &#x21d2; <tt>Hash[Symbol, Hash[String, String]]</tt> 
   
 
   
@@ -2185,33 +2273,24 @@ page path so a crash mid-build identifies the file responsible.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p class="note returns_void">This method returns an undefined value.</p><p>Removes directories that became empty because their stale assets
-were deleted, walking up but never above target_dir.
-: (String, String) -&gt; void</p>
+    <p>The wiki's link index: every page and image asset at the
+repository root, for canonicalizing wikilink targets the way
+GitHub Wiki resolves them (see Tags.build_link_index). Pages are
+all .md files here, generated or not — resolution is about what
+exists in the wiki, not about what this build emits.
+: () -&gt; Hash[Symbol, Hash[String, String]]</p>
 
   </div>
 </div>
 <div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
   
     <li>
       
-        <span class='name'></span>
       
-      
-        <span class='type'>(<tt>String</tt>)</span>
-      
-      
-      
-    </li>
-  
-    <li>
-      
-        <span class='name'></span>
-      
-      
-        <span class='type'>(<tt>String</tt>)</span>
+        <span class='type'>(<tt>Hash[Symbol, Hash[String, String]]</tt>)</span>
       
       
       
@@ -2219,38 +2298,51 @@ were deleted, walking up but never above target_dir.
   
 </ul>
 
-
 </div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-131
-132
-133
-134
-135
-136
-137
-138
-139
-140
-141</pre>
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 131</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 474</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_prune_empty_directories'>prune_empty_directories</span><span class='lparen'>(</span><span class='id identifier rubyid_directory'>directory</span><span class='comma'>,</span> <span class='id identifier rubyid_stop_at'>stop_at</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_directory'>directory</span>
-  <span class='kw'>while</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='id identifier rubyid_stop_at'>stop_at</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_path'>path</span> <span class='op'>!=</span> <span class='id identifier rubyid_stop_at'>stop_at</span> <span class='op'>&amp;&amp;</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-    <span class='kw'>break</span> <span class='kw'>unless</span> <span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-
-    <span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_rmdir'>rmdir</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_dirname'>dirname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_link_index'>link_index</span>
+  <span class='ivar'>@link_index</span> <span class='op'>||=</span> <span class='kw'>begin</span>
+    <span class='id identifier rubyid_page_slugs'>page_slugs</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>    <span class='id identifier rubyid_asset_names'>asset_names</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>    <span class='id identifier rubyid_image_extensions'>image_extensions</span> <span class='op'>=</span> <span class='qwords_beg'>%w[</span><span class='tstring_content'>.png</span><span class='words_sep'> </span><span class='tstring_content'>.jpg</span><span class='words_sep'> </span><span class='tstring_content'>.jpeg</span><span class='words_sep'> </span><span class='tstring_content'>.gif</span><span class='words_sep'> </span><span class='tstring_content'>.webp</span><span class='words_sep'> </span><span class='tstring_content'>.svg</span><span class='tstring_end'>]</span></span>
+    <span class='ivar'>@tree</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='symbol'>:preorder</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_entry'>entry</span><span class='op'>|</span>
+      <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='symbol'>:blob</span>
+      <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_root'><span class='object_link'><a href="../../top-level-namespace.html" title="Top Level Namespace (root)">root</a></span></span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='comment'># subdirectory files are unsupported and ignored
+</span>
+      <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span>
+      <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki pages or assets
+</span>
+      <span class='id identifier rubyid_page_slugs'>page_slugs</span> <span class='op'>&lt;&lt;</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_asset_names'>asset_names</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_name'>name</span> <span class='kw'>if</span> <span class='id identifier rubyid_image_extensions'>image_extensions</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_extname'>extname</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+    <span class='const'><span class='object_link'><a href="Wiki/Tags.html" title="Wikinder::GitHub::Wiki::Tags (module)">Tags</a></span></span><span class='period'>.</span><span class='id identifier rubyid_build_link_index'><span class='object_link'><a href="Wiki/Tags.html#build_link_index-class_method" title="Wikinder::GitHub::Wiki::Tags.build_link_index (method)">build_link_index</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_page_slugs'>page_slugs</span><span class='comma'>,</span> <span class='id identifier rubyid_asset_names'>asset_names</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-<span class='kw'>rescue</span> <span class='const'>SystemCallError</span>
-  <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2258,9 +2350,9 @@ were deleted, walking up but never above target_dir.
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="read_assets_manifest-instance_method">
+  <h3 class="signature " id="md?-instance_method">
   
-    #<strong>read_assets_manifest</strong>(target_dir)  &#x21d2; <tt>Array[String]</tt> 
+    #<strong>md?</strong>(path)  &#x21d2; <tt>Boolean</tt> 
   
 
   
@@ -2268,7 +2360,7 @@ were deleted, walking up but never above target_dir.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String) -&gt; <a href="String">Array</a></p>
+    <p>: (String) -&gt; bool</p>
 
   </div>
 </div>
@@ -2295,7 +2387,7 @@ were deleted, walking up but never above target_dir.
     <li>
       
       
-        <span class='type'>(<tt>Array[String]</tt>)</span>
+        <span class='type'>(<tt>Boolean</tt>)</span>
       
       
       
@@ -2309,27 +2401,89 @@ were deleted, walking up but never above target_dir.
       <pre class="lines">
 
 
-149
-150
-151
-152
-153
-154
-155
-156
-157</pre>
+457
+458
+459</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 149</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 457</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_read_assets_manifest'>read_assets_manifest</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_assets_manifest_path'>assets_manifest_path</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_exist?'>exist?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="plain_delta_paths-instance_method">
+  
+    #<strong>plain_delta_paths</strong>(diff)  &#x21d2; <tt>Array[[ Symbol, String ]]</tt> 
+  
 
-  <span class='id identifier rubyid_lines'>lines</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_readlines'>readlines</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:chomp</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:empty?</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_lines'>lines</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_line'>line</span><span class='op'>|</span> <span class='id identifier rubyid_line'>line</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_line'>line</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>..</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-<span class='kw'>rescue</span> <span class='const'>SystemCallError</span>
-  <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Snapshots a diff's [status, path] pairs before rename detection
+rewrites them. Paths are normalised to UTF-8 like the rename
+map's, so they can be compared against it directly.
+: (Rugged::Diff) -&gt; Array[[Symbol, String]]</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'></span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Rugged/Diff.html" title="Rugged::Diff (class)">Rugged::Diff</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array[[ Symbol, String ]]</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+420
+421
+422
+423
+424</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 420</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_plain_delta_paths'>plain_delta_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_diff'>diff</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
+    <span class='lbracket'>[</span><span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2399,29 +2553,31 @@ were deleted, walking up but never above target_dir.
       <pre class="lines">
 
 
-250
-251
-252
-253
-254
-255
-256
-257
-258
-259
-260
-261
-262
-263
-264
-265
-266
-267
-268
-269</pre>
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 226</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_redirect_outputs'>redirect_outputs</span><span class='lparen'>(</span><span class='id identifier rubyid_meta'>meta</span><span class='comma'>,</span> <span class='id identifier rubyid_occupied_slugs'>occupied_slugs</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_outputs'>outputs</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, String]
@@ -2431,12 +2587,14 @@ were deleted, walking up but never above target_dir.
       <span class='id identifier rubyid_downcased'>downcased</span> <span class='op'>=</span> <span class='id identifier rubyid_alias_slug'>alias_slug</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
       <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_occupied_slugs'>occupied_slugs</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_downcased'>downcased</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_downcased'>downcased</span> <span class='op'>==</span> <span class='id identifier rubyid_target_slug'>target_slug</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
 
-      <span class='id identifier rubyid_front_matter'>front_matter</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+      <span class='comment'># A redirect has no body, so it carries no language: language
+</span>      <span class='comment'># is a property of content, and a stub has none. Consumers
+</span>      <span class='comment'># that need one resolve it from the target page.
+</span>      <span class='id identifier rubyid_front_matter'>front_matter</span> <span class='op'>=</span> <span class='lbrace'>{</span>
         <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>kind</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>redirect</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
         <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>title</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_title'>title</span><span class='comma'>,</span>
         <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>slug</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_alias_slug'>alias_slug</span><span class='comma'>,</span>
-        <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>target_slug</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_target_slug'>target_slug</span><span class='comma'>,</span>
-        <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>language</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_row'>row</span><span class='lbracket'>[</span><span class='symbol'>:language</span><span class='rbracket'>]</span>
+        <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>target_slug</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_target_slug'>target_slug</span>
       <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_to_yaml'>to_yaml</span>
       <span class='id identifier rubyid_outputs'>outputs</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_alias_slug'>alias_slug</span><span class='embexpr_end'>}</span><span class='tstring_content'>.md</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_front_matter'>front_matter</span><span class='embexpr_end'>}</span><span class='tstring_content'>---\n\n</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
@@ -2461,6 +2619,15 @@ were deleted, walking up but never above target_dir.
   <div class="discussion">
     <p>Builds a map of rename deltas across the full history: every file path
 that was ever renamed maps to its predecessor path.
+Additionally, surface a warning when a single commit deletes one
+.md file and adds another .md file with no detectable rename —
+that is the most likely shape of a rename+rewrite that git cannot
+link statistically. The wiki schema can only pick one answer when
+similarity is low, so the author should curate the alias by hand.</p>
+<p>One diff is computed per (commit, parent) pair and shared with
+touched? through cached_diff. The plain delta list is snapshotted
+before find_similar! runs, because similarity detection consumes
+exactly the added/deleted pairs warn_unlinked_rename looks for.
 : () -&gt; Hash[String, String]</p>
 
   </div>
@@ -2487,6 +2654,28 @@ that was ever renamed maps to its predecessor path.
       <pre class="lines">
 
 
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
 403
 404
 405
@@ -2498,54 +2687,40 @@ that was ever renamed maps to its predecessor path.
 411
 412
 413
-414
-415
-416
-417
-418
-419
-420
-421
-422
-423
-424
-425
-426
-427
-428
-429
-430
-431
-432</pre>
+414</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 403</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 381</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rename_deltas'>rename_deltas</span>
   <span class='ivar'>@rename_deltas</span> <span class='op'>||=</span> <span class='kw'>begin</span>
     <span class='id identifier rubyid_map'>map</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, String]
 </span>    <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HEAD</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_commit'>commit</span><span class='op'>|</span>
-      <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+      <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_parent'>parent</span><span class='op'>|</span>
+        <span class='id identifier rubyid_diff'>diff</span> <span class='op'>=</span> <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_plain'>plain</span> <span class='op'>=</span> <span class='id identifier rubyid_plain_delta_paths'>plain_delta_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_diff'>diff</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_find_similar!'>find_similar!</span><span class='lparen'>(</span><span class='label'>renames:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_marked_renames'>marked_renames</span> <span class='op'>=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+        <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
+          <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:renamed</span>
 
-      <span class='id identifier rubyid_diff'>diff</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_find_similar!'>find_similar!</span><span class='lparen'>(</span><span class='label'>renames:</span> <span class='kw'>true</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
-        <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:renamed</span>
-
-        <span class='comment'># Rugged&#39;s +a.diff(b)+ treats +a+ as the *old* side and +b+ as the
-</span>        <span class='comment'># *new* side, so +commit.diff(parent)+ is chronologically
-</span>        <span class='comment'># reversed. Do not &quot;fix&quot; the argument order — doing so inverts
-</span>        <span class='comment'># the whole map and every dependent lookup fails silently.
-</span>        <span class='comment'>#
-</span>        <span class='comment'># For status :renamed, old_file is the *newer* path (the
-</span>        <span class='comment'># commit&#39;s side) and new_file is the *older* one, so the map
-</span>        <span class='comment'># reads &quot;current name -&gt; name it was renamed from&quot;. Everything
-</span>        <span class='comment'># is walked from HEAD, so first seen wins. Byte-compare paths
-</span>        <span class='comment'># like touched? does, because rugged hands back ASCII-8BIT
-</span>        <span class='comment'># path strings.
-</span>        <span class='id identifier rubyid_newer'>newer</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
-        <span class='id identifier rubyid_older'>older</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
-        <span class='id identifier rubyid_map'>map</span><span class='lbracket'>[</span><span class='id identifier rubyid_newer'>newer</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_older'>older</span>
+          <span class='comment'># Rugged&#39;s +commit.diff(parent)+ reports the commit side as
+</span>          <span class='comment'># old_file and the parent side as new_file (chronologically
+</span>          <span class='comment'># reversed). The rename map therefore reads &quot;current name -&gt;
+</span>          <span class='comment'># name it was renamed from&quot;. First seen wins; walked from
+</span>          <span class='comment'># HEAD so the most recent rename is recorded first.
+</span>          <span class='comment'>#
+</span>          <span class='comment'># The paths are normalised to valid UTF-8 here so all
+</span>          <span class='comment'># downstream consumers (slug/alias handling, front-matter
+</span>          <span class='comment'># YAML) can treat them as plain Strings without ever having
+</span>          <span class='comment'># to worry about ASCII-8BIT.
+</span>          <span class='id identifier rubyid_newer'>newer</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_older'>older</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_map'>map</span><span class='lbracket'>[</span><span class='id identifier rubyid_newer'>newer</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_older'>older</span>
+          <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_newer'>newer</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_older'>older</span><span class='rparen'>)</span>
+        <span class='kw'>end</span>
+        <span class='id identifier rubyid_warn_unlinked_rename'>warn_unlinked_rename</span><span class='lparen'>(</span><span class='id identifier rubyid_plain'>plain</span><span class='comma'>,</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='rparen'>)</span>
       <span class='kw'>end</span>
     <span class='kw'>end</span>
     <span class='id identifier rubyid_map'>map</span>
@@ -2610,29 +2785,29 @@ based on git rename detection across history.
       <pre class="lines">
 
 
-385
-386
-387
-388
-389
-390
-391
-392
-393
-394
-395
-396
-397
-398</pre>
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 385</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 353</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_renames'>renames</span> <span class='op'>=</span> <span class='id identifier rubyid_rename_deltas'>rename_deltas</span> <span class='comment'>#: Hash[String, String]
 </span>  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
-</span>  <span class='id identifier rubyid_current'>current</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
-  <span class='id identifier rubyid_visited'>visited</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_current'>current</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='id identifier rubyid_current'>current</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span> <span class='comment'>#: String
+</span>  <span class='id identifier rubyid_visited'>visited</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_current'>current</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
 </span>  <span class='kw'>until</span> <span class='lparen'>(</span><span class='id identifier rubyid_predecessor'>predecessor</span> <span class='op'>=</span> <span class='id identifier rubyid_renames'>renames</span><span class='lbracket'>[</span><span class='id identifier rubyid_current'>current</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_visited'>visited</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_predecessor'>predecessor</span><span class='rparen'>)</span> <span class='comment'># guard against rename cycles
 </span>
@@ -2699,15 +2874,15 @@ based on git rename detection across history.
       <pre class="lines">
 
 
-437
-438
-439</pre>
+464
+465
+466</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 437</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 464</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_render_page'>render_page</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-  <span class='const'><span class='object_link'><a href="Wiki/Tags.html" title="Wikinder::GitHub::Wiki::Tags (module)">Tags</a></span></span><span class='period'>.</span><span class='id identifier rubyid_render'><span class='object_link'><a href="Wiki/Tags.html#render-class_method" title="Wikinder::GitHub::Wiki::Tags.render (method)">render</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="Wiki/Tags.html" title="Wikinder::GitHub::Wiki::Tags (module)">Tags</a></span></span><span class='period'>.</span><span class='id identifier rubyid_render'><span class='object_link'><a href="Wiki/Tags.html#render-class_method" title="Wikinder::GitHub::Wiki::Tags.render (method)">render</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='label'>link_index:</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2768,14 +2943,14 @@ mid-build identifies the file responsible.
       <pre class="lines">
 
 
-232
-233
-234
-235
-236</pre>
+203
+204
+205
+206
+207</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 232</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 203</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_render_page_with_context'>render_page_with_context</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_render_page'>render_page</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='rparen'>)</span>
@@ -2839,14 +3014,14 @@ mid-build identifies the file responsible.
       <pre class="lines">
 
 
-376
-377
-378
-379
-380</pre>
+338
+339
+340
+341
+342</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 376</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 338</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
   <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
@@ -2869,7 +3044,11 @@ mid-build identifies the file responsible.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String, String) -&gt; String</p>
+    <p>Special pages are site parts, not articles: their language is
+the site's language as supplied by the caller, never a language
+detected from the body. When the caller supplies none, the key
+is omitted rather than invented.
+: (String, String) -&gt; String</p>
 
   </div>
 </div>
@@ -2921,27 +3100,29 @@ mid-build identifies the file responsible.
       <pre class="lines">
 
 
-239
-240
-241
-242
-243
-244
-245
-246
-247</pre>
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 239</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 214</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_special_output'>special_output</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_file_name'>file_name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_front_matter'>front_matter</span> <span class='op'>=</span> <span class='lbrace'>{</span>
     <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>kind</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>special</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
     <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>title</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_title_for'>title_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>slug</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
-    <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>language</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>en</span><span class='tstring_end'>&#39;</span></span>
-  <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_to_yaml'>to_yaml</span>
-  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_front_matter'>front_matter</span><span class='embexpr_end'>}</span><span class='tstring_content'>---\n\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_render_page_with_context'>render_page_with_context</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>slug</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_name'>name</span>
+  <span class='rbrace'>}</span> <span class='comment'>#: Hash[String, String]
+</span>  <span class='id identifier rubyid_language'>language</span> <span class='op'>=</span> <span class='ivar'>@site_language</span>
+  <span class='id identifier rubyid_front_matter'>front_matter</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>language</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_language'>language</span> <span class='kw'>if</span> <span class='id identifier rubyid_language'>language</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_front_matter'>front_matter</span><span class='period'>.</span><span class='id identifier rubyid_to_yaml'>to_yaml</span><span class='embexpr_end'>}</span><span class='tstring_content'>---\n\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_render_page_with_context'>render_page_with_context</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -3000,32 +3181,40 @@ mid-build identifies the file responsible.
       <pre class="lines">
 
 
-323
-324
-325
-326
-327
-328
-329
-330
-331
-332
-333
-334</pre>
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 323</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 279</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_entry'>entry</span> <span class='op'>=</span> <span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_entry'>entry</span>
 
-  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:oid</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:oid</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span>
+  <span class='comment'># Normalise CR and CRLF line endings; the Commonmarker parser walks
+</span>  <span class='comment'># \r\n and bare \r as distinct line separators, so CR-only files
+</span>  <span class='comment'># would otherwise crash range_for with offsets past the end of
+</span>  <span class='comment'># line_offsets. This mirrors Gollum&#39;s Wiki#normalize.
+</span>  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\r\n?</span><span class='regexp_end'>/</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_content'>content</span> <span class='kw'>if</span> <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_valid_encoding?'>valid_encoding?</span>
 
-  <span class='comment'># Replace invalid byte sequences with U+FFFD so a single bad page
-</span>  <span class='comment'># never aborts the whole build — but say so, loudly.
-</span>  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>text_for: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> contains invalid UTF-8; invalid bytes were replaced with U+FFFD</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>text_for: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> contains invalid UTF-8; invalid bytes were replaced with U+FFFD</span><span class='tstring_end'>&quot;</span></span>
   <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_scrub'>scrub</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -3085,10 +3274,10 @@ mid-build identifies the file responsible.
       <pre class="lines">
 
 
-506</pre>
+558</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 506</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 558</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_title_for'>title_for</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Wiki/Slugs.html" title="Wikinder::GitHub::Wiki::Slugs (module)">Slugs</a></span></span><span class='period'>.</span><span class='id identifier rubyid_title_for'><span class='object_link'><a href="Wiki/Slugs.html#title_for-class_method" title="Wikinder::GitHub::Wiki::Slugs.title_for (method)">title_for</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span></pre>
     </td>
@@ -3159,30 +3348,30 @@ mid-build identifies the file responsible.
       <pre class="lines">
 
 
-445
-446
-447
-448
-449
-450
-451
-452
-453
-454
-455</pre>
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 445</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 497</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_touched?'>touched?</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parents'>parents</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-    <span class='comment'># The root commit touches exactly the paths it introduced.
-</span>    <span class='kw'>return</span> <span class='op'>!</span><span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>tree:</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-  <span class='kw'>end</span>
+  <span class='kw'>return</span> <span class='op'>!</span><span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>tree:</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='kw'>if</span> <span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
 
-  <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
-    <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>==</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>||</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>==</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
+  <span class='id identifier rubyid_path_b'>path_b</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
+  <span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_parent'>parent</span><span class='op'>|</span>
+    <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
+      <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>==</span> <span class='id identifier rubyid_path_b'>path_b</span> <span class='op'>||</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>==</span> <span class='id identifier rubyid_path_b'>path_b</span>
+    <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -3201,9 +3390,8 @@ mid-build identifies the file responsible.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Looks up a path inside the HEAD tree, descending through subtrees
-byte-exactly. Rugged's <code>tree[&quot;a/b.md&quot;]</code> only flattens a single
-directory, so wikis pushed with subdirectories need this instead.
+    <p>Looks up a path in the HEAD tree. GitHub Wiki is flat, so a plain
+tree lookup always suffices.
 : (String, ?tree: Rugged::Tree?) -&gt; Rugged::tree_entry?</p>
 
   </div>
@@ -3258,39 +3446,15 @@ directory, so wikis pushed with subdirectories need this instead.
       <pre class="lines">
 
 
-306
-307
-308
-309
-310
-311
-312
-313
-314
-315
-316
-317
-318
-319
-320</pre>
+274
+275
+276</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 306</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 274</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>tree:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:empty?</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_parts'>parts</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-
-  <span class='id identifier rubyid_current'>current</span> <span class='op'>=</span> <span class='id identifier rubyid_tree'>tree</span> <span class='op'>||</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_head'>head</span><span class='period'>.</span><span class='id identifier rubyid_target'>target</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span>
-  <span class='id identifier rubyid_parts'>parts</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_part'>part</span><span class='op'>|</span>
-    <span class='id identifier rubyid_entry'>entry</span> <span class='op'>=</span> <span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='id identifier rubyid_part'>part</span><span class='rbracket'>]</span>
-    <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_entry'>entry</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-    <span class='kw'>return</span> <span class='id identifier rubyid_entry'>entry</span> <span class='kw'>if</span> <span class='id identifier rubyid_part'>part</span> <span class='op'>==</span> <span class='id identifier rubyid_parts'>parts</span><span class='period'>.</span><span class='id identifier rubyid_last'>last</span>
-    <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span> <span class='op'>!=</span> <span class='symbol'>:tree</span>
-
-    <span class='id identifier rubyid_current'>current</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:oid</span><span class='rbracket'>]</span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-  <span class='kw'>nil</span>
+  <span class='lparen'>(</span><span class='id identifier rubyid_tree'>tree</span> <span class='op'>||</span> <span class='ivar'>@tree</span><span class='rparen'>)</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -3350,20 +3514,20 @@ happens.
       <pre class="lines">
 
 
-95
-96
-97
-98
-99
-100
-101
-102
-103
-104
-105</pre>
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 95</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 113</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_verify_confined!'>verify_confined!</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_base'>base</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
@@ -3382,9 +3546,9 @@ happens.
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="write_assets_manifest-instance_method">
+  <h3 class="signature " id="warn_unlinked_rename-instance_method">
   
-    #<strong>write_assets_manifest</strong>(target_dir, outputs)  &#x21d2; <tt>void</tt> 
+    #<strong>warn_unlinked_rename</strong>(plain, marked_renames)  &#x21d2; <tt>void</tt> 
   
 
   
@@ -3392,10 +3556,14 @@ happens.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p class="note returns_void">This method returns an undefined value.</p><p>Records the asset outputs of this build so they can be located for
-stale-file cleanup on the next build (covers subdirectory assets,
-which root-level glob patterns never see).
-: (String, Hash[String, String]) -&gt; void</p>
+    <p class="note returns_void">This method returns an undefined value.</p><p>Emits a one-line warning when the commit deletes an .md file and adds
+another .md file, and the git rename detector found no link between
+them. This is the usual telltale shape of &quot;rename and fully rewrite&quot;.
+Has no effect on the returned rows; only diagnostics.</p>
+<p><code>plain</code> is the pre-similarity snapshot of the reversed diff
+(commit side as old), so a forward deletion appears as :added
+and a forward addition as :deleted.
+: (Array[[Symbol, String]], <a href="String">Set</a>) -&gt; void</p>
 
   </div>
 </div>
@@ -3408,7 +3576,7 @@ which root-level glob patterns never see).
         <span class='name'></span>
       
       
-        <span class='type'>(<tt>String</tt>)</span>
+        <span class='type'>(<tt>Array[[ Symbol, String ]]</tt>)</span>
       
       
       
@@ -3419,7 +3587,7 @@ which root-level glob patterns never see).
         <span class='name'></span>
       
       
-        <span class='type'>(<tt>Hash[String, String]</tt>)</span>
+        <span class='type'>(<tt>Set[String]</tt>)</span>
       
       
       
@@ -3434,31 +3602,49 @@ which root-level glob patterns never see).
       <pre class="lines">
 
 
-163
-164
-165
-166
-167
-168
-169
-170
-171
-172
-173</pre>
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 163</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 435</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_write_assets_manifest'>write_assets_manifest</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_assets'>assets</span> <span class='op'>=</span> <span class='id identifier rubyid_outputs'>outputs</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span>
-    <span class='qwords_beg'>%w[</span><span class='tstring_content'>.png</span><span class='words_sep'> </span><span class='tstring_content'>.jpg</span><span class='words_sep'> </span><span class='tstring_content'>.jpeg</span><span class='words_sep'> </span><span class='tstring_content'>.gif</span><span class='words_sep'> </span><span class='tstring_content'>.webp</span><span class='words_sep'> </span><span class='tstring_content'>.svg</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_extname'>extname</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_warn_unlinked_rename'>warn_unlinked_rename</span><span class='lparen'>(</span><span class='id identifier rubyid_plain'>plain</span><span class='comma'>,</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='id identifier rubyid_plain'>plain</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='op'>|</span>
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:added</span>
+    <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:deleted</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_assets_manifest_path'>assets_manifest_path</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_assets'>assets</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-    <span class='const'>FileUtils</span><span class='period'>.</span><span class='id identifier rubyid_rm_f'>rm_f</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-  <span class='kw'>else</span>
-    <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_assets'>assets</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span> <span class='op'>=</span> <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+  <span class='id identifier rubyid_unmatched_added'>unmatched_added</span> <span class='op'>=</span> <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+  <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>||</span> <span class='id identifier rubyid_unmatched_added'>unmatched_added</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='id identifier rubyid_deleted_list'>deleted_list</span> <span class='op'>=</span> <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_added_list'>added_list</span> <span class='op'>=</span> <span class='id identifier rubyid_unmatched_added'>unmatched_added</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>git could not link this rename: </span><span class='tstring_end'>&#39;</span></span> \
+       <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_added_list'>added_list</span><span class='embexpr_end'>}</span><span class='tstring_content'> seems to succeed </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_deleted_list'>deleted_list</span><span class='embexpr_end'>}</span><span class='tstring_content'> after a heavy rewrite; </span><span class='tstring_end'>&quot;</span></span> \
+       <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>alias must be set in META.md manually</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>

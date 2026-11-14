@@ -156,7 +156,7 @@ round-trip is assumed.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Returns true when <code>slug</code> is usable as the natural path segment of a generated page or redirect: no directory separators, no parent references, never hidden or empty.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Returns true when <code>slug</code> is usable as the natural path segment of a generated page or redirect: no directory separators, no parent references, never hidden or empty, and reasonable size to write to a filesystem without hitting name length limits.</p></div></span>
   
 </li>
 
@@ -273,9 +273,10 @@ round-trip is assumed.</p>
   <div class="discussion">
     <p>Returns true when <code>slug</code> is usable as the natural path segment of
 a generated page or redirect: no directory separators, no parent
-references, never hidden or empty. Such names can still appear as
-titles, but may not emit path segments that escape the output
-directory or collapse onto site routes.
+references, never hidden or empty, and reasonable size to write
+to a filesystem without hitting name length limits. Such names
+can still appear as titles, but may not emit path segments that
+escape the output directory or collapse onto site routes.
 : (String) -&gt; bool</p>
 
   </div>
@@ -317,24 +318,32 @@ directory or collapse onto site routes.
       <pre class="lines">
 
 
-28
 29
 30
 31
 32
 33
 34
-35</pre>
+35
+36
+37
+38
+39
+40</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 29</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_safe?'>safe?</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>..</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki pages
-</span>
+</span>  <span class='comment'># Filesystems cap the length of any single path component
+</span>  <span class='comment'># (typically at 255 bytes). The .md extension consumes at most
+</span>  <span class='comment'># 3 bytes, leaving 252 for the slug itself.
+</span>  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_bytesize'>bytesize</span> <span class='op'>&gt;</span> <span class='int'>252</span>
+
   <span class='kw'>true</span>
 <span class='kw'>end</span></pre>
     </td>
