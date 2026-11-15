@@ -163,20 +163,63 @@ body {
   gap: 0.25em 1.5em;
 }
 
+/* The language menu: a button showing the current language,
+   opening a panel with every language. However many languages the
+   site gains, the header keeps this one control. */
+.language-menu {
+  position: relative;
+}
+
+.language-menu__button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  list-style: none;
+  cursor: pointer;
+}
+
+.language-menu__button::-webkit-details-marker {
+  display: none;
+}
+
+.language-menu__button::after {
+  content: "▾";
+  font-size: 80%;
+}
+
 .language-switcher {
+  position: absolute;
+  top: calc(100% + 0.25em);
+  inset-inline-end: 0;
+  z-index: 10;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.25em 1em;
+  flex-direction: column;
+  gap: 0.25em;
+  min-width: 10em;
+  max-height: 60vh;
+  overflow-y: auto;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.5em 0.75em;
+  border: 1px solid currentColor;
+  background-color: #fff;
+  box-shadow: 0 0.25em 1em rgb(0 0 0 / 0.15);
   font-size: 95%;
 }
 
-/* On a home page the switcher sits at the start, next to the site
-   name, instead of at the far end. */
+.language-switcher a {
+  display: block;
+}
+
+/* On a home page the menu sits at the start of the header, and
+   its panel opens from the start as well. */
 .home .header nav {
   justify-content: flex-start;
+}
+
+.home .language-switcher {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
 }
 
 /* Translation notice at the top of a translated article */

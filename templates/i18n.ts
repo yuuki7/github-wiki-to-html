@@ -4,10 +4,13 @@ import site from "../site.json";
 // default language is the one the original special pages belong to;
 // every other language exists once pages are translated into it.
 export const defaultLanguage: string = site.language ?? "en";
-export const supportedLanguages: string[] =
+// In ASCII order of their codes, the order languages are listed
+// in everywhere on the site.
+export const supportedLanguages: string[] = (
   Array.isArray(site.languages) && site.languages.length > 0
-    ? site.languages
-    : [defaultLanguage];
+    ? [...site.languages]
+    : [defaultLanguage]
+).sort();
 
 const RTL_BASE_LANGUAGES = new Set(["ar", "fa", "he", "ur"]);
 

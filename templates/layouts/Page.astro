@@ -27,23 +27,29 @@ const { title, isHome, meta, language, className, alternates, languageLinks } =
     <nav>
       {!isHome && <a href={homeHref(language)}>{site.name}</a>}
       {languageLinks && languageLinks.length > 1 && (
-        <ul class="language-switcher">
-          {languageLinks.map((link) => (
-            <li>
-              {link.language === language ? (
-                <span aria-current="true">{languageName(link.language)}</span>
-              ) : (
-                <a
-                  href={link.href}
-                  hreflang={link.language}
-                  lang={link.language}
-                >
-                  {languageName(link.language)}
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
+        <details class="language-menu">
+          <summary class="language-menu__button">
+            <span aria-hidden="true">🌐</span>
+            {languageName(language)}
+          </summary>
+          <ul class="language-switcher">
+            {languageLinks.map((link) => (
+              <li>
+                {link.language === language ? (
+                  <span aria-current="true">{languageName(link.language)}</span>
+                ) : (
+                  <a
+                    href={link.href}
+                    hreflang={link.language}
+                    lang={link.language}
+                  >
+                    {languageName(link.language)}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </nav>
   </Header>
