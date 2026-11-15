@@ -1,3 +1,12 @@
+import type { CollectionEntry } from "astro:content";
+
+// One entry of the pages collection, and the article form of
+// it, for the places that work with articles only.
+export type PageEntry = CollectionEntry<"pages">;
+export type ArticleEntry = PageEntry & {
+  data: Extract<PageEntry["data"], { kind: "article" }>;
+};
+
 export interface ArticleMetaProps {
   author: string;
   creationDate: string;

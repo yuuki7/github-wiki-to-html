@@ -4,6 +4,7 @@ import IndividualPage from "../layouts/IndividualPage.astro";
 import site from "../../site.json";
 import Redirect from "../layouts/Redirect.astro";
 import Toc from "./Toc.astro";
+import type { ArticleEntry } from "../types";
 import {
   absoluteUrl,
   languageNameInNominative,
@@ -64,7 +65,7 @@ const articleLinks = isRedirect
 // language, the translation under its language otherwise.
 const targetOriginal = isRedirect
   ? entries.find(
-      (e) =>
+      (e): e is ArticleEntry =>
         e.data.kind === "article" &&
         e.data.slug === entry.data.target_slug &&
         !e.data.translation,
@@ -86,7 +87,7 @@ const rendered = isRedirect ? null : await render(entry);
 ---
 
 {isRedirect ? (
-  <Redirect title={entry.data.title} targetHref={targetHref} />
+  <Redirect title={entry.data.title} targetHref={targetHref!} />
 ) : (
   <IndividualPage
     title={entry.data.title}
@@ -123,7 +124,7 @@ const rendered = isRedirect ? null : await render(entry);
     </Fragment>
 
     <Fragment slot="left-sidebar">
-      <Toc headings={rendered.headings} />
+      {rendered && <Toc headings={rendered.headings} />}
     </Fragment>
 
     <Fragment slot="right-sidebar">
@@ -141,7 +142,7 @@ const rendered = isRedirect ? null : await render(entry);
       </section>
     </Fragment>
 
-    <rendered.Content />
+    {rendered && <rendered.Content />}
 
     <Fragment slot="footer">
       {FooterContent && <FooterContent />}

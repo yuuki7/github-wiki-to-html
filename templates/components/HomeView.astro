@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import HomePage from "../layouts/HomePage.astro";
+import type { ArticleEntry } from "../types";
 import site from "../../site.json";
 import {
   absoluteUrl,
@@ -38,7 +39,7 @@ const footer =
 
 const listedPages = pages
   .filter(
-    (p) =>
+    (p): p is ArticleEntry =>
       p.data.kind === "article" &&
       p.data.language === lang &&
       (p.data.listed ?? true),

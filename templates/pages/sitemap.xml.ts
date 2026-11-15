@@ -1,4 +1,5 @@
 import { getCollection } from "astro:content";
+import type { ArticleEntry } from "../types";
 import {
   absoluteUrl,
   defaultLanguage,
@@ -38,16 +39,10 @@ export async function GET() {
 
   // The home page: the top page — the default language's home —
   // as the single entry, pinned first. The other languages'
-  // homes are its alternates.
-  const home = entries.find(
-    (entry) =>
-      entry.data.kind === "special" &&
-      entry.data.slug === "Home" &&
-      entry.data.language === defaultLanguage,
-  );
+  // homes are its alternates. Special pages carry no dates, so
+  // the entry has no lastmod.
   urls.push({
     loc: absoluteUrl(homeHref(defaultLanguage)),
-    lastmod: home?.data.modified_date ?? home?.data.creation_date,
     alternates: supportedLanguages.map((language) => ({
       language,
       href: absoluteUrl(homeHref(language)),
@@ -60,15 +55,17 @@ export async function GET() {
   // the original's dates, so a group has one date: the
   // article's last update, or its creation when it was never
   // updated.
-  const versionsBySlug = new Map<string, typeof entries>();
-  for (const entry of entries) {
-    if (entry.data.kind !== "article") continue;
+  const articleEntries = entries.filter(
+    (entry): entry is ArticleEntry => entry.data.kind === "article",
+  );
+  const versionsBySlug = new Map<string, ArticleEntry[]>();
+  for (const entry of articleEntries) {
     const versions = versionsBySlug.get(entry.data.slug) ?? [];
     versions.push(entry);
     versionsBySlug.set(entry.data.slug, versions);
   }
   const groups = [...versionsBySlug.entries()].map(([slug, versions]) => {
-    const hrefOf = (version: (typeof entries)[number]): string =>
+    const hrefOf = (version: ArticleEntry): string =>
       absoluteUrl(
         pageHref(
           version.data.language,
@@ -76,7 +73,7 @@ export async function GET() {
           version.data.translation ?? false,
         ),
       );
-    const updated = (version: (typeof entries)[number]): string =>
+    const updated = (version: ArticleEntry): string =>
       version.data.modified_date ?? version.data.creation_date;
     const original = versions.find((version) => !version.data.translation);
     const base = original ?? versions[0];

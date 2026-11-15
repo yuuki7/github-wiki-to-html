@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import ArticleView from "../components/ArticleView.astro";
 import Redirect from "../layouts/Redirect.astro";
 import { defaultLanguage, missingVersions, pageHref } from "../i18n";
+import type { ArticleEntry } from "../types";
 import site from "../../site.json";
 
 export async function getStaticPaths() {
@@ -27,7 +28,7 @@ export async function getStaticPaths() {
   };
   const originalOf = (slug: string) =>
     entries.find(
-      (e) =>
+      (e): e is ArticleEntry =>
         e.data.kind === "article" &&
         e.data.slug === slug &&
         !e.data.translation,
@@ -88,7 +89,7 @@ export async function getStaticPaths() {
   // its code, it redirects there.
   paths.push({
     params: { path: defaultLanguage },
-    props: { title: site.title, redirectTo: "/" },
+    props: { title: site.name, redirectTo: "/" },
   });
 
   return paths;
