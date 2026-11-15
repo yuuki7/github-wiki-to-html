@@ -3,10 +3,35 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Detects the ISO language code of a page body, defaulting to English.
+      # Detects and normalizes the language code of a page.
+      #
+      # Chinese is normalized to a script variant (zh-Hans or zh-Hant),
+      # because the site treats the two scripts as separate languages:
+      # a bare 'zh' cannot name the directory a page belongs in. The
+      # script is decided by counting characters that exist in only one
+      # of the two scripts; text without any such character defaults to
+      # Simplified, the larger of the two readerships.
       module Language
+        # High-frequency characters written differently in the two
+        # scripts. Only characters whose simplified and traditional
+        # forms differ are listed, so shared characters never vote.
+        SIMPLIFIED_ONLY: ::String
+
+        TRADITIONAL_ONLY: ::String
+
         # : (String?) -> String
         def self.call: (String?) -> String
+
+        # Normalizes a language code to the form the site uses as a
+        # directory name. Chinese codes gain a script suffix (detected
+        # from +text+ when available); region variants of the supported
+        # languages collapse to the plain code. Unknown codes pass
+        # through unchanged.
+        # : (String?, ?String?) -> String?
+        def self.normalize: (String?, ?String?) -> String?
+
+        # : (String, String?) -> String
+        def self.chinese_variant: (String, String?) -> String
       end
     end
   end

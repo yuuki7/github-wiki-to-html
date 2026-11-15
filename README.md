@@ -40,6 +40,8 @@ The Ruby library gollum-lib offers no readable API for Markdown-to-Markdown conv
 
 For the SSG, we are considering Astro, which is written in TypeScript.
 
+Each page is published under a directory named by its language: the language the page itself is written in for originals, and the target language for translations. The site's languages are listed in `site.json` (English, Simplified and Traditional Chinese, Arabic, Japanese, and German); the first entry's sibling key `language` names the default language, which the original Home and footer belong to. Translations are not produced by the converter. They are supplied as data under `translations/<language>/<Slug>.md` (see `translations/README.md`) and built like the originals, marked as translations with a notice and a link to the original at the top. Internal links point at the same-language version of their target when one exists, and at the original otherwise.
+
 ## Directory structure
 
 - `.config/` — Configuration files
@@ -58,9 +60,10 @@ For the SSG, we are considering Astro, which is written in TypeScript.
 - `package-lock.json` — Locked Node.js dependency versions
 - `package.json` — Node.js dependencies
 - `sig/` — RBS signatures
-- `site.json` — Site metadata
+- `site.json` — Site metadata, including the site's languages
 - `templates/` — Astro templates
 - `test/` — RSpec tests
+- `translations/` — Translated pages, one directory per language
 
 ## Development
 

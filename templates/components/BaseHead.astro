@@ -1,10 +1,16 @@
 ---
+import type { AlternateLink } from "../types";
+
 type Props = {
   title: string;
+  alternates?: AlternateLink[];
 };
 
-const { title } = Astro.props;
+const { title, alternates } = Astro.props;
 ---
 
 <meta charset="utf-8" />
 <title>{title}</title>
+{alternates?.map((alternate) => (
+  <link rel="alternate" hreflang={alternate.language} href={alternate.href} />
+))}

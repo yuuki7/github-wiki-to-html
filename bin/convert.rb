@@ -18,8 +18,11 @@ UNLISTED_PAGES = Set['Wikinder', 'Wikinder-Japan'].freeze
 # Output directory for the generated markdown.
 MD_DIR = '../md'
 
-# Site metadata (name, wiki URL, language), maintained by hand.
+# Site metadata (name, wiki URL, languages), maintained by hand.
 SITE_PATH = '../site.json'
+
+# Translated pages, supplied as data (one directory per language).
+TRANSLATIONS_DIR = '../translations'
 
 # Previous wiki HEAD used for incremental META.md sync.
 CACHE_PATH = '../.cache/head'
@@ -51,7 +54,9 @@ Dir.chdir(__dir__) do
       unlisted_pages: UNLISTED_PAGES,
       ignore_meta: options[:ignore_meta],
       prev_head: prev_head,
-      site_language: site['language']
+      site_language: site['language'],
+      supported_languages: site['languages'],
+      translations_dir: TRANSLATIONS_DIR
     }
   )
   wiki.build(MD_DIR)

@@ -1,47 +1,18 @@
 ---
-import { getCollection, render } from "astro:content";
-import HomePage from "../layouts/HomePage.astro";
+import Base from "../layouts/Base.astro";
 import site from "../../site.json";
+import { homeHref } from "../i18n";
 
-const pages = await getCollection("pages");
-
-const home = pages.find(
-  (f) => f.data.kind === "special" && f.data.slug === "Home",
-);
-const footer = pages.find(
-  (f) => f.data.kind === "special" && f.data.slug === "_Footer",
-);
-if (!home || !footer) {
-  throw new Error("Home or footer page is missing");
-}
-
-const listedPages = pages
-  .filter((p) => p.data.kind === "article" && (p.data.listed ?? true))
-  .sort((a, b) => b.data.creation_date.localeCompare(a.data.creation_date));
-
-const { Content: HomeContent } = await render(home);
-const { Content: FooterContent } = await render(footer);
+// The site's root is the default language's home page.
+const target = homeHref(site.language);
 ---
 
-<HomePage
-  className="home"
-  title={site.name}
-  language={home.data.language}
-  isHome
->
-  <ul slot="left-sidebar">
-    {listedPages.map((entry) => (
-      <li>
-        <a href={`/${encodeURIComponent(entry.data.slug)}`}>
-          {entry.data.title}
-        </a>
-      </li>
-    ))}
-  </ul>
-
-  <HomeContent />
-
-  <Fragment slot="footer">
-    <FooterContent />
+<Base title={site.name} language={site.language}>
+  <Fragment slot="head">
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
   </Fragment>
-</HomePage>
+
+  <p>
+    <a href={target}>{site.name}</a>
+  </p>
+</Base>

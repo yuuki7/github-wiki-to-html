@@ -2,6 +2,8 @@ type wiki_options = {
   ?ignore_meta: bool,
   ?prev_head: String?,
   ?site_language: String?,
+  ?supported_languages: Array[String],
+  ?translations_dir: (String | Pathname)?,
   ?ungenerated_pages: Set[String],
   ?unlisted_pages: Set[String]
 }
@@ -15,3 +17,22 @@ type meta_row = {
   language: String,
   aliases: Array[String]
 }
+
+type original_page = {
+  page: String,
+  language: String
+}
+
+type translation_record = {
+  slug: String,
+  language: String,
+  title: String?,
+  body: String,
+  special: bool
+}
+
+type link_index = Hash[Symbol, Hash[String, String]]
+
+type link_routes = Hash[String, String]
+
+type page_versions = Hash[String, Hash[String, bool]]

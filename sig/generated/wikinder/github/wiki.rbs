@@ -12,6 +12,10 @@ module Wikinder
     # pages are addressed by name only. Subdirectory blobs are therefore
     # silently unsupported — they are ignored entirely.
     class Wiki
+      @translations_dir: String?
+
+      @supported_languages: Array[String]
+
       @site_language: String?
 
       @prev_head: String?
@@ -54,6 +58,19 @@ module Wikinder
       #   special pages. Site metadata is the caller's business (the
       #   conversion CLI maintains it); the module never reads a site
       #   file itself and never detects a language for site parts.
+      #   It is also the language the original special pages belong to:
+      #   every output is written under a language directory named by
+      #   the page's own language.
+      # @param options[:supported_languages] The languages the site
+      #   offers translations in. Translation directories naming any
+      #   other language are ignored. When empty, every language found
+      #   under the translations directory is accepted.
+      # @param options[:translations_dir] Directory holding translated
+      #   pages as data, one subdirectory per language
+      #   (translations/<language>/<Slug>.md). Translation itself is
+      #   not this module's business; the files are inputs, produced
+      #   elsewhere, and may carry a YAML front matter whose only key
+      #   the converter reads is +title+ (the translated title).
       # : (String | Pathname, ?wiki_options) -> void
       def initialize: (String | Pathname, ?wiki_options) -> void
 
@@ -82,9 +99,11 @@ module Wikinder
       # The output directory is assumed to be exclusively this tool's
       # destination — anything matching the generated extensions (Markdown
       # or common image types) that the current build did not produce is
-      # removed, along with `.tmp.<pid>` stragglers from a crash-during-write.
+      # removed, at any depth (outputs live in per-language directories),
+      # along with `.tmp.<pid>` stragglers from a crash-during-write.
       # Files with other extensions (e.g. site assets shared with the SSG)
-      # are left untouched.
+      # are left untouched. Directories left empty by a removal (a
+      # language with no pages left) are removed as well.
       # : (String, Hash[String, String]) -> void
       def cleanup_stale_files: (String, Hash[String, String]) -> void
 
@@ -95,6 +114,73 @@ module Wikinder
       # : () -> Hash[String, String]
       def compute_outputs: () -> Hash[String, String]
 
+      # The original pages of this build, keyed by slug, each with the
+      # language the page itself is written in (normalized, so a Chinese
+      # page names its script variant).
+      # : (Array[String], Hash[String, meta_row]) -> Hash[String, original_page]
+      def original_records: (Array[String], Hash[String, meta_row]) -> Hash[String, original_page]
+
+      # The effective language of an original page: the META row's
+      # language when one exists, a detection result otherwise, always
+      # normalized (Chinese gains its script variant from the body).
+      # : (String, Hash[String, meta_row]) -> String
+      def page_language: (String, Hash[String, meta_row]) -> String
+
+      # Reads the translation files supplied as data under the
+      # translations directory: one subdirectory per language, one
+      # Markdown file per page, named by the original page's slug.
+      # Home and _Footer name the special pages. A file is skipped,
+      # with a warning, when its language is not supported, when no
+      # original page bears its slug, or when it merely restates the
+      # original in the original's own language.
+      # : (Hash[String, original_page]) -> Array[translation_record]
+      def load_translations: (Hash[String, original_page]) -> Array[translation_record]
+
+      # : (String, String, Hash[String, original_page]) -> translation_record?
+      def translation_record: (String, String, Hash[String, original_page]) -> translation_record?
+
+      # Splits a translation file into its optional front matter title
+      # and its body. The front matter is YAML between '---' lines at
+      # the very start of the file; +title+ is the only key read.
+      # : (String) -> [String?, String]
+      def split_translation_source: (String) -> [ String?, String ]
+
+      # Reads the value of a front matter 'title:' line, removing one
+      # layer of matching quotes when present. Only this one key is
+      # read, so the front matter needs no full YAML parse.
+      # : (String) -> String?
+      def translation_title: (String) -> String?
+
+      # Which languages each page exists in: slug -> language -> true
+      # when that version is a translation, false for the original.
+      # : (Hash[String, original_page], Array[translation_record]) -> page_versions
+      def version_map: (Hash[String, original_page], Array[translation_record]) -> page_versions
+
+      # Every language this build emits anything in: the originals'
+      # languages, the translations' languages, and the site language
+      # (home of the original special pages).
+      # : (page_versions, Array[translation_record]) -> Array[String]
+      def active_languages: (page_versions, Array[translation_record]) -> Array[String]
+
+      # For every emitted language, the routes its pages link with:
+      # slug -> the language a link to that slug must point at from a
+      # page in this language. A target that exists in the reader's
+      # language wins; anything else falls back to the original.
+      # Aliases route within the reader's language, where a redirect
+      # for them is generated (see redirect_outputs).
+      # : (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, Hash[String, String]]
+      def routes_by_language: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, Hash[String, String]]
+
+      # Builds one translated article: the original's metadata, the
+      # translation's own title when it supplies one, and a body whose
+      # wikilinks are resolved for the translation's language.
+      # : (translation_record, original_page, Hash[String, meta_row], Hash[String, String]?) -> String
+      def translated_output: (translation_record, original_page, Hash[String, meta_row], Hash[String, String]?) -> String
+
+      # Builds one translated special page (Home or _Footer).
+      # : (translation_record, Hash[String, String]?) -> String
+      def translated_special_output: (translation_record, Hash[String, String]?) -> String
+
       # Builds the front matter for one page, wrapping any failure with the
       # page path so a crash mid-build identifies the file responsible.
       # : (String, Hash[String, meta_row]) -> String
@@ -102,18 +188,28 @@ module Wikinder
 
       # Renders one page, wrapping any failure with the page path so a crash
       # mid-build identifies the file responsible.
-      # : (String) -> String
-      def render_page_with_context: (String) -> String
+      # : (String, ?Hash[String, String]?) -> String
+      def render_page_with_context: (String, ?Hash[String, String]?) -> String
 
       # Special pages are site parts, not articles: their language is
       # the site's language as supplied by the caller, never a language
       # detected from the body. When the caller supplies none, the key
       # is omitted rather than invented.
-      # : (String, String) -> String
-      def special_output: (String, String) -> String
+      # : (String, String, ?Hash[String, String]?) -> String
+      def special_output: (String, String, ?Hash[String, String]?) -> String
 
-      # : (Hash[String, meta_row], Set[String]) -> Hash[String, String]
-      def redirect_outputs: (Hash[String, meta_row], Set[String]) -> Hash[String, String]
+      # One redirect per alias per emitted language, each in that
+      # language's directory. The redirect for a language is skipped
+      # when a real page of that language already bears the alias's
+      # slug: the existing page always wins over a generated redirect.
+      # : (Hash[String, meta_row], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
+      def redirect_outputs: (Hash[String, meta_row], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
+
+      # The slugs a redirect must not shadow within one language: the
+      # pages that language actually has, its special pages, and the
+      # pages the build never generates in any language.
+      # : (String, page_versions, Hash[String, Set[String]]) -> Set[String]
+      def occupied_slugs: (String, page_versions, Hash[String, Set[String]]) -> Set[String]
 
       # : () -> Array[String]
       def collect_pages: () -> Array[String]
@@ -185,8 +281,8 @@ module Wikinder
 
       private
 
-      # : (String) -> String
-      def render_page: (String) -> String
+      # : (String, ?Hash[String, String]?) -> String
+      def render_page: (String, ?Hash[String, String]?) -> String
 
       # The wiki's link index: every page and image asset at the
       # repository root, for canonicalizing wikilink targets the way

@@ -34,14 +34,20 @@ RSpec.describe Wikinder::GitHub::Wiki do
   end
 
   describe '#build' do
-    # Slugs are catalogue keys, so a duplicate would collide on the site.
+    # Slugs are catalogue keys within a language, so a duplicate in the
+    # same language directory would collide on the site.
     it 'writes pages with unique, non-empty slugs' do
       with_seeded_wiki do |wiki|
         wiki.build(target)
-        slugs = Dir.glob(File.join(target, '*.md')).map { |name| File.basename(name, '.md') }
-        expect(slugs).not_to be_empty
-        expect(slugs.uniq.size).to eq(slugs.size)
-        expect(slugs.none?(&:empty?)).to be(true)
+        files = Dir.glob(File.join(target, '**/*.md'))
+        keys = files.map do |file|
+          meta = YAML.safe_load(File.read(file).split("---\n")[1])
+          language = meta['language'] || file.delete_prefix("#{target}/").split('/').first
+          [meta['kind'], meta['slug'], language]
+        end
+        expect(keys).not_to be_empty
+        expect(keys.uniq.size).to eq(keys.size)
+        expect(keys.none? { |key| key[1].empty? }).to be(true)
       end
     end
 
@@ -49,7 +55,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'points every redirect at an existing article' do
       with_seeded_wiki do |wiki|
         wiki.build(target)
-        entries = Dir.glob(File.join(target, '*.md')).map { |name| File.read(name) }
+        entries = Dir.glob(File.join(target, '**/*.md')).map { |name| File.read(name) }
         kinds = entries.map { |content| YAML.safe_load(content.split("---\n")[1]) }
         canonical = kinds.select { |d| d['kind'] == 'article' }.map { |d| d['slug'] }
         kinds.select { |d| d['kind'] == 'redirect' }.each do |d|
@@ -84,7 +90,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
 
         with_site = { ungenerated_pages: Set[], unlisted_pages: Set[], site_language: 'ja' }
         described_class.new(scratch, with_site).build(out)
-        expect(File.read(File.join(out, 'Home.md'))).to include('language: ja')
+        expect(File.read(File.join(out, 'ja', 'Home.md'))).to include('language: ja')
 
         described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(out)
         front_matter = YAML.safe_load(File.read(File.join(out, 'Home.md')).split("---\n")[1])
@@ -120,7 +126,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
         FixtureWiki.build(path)
         described_class.new(path).build(target)
         expect(File.exist?(File.join(target, 'META.md'))).to be(false)
-        expect(File.exist?(File.join(target, 'About.md'))).to be(true)
+        expect(File.exist?(File.join(target, 'en', 'About.md'))).to be(true)
       ensure
         FileUtils.remove_entry(path)
         FileUtils.remove_entry(target)
@@ -140,7 +146,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
 
         expect { described_class.new(path, fixture_options(ignore_meta: true)).build(out) }
           .not_to raise_error
-        expect(File.read(File.join(out, 'page.md'), mode: 'rb')).to include("\uFFFD".b)
+        expect(File.read(File.join(out, 'en', 'page.md'), mode: 'rb')).to include("\uFFFD".b)
       ensure
         FileUtils.remove_entry(path)
         FileUtils.remove_entry(out)
@@ -199,7 +205,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
       begin
         FixtureWiki.build(path)
         described_class.new(path, fixture_options(ignore_meta: true)).build(built_target)
-        article = Dir.glob(File.join(built_target, '*.md'))
+        article = Dir.glob(File.join(built_target, '**/*.md'))
                      .map { |name| YAML.safe_load(File.read(name).split("---\n")[1]) }
                      .find { |meta| meta['kind'] == 'article' }
         expect(article['creation_date']).to match(/\A\d{4}-\d{2}-\d{2}T/)
@@ -209,6 +215,145 @@ RSpec.describe Wikinder::GitHub::Wiki do
       ensure
         FileUtils.remove_entry(path)
         FileUtils.remove_entry(built_target)
+      end
+    end
+  end
+
+  describe '#multilingual' do
+    # Writes the given translation files (relative path => content)
+    # into a fresh translations directory and yields its path.
+    def with_translations(files)
+      translations = Dir.mktmpdir('translations')
+      files.each do |relative, content|
+        path = File.join(translations, relative)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, content)
+      end
+      yield translations
+    ensure
+      FileUtils.remove_entry(translations) if translations
+    end
+
+    def multilingual_options(translations)
+      fixture_options(unlisted_pages: Set[]).merge(
+        site_language: 'en',
+        supported_languages: %w[en ja de],
+        translations_dir: translations
+      )
+    end
+
+    # Original pages are written under the directory of the language
+    # each page is itself written in. A link whose target has no
+    # version in the linking page's language points at the original.
+    it 'writes originals under their own language directories' do
+      with_seeded_wiki do |wiki|
+        wiki.build(target)
+        expect(File.exist?(File.join(target, 'en', 'About.md'))).to be(true)
+        expect(File.exist?(File.join(target, 'ja', 'Japanese-page.md'))).to be(true)
+        about = File.read(File.join(target, 'en', 'About.md'))
+        expect(about).to include('[Japanese-page](/ja/Japanese-page)')
+      end
+    end
+
+    # Translations arrive as data: the translated article inherits the
+    # original's metadata, is marked as a translation of it, and links
+    # fall back to a target's original language when no version in the
+    # translation's language exists.
+    it 'builds translated articles and special pages from the translations directory' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations(
+          'de/About.md' => "---\ntitle: Über uns\n---\n\nDeutscher Text. Siehe [[Japanese-page]].\n",
+          'ja/Home.md' => "翻訳されたホーム。[[About]]へのリンク。\n"
+        ) do |translations|
+          described_class.new(path, multilingual_options(translations)).build(target)
+
+          translated = File.read(File.join(target, 'de', 'About.md'))
+          meta = YAML.safe_load(translated.split("---\n")[1])
+          expect(meta['kind']).to eq('article')
+          expect(meta['language']).to eq('de')
+          expect(meta['original_language']).to eq('en')
+          expect(meta['translation']).to be(true)
+          expect(meta['title']).to eq('Über uns')
+          expect(meta['author']).to eq('fixture-bot')
+          expect(translated).to include('[Japanese-page](/ja/Japanese-page)')
+
+          home = File.read(File.join(target, 'ja', 'Home.md'))
+          home_meta = YAML.safe_load(home.split("---\n")[1])
+          expect(home_meta['kind']).to eq('special')
+          expect(home_meta['language']).to eq('ja')
+          expect(home).to include('[About](/en/About)')
+
+          # The original Home belongs to the site's default language,
+          # and no German Home exists until one is translated.
+          expect(File.exist?(File.join(target, 'en', 'Home.md'))).to be(true)
+          expect(File.exist?(File.join(target, 'de', 'Home.md'))).to be(false)
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    it 'ignores translations in languages the site does not support' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations('fr/About.md' => "Texte français.\n") do |translations|
+          expect { described_class.new(path, multilingual_options(translations)).build(target) }
+            .to output(%r{ignoring fr/}).to_stderr
+          expect(File.exist?(File.join(target, 'fr', 'About.md'))).to be(false)
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    it 'ignores a translation whose slug has no original page' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations('de/Missing.md' => "Ohne Original.\n") do |translations|
+          expect { described_class.new(path, multilingual_options(translations)).build(target) }
+            .to output(/no original page/).to_stderr
+          expect(File.exist?(File.join(target, 'de', 'Missing.md'))).to be(false)
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    it 'ignores a translation written in the original page\'s own language' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations('en/About.md' => "Same language.\n") do |translations|
+          expect { described_class.new(path, multilingual_options(translations)).build(target) }
+            .to output(/same language as the original/).to_stderr
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    # A translation that disappears takes its page with it; the now
+    # empty language directory is removed as well.
+    it 'removes a translated page when its translation file disappears' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations('de/About.md' => "Deutscher Text.\n") do |translations|
+          options = multilingual_options(translations)
+          described_class.new(path, options).build(target)
+          expect(File.exist?(File.join(target, 'de', 'About.md'))).to be(true)
+
+          FileUtils.remove_entry(File.join(translations, 'de'))
+          described_class.new(path, options).build(target)
+          expect(File.exist?(File.join(target, 'de', 'About.md'))).to be(false)
+          expect(File.exist?(File.join(target, 'de'))).to be(false)
+        end
+      ensure
+        FileUtils.remove_entry(path)
       end
     end
   end
@@ -436,9 +581,9 @@ RSpec.describe Wikinder::GitHub::Wiki do
         out = Dir.mktmpdir('canon-out')
         begin
           described_class.new(scratch, { ungenerated_pages: Set['META'], unlisted_pages: Set[] }).build(out)
-          built = File.read(File.join(out, 'Index.md'))
-          expect(built).to include('[my page](/My-Page)')
-          expect(built).to include('[MY-PAGE](/My-Page)')
+          built = File.read(File.join(out, 'en', 'Index.md'))
+          expect(built).to include('[my page](/en/My-Page)')
+          expect(built).to include('[MY-PAGE](/en/My-Page)')
         ensure
           FileUtils.remove_entry(out)
         end
@@ -535,7 +680,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
       target = Dir.mktmpdir('content')
       described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
 
-      expect(File.read(File.join(target, 'About.md'))).to include('kind: article')
+      expect(File.read(File.join(target, 'en', 'About.md'))).to include('kind: article')
       row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
       expect(row).not_to include('About')
       FileUtils.remove_entry(target)
@@ -571,7 +716,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
       expect(wiki.send(:diff_paths, base_sha)).to eq([]) # provenance: incremental keep path ran
       row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
       expect(row).not_to include('About')
-      expect(File.read(File.join(target2, 'About.md'))).to include('kind: article')
+      expect(File.read(File.join(target2, 'en', 'About.md'))).to include('kind: article')
       FileUtils.remove_entry(target)
       FileUtils.remove_entry(target2)
     end
@@ -584,7 +729,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
       target = Dir.mktmpdir('content')
       described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
 
-      expect(File.read(File.join(target, 'Timeline-of-yuuki.md'))).to include('kind: redirect')
+      expect(File.read(File.join(target, 'en', 'Timeline-of-yuuki.md'))).to include('kind: redirect')
+      expect(File.read(File.join(target, 'ja', 'Timeline-of-yuuki.md'))).to include('kind: redirect')
       row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
       expect(row).to include('Timeline of yuuki')
       FileUtils.remove_entry(target)
@@ -620,8 +766,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
       begin
         expect { Wikinder::GitHub::Wiki.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(target) }
           .not_to output(/.+/).to_stderr
-        expect(Dir.children(target).sort).to eq(['Root.md'])
-        expect(Dir.children(target)).to all(satisfy { |name| !name.include?('/') })
+        expect(Dir.children(target).sort).to eq(['en'])
+        expect(File.exist?(File.join(target, 'en', 'Root.md'))).to be(true)
       ensure
         FileUtils.remove_entry(target)
       end
@@ -781,6 +927,20 @@ RSpec.describe Wikinder::GitHub::Wiki do
       FileUtils.remove_entry(out)
       FileUtils.remove_entry(out2)
     end
+  end
+end
+
+RSpec.describe Wikinder::GitHub::Wiki::Language do
+  it 'normalizes Chinese to a script variant and regions to plain codes' do
+    expect(described_class.normalize('zh')).to eq('zh-Hans')
+    expect(described_class.normalize('zh-TW')).to eq('zh-Hant')
+    expect(described_class.normalize('zh-Hans')).to eq('zh-Hans')
+    expect(described_class.normalize('en-US')).to eq('en')
+  end
+
+  it 'detects the script of Chinese text' do
+    expect(described_class.call('这是我的文章，我们学习汉语，讨论数学问题。')).to eq('zh-Hans')
+    expect(described_class.call('這是我的文章，我們學習漢語，討論數學問題。')).to eq('zh-Hant')
   end
 end
 

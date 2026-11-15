@@ -1,0 +1,152 @@
+---
+import { getCollection, render } from "astro:content";
+import IndividualPage from "../../layouts/IndividualPage.astro";
+import site from "../../../site.json";
+import Redirect from "../../layouts/Redirect.astro";
+import Toc from "../../components/Toc.astro";
+import { pageHref, uiFor } from "../../i18n";
+
+export async function getStaticPaths() {
+  // A redirect carries no language of its own; the language it serves
+  // is the directory its file lives in.
+  const languageOf = (entry: {
+    data: { kind: string; language?: string };
+    filePath?: string;
+    id: string;
+  }) => {
+    if (entry.data.kind !== "redirect") return entry.data.language;
+    const parts = (entry.filePath ?? entry.id).split("/");
+    return parts[parts.length - 2];
+  };
+
+  const entries = await getCollection("pages");
+  return entries
+    .filter(
+      (entry) =>
+        entry.data.kind === "article" || entry.data.kind === "redirect",
+    )
+    .map((entry) => ({
+      params: { lang: languageOf(entry), slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const lang = Astro.params.lang;
+const isRedirect = entry.data.kind === "redirect";
+
+const entries = await getCollection("pages");
+
+// The footer in this page's language, falling back to the site's
+// default language when the footer has not been translated.
+const footerFragment =
+  entries.find(
+    (f) =>
+      f.data.kind === "special" &&
+      f.data.slug === "_Footer" &&
+      f.data.language === lang,
+  ) ??
+  entries.find(
+    (f) =>
+      f.data.kind === "special" &&
+      f.data.slug === "_Footer" &&
+      f.data.language === site.language,
+  );
+const { Content: FooterContent } = footerFragment
+  ? await render(footerFragment)
+  : { Content: null };
+
+// Every version of this article, for the language switcher and the
+// hreflang links. The original is the version that is not a translation.
+const versions = isRedirect
+  ? []
+  : entries.filter(
+      (e) => e.data.kind === "article" && e.data.slug === entry.data.slug,
+    );
+const alternates = versions.map((version) => ({
+  language: version.data.language,
+  href: pageHref(version.data.language, version.data.slug),
+}));
+const original =
+  versions.find((version) => !version.data.translation) ?? versions[0];
+
+// For a redirect, the best target version: this language's when it
+// exists, the original otherwise.
+const targetVersions = isRedirect
+  ? entries.filter(
+      (e) =>
+        e.data.kind === "article" && e.data.slug === entry.data.target_slug,
+    )
+  : [];
+const targetLanguage = (
+  targetVersions.find((version) => version.data.language === lang) ??
+  targetVersions.find((version) => !version.data.translation) ??
+  targetVersions[0]
+)?.data.language;
+
+const isTranslation =
+  entry.data.kind === "article" && (entry.data.translation ?? false);
+const ui = uiFor(lang);
+
+const rendered = isRedirect ? null : await render(entry);
+---
+
+{isRedirect ? (
+  <Redirect
+    title={entry.data.title}
+    targetSlug={entry.data.target_slug}
+    targetLanguage={targetLanguage}
+  />
+) : (
+  <IndividualPage
+    title={entry.data.title}
+    language={entry.data.language}
+    alternates={alternates}
+    languageLinks={alternates}
+    meta={{
+      author: entry.data.author,
+      creationDate: entry.data.creation_date,
+      modifiedDate: entry.data.modified_date,
+      language: entry.data.language,
+    }}
+  >
+    <Fragment slot="head">
+      {original && (
+        <link
+          rel="alternate"
+          hreflang="x-default"
+          href={pageHref(original.data.language, original.data.slug)}
+        />
+      )}
+    </Fragment>
+
+    <Fragment slot="left-sidebar">
+      <Toc headings={rendered.headings} />
+    </Fragment>
+
+    {isTranslation && (
+      <p class="translation-notice">
+        {ui.translationNotice}{" "}
+        <a
+          href={pageHref(
+            entry.data.original_language ?? original?.data.language ?? lang,
+            entry.data.slug,
+          )}
+        >
+          {ui.originalArticle}
+        </a>
+      </p>
+    )}
+
+    <rendered.Content />
+
+    <Fragment slot="footer">
+      {FooterContent && <FooterContent />}
+      {!isTranslation && (
+        <a href={`${site.wiki_url}/${encodeURIComponent(entry.data.slug)}`}>
+          {ui.editOnWiki}
+        </a>
+      )}
+    </Fragment>
+  </IndividualPage>
+)}

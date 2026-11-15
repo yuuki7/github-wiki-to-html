@@ -6,17 +6,45 @@ import LeftSidebar from "../components/LeftSidebar.astro";
 import Main from "../components/Main.astro";
 import RightSidebar from "../components/RightSidebar.astro";
 import Footer from "../components/Footer.astro";
+import { homeHref, languageName } from "../i18n";
 import type { ArticleProps } from "../types";
 
 type Props = ArticleProps;
 
-const { title, isHome, meta, language, className } = Astro.props;
+const { title, isHome, meta, language, className, alternates, languageLinks } =
+  Astro.props;
 ---
 
-<Base title={title} language={language} className={className}>
+<Base
+  title={title}
+  language={language}
+  className={className}
+  alternates={alternates}
+>
+  <slot name="head" slot="head" />
+
   <Header>
     <nav>
-      <a href="/">{site.name}</a>
+      <a href={homeHref(language)}>{site.name}</a>
+      {languageLinks && languageLinks.length > 1 && (
+        <ul class="language-switcher">
+          {languageLinks.map((link) => (
+            <li>
+              {link.language === language ? (
+                <span aria-current="true">{languageName(link.language)}</span>
+              ) : (
+                <a
+                  href={link.href}
+                  hreflang={link.language}
+                  lang={link.language}
+                >
+                  {languageName(link.language)}
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </nav>
   </Header>
 

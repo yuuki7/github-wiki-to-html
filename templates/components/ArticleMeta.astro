@@ -1,17 +1,19 @@
 ---
+import { defaultLanguage, uiFor } from "../i18n";
 import type { ArticleMetaProps } from "../types";
 
 interface Props extends ArticleMetaProps {}
 
-const { author, creationDate, modifiedDate } = Astro.props;
+const { author, creationDate, modifiedDate, language } = Astro.props;
+const locale = language ?? defaultLanguage;
 
-const dateFmt = new Intl.DateTimeFormat("en-US", {
+const dateFmt = new Intl.DateTimeFormat(locale, {
   timeZone: "UTC",
   year: "numeric",
   month: "long",
   day: "numeric",
 });
-const timeFmt = new Intl.DateTimeFormat("en-US", {
+const timeFmt = new Intl.DateTimeFormat(locale, {
   timeZone: "UTC",
   hour: "numeric",
   minute: "2-digit",
@@ -22,7 +24,9 @@ const formatDate = (iso: string) =>
 ---
 
 <p class="article__meta">
-  <span class="article__author">by {author}</span>
+  <span class="article__author">
+    {uiFor(locale).byline} {author}
+  </span>
   {" · "}
   <time class="article__date article__date--created" datetime={creationDate}>
     {formatDate(creationDate)}
