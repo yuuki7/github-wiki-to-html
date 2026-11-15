@@ -1,6 +1,9 @@
 ---
 import { getCollection } from "astro:content";
 import ArticleView from "../components/ArticleView.astro";
+import Redirect from "../layouts/Redirect.astro";
+import { defaultLanguage, pageHref } from "../i18n";
+import site from "../../site.json";
 
 export async function getStaticPaths() {
   const entries = await getCollection("pages");
@@ -22,36 +25,72 @@ export async function getStaticPaths() {
         !e.data.translation,
     );
 
-  return entries
-    .filter(
-      (entry) =>
-        entry.data.kind === "article" || entry.data.kind === "redirect",
-    )
-    .map((entry) => {
-      if (entry.data.kind === "article") {
-        // An original lives at the root; a translation lives under
-        // its language.
-        const path = entry.data.translation
-          ? `${entry.data.language}/${entry.data.slug}`
-          : entry.data.slug;
-        return {
-          params: { path },
+  const paths = [];
+
+  for (const entry of entries) {
+    if (entry.data.kind === "article") {
+      if (entry.data.translation) {
+        // A translation lives under its language.
+        paths.push({
+          params: { path: `${entry.data.language}/${entry.data.slug}` },
           props: { entry, lang: entry.data.language },
-        };
+        });
+      } else {
+        // An original lives at the root. The same article addressed
+        // with its original language's code redirects to the
+        // code-less URL.
+        paths.push({
+          params: { path: entry.data.slug },
+          props: { entry, lang: entry.data.language },
+        });
+        paths.push({
+          params: { path: `${entry.data.language}/${entry.data.slug}` },
+          props: {
+            title: entry.data.title,
+            redirectTo: pageHref(entry.data.language, entry.data.slug),
+          },
+        });
       }
+    } else if (entry.data.kind === "redirect") {
       // A redirect is served at the root in its target's original
       // language, and under its directory's language elsewhere.
       const lang = directoryLanguage(entry);
       const original = originalOf(entry.data.target_slug);
-      const path =
-        original && original.data.language === lang
-          ? entry.data.slug
-          : `${lang}/${entry.data.slug}`;
-      return { params: { path }, props: { entry, lang } };
-    });
+      if (original && original.data.language === lang) {
+        paths.push({
+          params: { path: entry.data.slug },
+          props: { entry, lang },
+        });
+        // The alias addressed with its language's code redirects
+        // to the code-less alias.
+        paths.push({
+          params: { path: `${lang}/${entry.data.slug}` },
+          props: { title: entry.data.title, redirectTo: `/${entry.data.slug}` },
+        });
+      } else {
+        paths.push({
+          params: { path: `${lang}/${entry.data.slug}` },
+          props: { entry, lang },
+        });
+      }
+    }
+  }
+
+  // The default language's home lives at the root. Addressed with
+  // its code, it redirects there.
+  paths.push({
+    params: { path: defaultLanguage },
+    props: { title: site.title, redirectTo: "/" },
+  });
+
+  return paths;
 }
 
-const { entry, lang } = Astro.props;
+const { entry, lang, title, redirectTo } = Astro.props;
 ---
 
-<ArticleView entry={entry} lang={lang} />
+{redirectTo ? (
+  <Redirect title={title} targetHref={redirectTo} />
+) : (
+  <ArticleView entry={entry} lang={lang} />
+)}
