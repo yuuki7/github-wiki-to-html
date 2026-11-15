@@ -31,10 +31,70 @@ export function languageName(language: string): string {
   return LANGUAGE_NAMES[language] ?? language;
 }
 
+// Language names as written in another language, for sentences
+// that name a language inside a text in a different one. The
+// German forms are the declined names its notice sentence needs.
+const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
+  en: {
+    en: "English",
+    "zh-Hans": "Simplified Chinese",
+    "zh-Hant": "Traditional Chinese",
+    ar: "Arabic",
+    ja: "Japanese",
+    de: "German",
+  },
+  ja: {
+    en: "英語",
+    "zh-Hans": "中国語（簡体字）",
+    "zh-Hant": "中国語（繁体字）",
+    ar: "アラビア語",
+    ja: "日本語",
+    de: "ドイツ語",
+  },
+  de: {
+    en: "Englischen",
+    "zh-Hans": "Chinesischen (vereinfacht)",
+    "zh-Hant": "Chinesischen (traditionell)",
+    ar: "Arabischen",
+    ja: "Japanischen",
+    de: "Deutschen",
+  },
+  "zh-Hans": {
+    en: "英语",
+    "zh-Hans": "简体中文",
+    "zh-Hant": "繁体中文",
+    ar: "阿拉伯语",
+    ja: "日语",
+    de: "德语",
+  },
+  "zh-Hant": {
+    en: "英語",
+    "zh-Hans": "簡體中文",
+    "zh-Hant": "繁體中文",
+    ar: "阿拉伯語",
+    ja: "日語",
+    de: "德語",
+  },
+  ar: {
+    en: "الإنجليزية",
+    "zh-Hans": "الصينية المبسطة",
+    "zh-Hant": "الصينية التقليدية",
+    ar: "العربية",
+    ja: "اليابانية",
+    de: "الألمانية",
+  },
+};
+
+// The name of the target language as written in the given
+// language, falling back to the target's own name for itself.
+export function languageNameIn(language: string, target: string): string {
+  return LANGUAGE_NAMES_IN[language]?.[target] ?? languageName(target);
+}
+
 export interface UiStrings {
   editOnWiki: string;
   byline: string;
-  translationNotice: string;
+  translationNotice: (originalLanguageName: string) => string;
   originalArticle: string;
 }
 
@@ -42,39 +102,38 @@ const UI_STRINGS: Record<string, UiStrings> = {
   en: {
     editOnWiki: "Edit this page on GitHub Wiki",
     byline: "by",
-    translationNotice: "This page is a translation of the original article.",
-    originalArticle: "Read the original article",
+    translationNotice: (name) => `Translated from ${name}`,
+    originalArticle: "Show original",
   },
   ja: {
     editOnWiki: "GitHub Wikiでこのページを編集",
     byline: "著者",
-    translationNotice: "このページは原文の翻訳です。",
-    originalArticle: "原文を読む",
+    translationNotice: (name) => `${name}から翻訳`,
+    originalArticle: "原文を見る",
   },
   de: {
     editOnWiki: "Diese Seite im GitHub Wiki bearbeiten",
     byline: "von",
-    translationNotice:
-      "Diese Seite ist eine Übersetzung des Originalartikels.",
-    originalArticle: "Originalartikel lesen",
+    translationNotice: (name) => `Aus dem ${name} übersetzt`,
+    originalArticle: "Original anzeigen",
   },
   "zh-Hans": {
     editOnWiki: "在 GitHub Wiki 上编辑此页",
     byline: "作者",
-    translationNotice: "本页是原文的翻译。",
-    originalArticle: "阅读原文",
+    translationNotice: (name) => `译自${name}`,
+    originalArticle: "查看原文",
   },
   "zh-Hant": {
     editOnWiki: "在 GitHub Wiki 上編輯此頁",
     byline: "作者",
-    translationNotice: "本頁是原文的翻譯。",
-    originalArticle: "閱讀原文",
+    translationNotice: (name) => `譯自${name}`,
+    originalArticle: "查看原文",
   },
   ar: {
     editOnWiki: "حرر هذه الصفحة على GitHub Wiki",
     byline: "بقلم",
-    translationNotice: "هذه الصفحة ترجمة للمقال الأصلي.",
-    originalArticle: "اقرأ المقال الأصلي",
+    translationNotice: (name) => `مترجم من ${name}`,
+    originalArticle: "عرض الأصل",
   },
 };
 

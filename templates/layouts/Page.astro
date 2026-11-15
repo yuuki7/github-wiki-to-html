@@ -25,7 +25,7 @@ const { title, isHome, meta, language, className, alternates, languageLinks } =
 
   <Header>
     <nav>
-      <a href={homeHref(language)}>{site.name}</a>
+      {!isHome && <a href={homeHref(language)}>{site.name}</a>}
       {languageLinks && languageLinks.length > 1 && (
         <ul class="language-switcher">
           {languageLinks.map((link) => (

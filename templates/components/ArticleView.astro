@@ -4,7 +4,7 @@ import IndividualPage from "../layouts/IndividualPage.astro";
 import site from "../../site.json";
 import Redirect from "../layouts/Redirect.astro";
 import Toc from "./Toc.astro";
-import { pageHref, supportedLanguages, uiFor } from "../i18n";
+import { languageNameIn, pageHref, supportedLanguages, uiFor } from "../i18n";
 
 // One article page, or one redirect stub. `lang` is the language
 // the page is served for: the article's own language, or, for a
@@ -110,7 +110,7 @@ const rendered = isRedirect ? null : await render(entry);
 
     {isTranslation && (
       <p class="translation-notice">
-        {ui.translationNotice}{" "}
+        {ui.translationNotice(languageNameIn(lang, originalLanguage ?? lang))}{" "}
         <a href={pageHref(originalLanguage ?? lang, entry.data.slug)}>
           {ui.originalArticle}
         </a>

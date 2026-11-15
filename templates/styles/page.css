@@ -173,6 +173,12 @@ body {
   font-size: 95%;
 }
 
+/* On a home page the switcher sits at the start, next to the site
+   name, instead of at the far end. */
+.home .header nav {
+  justify-content: flex-start;
+}
+
 /* Translation notice at the top of a translated article */
 .translation-notice {
   border: 1px solid currentColor;
