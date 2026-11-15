@@ -7,11 +7,16 @@ import {
   supportedLanguages,
 } from "../i18n";
 
-// The site's sitemap: every language's home page first, then
-// every article in every language, newest updated first. Each
-// URL names its versions in the other languages as alternates,
-// with the original as the default. Redirect stubs are not
-// pages and are not listed.
+// The site's sitemap: one entry for the home page, then one
+// entry per article, newest updated first. An entry's URL is
+// the page's original version, and the entry names every
+// language version of the page once, as its alternates, with
+// the original as the default. The versions are not entries of
+// their own: giving each version an entry with the same list
+// of alternates would repeat the list once per version and
+// grow this file by the square of the language count, while
+// the pages' heads already declare the versions reciprocally.
+// Redirect stubs are not pages and are not listed.
 
 interface SitemapUrl {
   loc: string;
@@ -31,37 +36,30 @@ export async function GET() {
   const entries = await getCollection("pages");
   const urls: SitemapUrl[] = [];
 
-  // Home pages, one per supported language. They carry no dates,
-  // so they cannot take part in the newest-first order below;
-  // they stand at the head, the top page — the default language's
-  // home — pinned first, then the others in language order.
-  const homeAlternates = supportedLanguages.map((language) => ({
-    language,
-    href: absoluteUrl(homeHref(language)),
-  }));
-  const homeLanguages = [
-    defaultLanguage,
-    ...supportedLanguages.filter((language) => language !== defaultLanguage),
-  ];
-  for (const language of homeLanguages) {
-    const home = entries.find(
-      (entry) =>
-        entry.data.kind === "special" &&
-        entry.data.slug === "Home" &&
-        entry.data.language === language,
-    );
-    urls.push({
-      loc: absoluteUrl(homeHref(language)),
-      lastmod: home?.data.modified_date ?? home?.data.creation_date,
-      alternates: homeAlternates,
-      xDefault: absoluteUrl(homeHref(defaultLanguage)),
-    });
-  }
+  // The home page: the top page — the default language's home —
+  // as the single entry, pinned first. The other languages'
+  // homes are its alternates.
+  const home = entries.find(
+    (entry) =>
+      entry.data.kind === "special" &&
+      entry.data.slug === "Home" &&
+      entry.data.language === defaultLanguage,
+  );
+  urls.push({
+    loc: absoluteUrl(homeHref(defaultLanguage)),
+    lastmod: home?.data.modified_date ?? home?.data.creation_date,
+    alternates: supportedLanguages.map((language) => ({
+      language,
+      href: absoluteUrl(homeHref(language)),
+    })),
+    xDefault: absoluteUrl(homeHref(defaultLanguage)),
+  });
 
-  // Articles, grouped by slug so that each version of an article
-  // can name the others. A translation inherits the original's
-  // dates, so a group has one date: the article's last update,
-  // or its creation when it was never updated.
+  // Articles, grouped by slug: one entry per article, however
+  // many languages it has versions in. A translation inherits
+  // the original's dates, so a group has one date: the
+  // article's last update, or its creation when it was never
+  // updated.
   const versionsBySlug = new Map<string, typeof entries>();
   for (const entry of entries) {
     if (entry.data.kind !== "article") continue;
@@ -81,30 +79,26 @@ export async function GET() {
     const updated = (version: (typeof entries)[number]): string =>
       version.data.modified_date ?? version.data.creation_date;
     const original = versions.find((version) => !version.data.translation);
-    // The original first, then the translations in the site's
-    // language order.
-    const ordered = [...versions].sort((a, b) => {
-      if (!a.data.translation) return -1;
-      if (!b.data.translation) return 1;
-      return (
+    const base = original ?? versions[0];
+    // The versions in the site's language order, the same order
+    // the pages' heads list them in.
+    const ordered = [...versions].sort(
+      (a, b) =>
         supportedLanguages.indexOf(a.data.language) -
-        supportedLanguages.indexOf(b.data.language)
-      );
-    });
+        supportedLanguages.indexOf(b.data.language),
+    );
     return {
       slug,
-      date: updated(original ?? versions[0]),
-      urls: ordered.map(
-        (version): SitemapUrl => ({
-          loc: hrefOf(version),
-          lastmod: updated(version),
-          alternates: ordered.map((other) => ({
-            language: other.data.language,
-            href: hrefOf(other),
-          })),
-          xDefault: original ? hrefOf(original) : hrefOf(ordered[0]),
-        }),
-      ),
+      date: updated(base),
+      url: {
+        loc: hrefOf(base),
+        lastmod: updated(base),
+        alternates: ordered.map((version) => ({
+          language: version.data.language,
+          href: hrefOf(version),
+        })),
+        xDefault: hrefOf(base),
+      } satisfies SitemapUrl,
     };
   });
   // Newest updated first. The dates are ISO strings in one
@@ -116,7 +110,7 @@ export async function GET() {
       : b.date.localeCompare(a.date),
   );
   for (const group of groups) {
-    urls.push(...group.urls);
+    urls.push(group.url);
   }
 
   const body = [
