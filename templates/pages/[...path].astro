@@ -2,11 +2,19 @@
 import { getCollection } from "astro:content";
 import ArticleView from "../components/ArticleView.astro";
 import Redirect from "../layouts/Redirect.astro";
-import { defaultLanguage, pageHref } from "../i18n";
+import { defaultLanguage, missingVersions, pageHref } from "../i18n";
 import site from "../../site.json";
 
 export async function getStaticPaths() {
   const entries = await getCollection("pages");
+
+  // Pages link to every language's version unconditionally, so a
+  // missing version would leave dead links. Refuse to build until
+  // every version exists.
+  const missing = missingVersions(entries);
+  if (missing.length > 0) {
+    throw new Error(`missing translations: ${missing.join(", ")}`);
+  }
 
   // A redirect carries no language of its own; the language it
   // serves is the directory its file lives in.

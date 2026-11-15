@@ -44,9 +44,11 @@ module Wikinder
         def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
 
         # : (String, ?Integer, Integer?) -> meta_row?
-        #  Line numbers are only used for diagnostics; the parser is tolerant
-        #  of broken rows (they are skipped with a warning), because a hand
-        #  edit should never make the sync crash.
+        #  Line numbers are only used for diagnostics. A broken row is
+        #  a fatal error, not a skip: the sync rewrites META.md from
+        #  the rows it read, so a skipped row would lose its curated
+        #  fields (aliases, language) without a trace. A hand edit
+        #  that breaks a row must be fixed, not silently absorbed.
         def self.parse_row: (String, ?Integer, Integer?) -> meta_row?
 
         # Syncs META.md with the given pages and returns the merged rows,

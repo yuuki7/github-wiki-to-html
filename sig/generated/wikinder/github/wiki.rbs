@@ -129,15 +129,16 @@ module Wikinder
       # Reads the translation files supplied as data under the
       # translations directory: one subdirectory per language, one
       # Markdown file per page, named by the original page's slug.
-      # Home and _Footer name the special pages. A file is skipped,
-      # with a warning, when its language is not supported, when no
-      # original page bears its slug, or when it merely restates the
-      # original in the original's own language.
+      # Home and _Footer name the special pages. The build refuses
+      # a file whose language is not supported, whose slug no
+      # original page bears, or that restates the original in the
+      # original's own language: dropped silently, it would leave a
+      # hole in a dataset the site treats as complete.
       # : (Hash[String, original_page]) -> Array[translation_record]
       def load_translations: (Hash[String, original_page]) -> Array[translation_record]
 
-      # : (String, String, Hash[String, original_page]) -> translation_record?
-      def translation_record: (String, String, Hash[String, original_page]) -> translation_record?
+      # : (String, String, Hash[String, original_page]) -> translation_record
+      def translation_record: (String, String, Hash[String, original_page]) -> translation_record
 
       # Splits a translation file into its optional front matter title
       # and its body. The front matter is YAML between '---' lines at

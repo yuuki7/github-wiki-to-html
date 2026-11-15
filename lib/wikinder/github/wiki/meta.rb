@@ -94,18 +94,19 @@ module Wikinder
             row = parse_row(line.chomp, index)
             next unless row
 
-            if result.key?(row[:slug])
-              warn "META.md: duplicate row for [[#{row[:slug]}]] on line #{index}; keeping the last"
-            end
+            raise "error: META.md: duplicate row for [[#{row[:slug]}]] on line #{index}" if result.key?(row[:slug])
+
             result[row[:slug]] = row
           end
           result
         end
 
         #: (String, ?Integer, Integer?) -> meta_row?
-        # Line numbers are only used for diagnostics; the parser is tolerant
-        # of broken rows (they are skipped with a warning), because a hand
-        # edit should never make the sync crash.
+        # Line numbers are only used for diagnostics. A broken row is
+        # a fatal error, not a skip: the sync rewrites META.md from
+        # the rows it read, so a skipped row would lose its curated
+        # fields (aliases, language) without a trace. A hand edit
+        # that breaks a row must be fixed, not silently absorbed.
         def self.parse_row(line, line_number = nil)
           location = line_number ? " (line #{line_number})" : ''
           cells = split_cells(line)
@@ -117,26 +118,19 @@ module Wikinder
           # The header row is a normal part of every META.md; skip it quietly.
           return nil if cells[0] == 'Title'
 
-          if cells.length < META_HEADERS.length
-            warn "META.md: ignoring row with too few cells#{location}"
-            return nil
-          end
+          raise "error: META.md: row has too few cells#{location}" if cells.length < META_HEADERS.length
+
           if cells.length > META_HEADERS.length
-            warn "META.md: ignoring #{cells.length - META_HEADERS.length} extra cell(s)#{location}"
-            cells = cells.first(META_HEADERS.length)
+            raise "error: META.md: row has #{cells.length - META_HEADERS.length} extra cell(s)#{location}"
           end
 
           title_cell = cells[0]
           unless title_cell.start_with?('[[') && title_cell.end_with?(']]')
-            warn "META.md: ignoring row without a [[Title]] cell#{location}"
-            return nil
+            raise "error: META.md: row without a [[Title]] cell#{location}"
           end
 
           title = title_cell[2...-2].to_s.strip
-          if title.empty?
-            warn "META.md: ignoring row with an empty [[]] cell#{location}"
-            return nil
-          end
+          raise "error: META.md: row with an empty [[]] cell#{location}" if title.empty?
 
           {
             slug: Slugs.for_title(title),

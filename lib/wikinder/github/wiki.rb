@@ -283,10 +283,11 @@ module Wikinder
       # Reads the translation files supplied as data under the
       # translations directory: one subdirectory per language, one
       # Markdown file per page, named by the original page's slug.
-      # Home and _Footer name the special pages. A file is skipped,
-      # with a warning, when its language is not supported, when no
-      # original page bears its slug, or when it merely restates the
-      # original in the original's own language.
+      # Home and _Footer name the special pages. The build refuses
+      # a file whose language is not supported, whose slug no
+      # original page bears, or that restates the original in the
+      # original's own language: dropped silently, it would leave a
+      # hole in a dataset the site treats as complete.
       #: (Hash[String, original_page]) -> Array[translation_record]
       def load_translations(originals)
         base = @translations_dir
@@ -302,35 +303,34 @@ module Wikinder
           next if language.nil?
 
           unless @supported_languages.empty? || @supported_languages.include?(language)
-            warn "translations: ignoring #{entry}/ (language is not in the site's supported languages)"
-            next
+            raise "error: translations: #{entry}/ names a language the site does not support"
           end
 
           Dir.glob(File.join(dir, '*.md')).each do |file|
-            record = translation_record(file, language, originals)
-            records << record if record
+            records << translation_record(file, language, originals)
           end
         end
         records
       end
 
-      #: (String, String, Hash[String, original_page]) -> translation_record?
+      #: (String, String, Hash[String, original_page]) -> translation_record
       def translation_record(file, language, originals)
-        slug = File.basename(file, '.md')
-        return nil unless Slugs.safe?(slug)
+        # A file name read from disk may be decomposed (NFD), as
+        # macOS stores names, where the wiki's page names are
+        # composed (NFC); normalize so the same page is recognized
+        # under either form.
+        slug = File.basename(file, '.md').unicode_normalize(:nfc)
+        raise "error: translations: #{language}/#{slug}.md is not a safe page name" unless Slugs.safe?(slug)
 
         special = %w[Home _Footer].include?(slug)
         if special
           if language == @site_language
-            warn "translations: ignoring #{language}/#{slug}.md (the original special page is used for this language)"
-            return nil
+            raise "error: translations: #{language}/#{slug}.md restates a special page in its own language"
           end
         elsif !originals.key?(slug)
-          warn "translations: ignoring #{language}/#{slug}.md (no original page has this slug)"
-          return nil
+          raise "error: translations: #{language}/#{slug}.md has no original page"
         elsif originals.fetch(slug)[:language] == language
-          warn "translations: ignoring #{language}/#{slug}.md (same language as the original page)"
-          return nil
+          raise "error: translations: #{language}/#{slug}.md is in the same language as the original page"
         end
 
         title, body = split_translation_source(File.read(file))

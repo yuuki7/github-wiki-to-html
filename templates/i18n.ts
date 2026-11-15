@@ -12,6 +12,46 @@ export const supportedLanguages: string[] = (
     : [defaultLanguage]
 ).sort();
 
+// A page version, as the content entries carry it. Redirects
+// carry no language and are not versions of a page.
+export interface PageVersion {
+  kind: string;
+  slug: string;
+  language?: string;
+  translation?: boolean;
+}
+
+// The versions of pages that are missing from the given entries,
+// as "Slug (language)" strings. Every original — an article not
+// marked as a translation, or a special page in the default
+// language — must exist in every supported language: pages link
+// to every language's version unconditionally, so a missing
+// version would leave dead links. The build refuses instead.
+export function missingVersions(entries: { data: PageVersion }[]): string[] {
+  const present = new Set<string>();
+  const originals: { slug: string; language: string }[] = [];
+  for (const entry of entries) {
+    const { kind, slug, language, translation } = entry.data;
+    if ((kind !== "article" && kind !== "special") || !language) continue;
+    present.add(`${language}/${slug}`);
+    if (kind === "article" ? !translation : language === defaultLanguage) {
+      originals.push({ slug, language });
+    }
+  }
+  const missing: string[] = [];
+  for (const original of originals) {
+    for (const language of supportedLanguages) {
+      if (
+        language !== original.language &&
+        !present.has(`${language}/${original.slug}`)
+      ) {
+        missing.push(`${original.slug} (${language})`);
+      }
+    }
+  }
+  return missing.sort();
+}
+
 const RTL_BASE_LANGUAGES = new Set(["ar", "fa", "he", "ur"]);
 
 // The writing direction of a language: right-to-left for Arabic and

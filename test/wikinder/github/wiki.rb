@@ -304,41 +304,71 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
-    it 'ignores translations in languages the site does not support' do
+    it 'refuses a translation in a language the site does not support' do
       path = Dir.mktmpdir('i18n-wiki')
       begin
         FixtureWiki.build(path)
         with_translations('fr/About.md' => "Texte français.\n") do |translations|
           expect { described_class.new(path, multilingual_options(translations)).build(target) }
-            .to output(%r{ignoring fr/}).to_stderr
-          expect(File.exist?(File.join(target, 'fr', 'About.md'))).to be(false)
+            .to raise_error(/names a language the site does not support/)
         end
       ensure
         FileUtils.remove_entry(path)
       end
     end
 
-    it 'ignores a translation whose slug has no original page' do
+    it 'refuses a translation whose slug has no original page' do
       path = Dir.mktmpdir('i18n-wiki')
       begin
         FixtureWiki.build(path)
         with_translations('de/Missing.md' => "Ohne Original.\n") do |translations|
           expect { described_class.new(path, multilingual_options(translations)).build(target) }
-            .to output(/no original page/).to_stderr
-          expect(File.exist?(File.join(target, 'de', 'Missing.md'))).to be(false)
+            .to raise_error(/has no original page/)
         end
       ensure
         FileUtils.remove_entry(path)
       end
     end
 
-    it 'ignores a translation written in the original page\'s own language' do
+    it 'refuses a translation written in the original page\'s own language' do
       path = Dir.mktmpdir('i18n-wiki')
       begin
         FixtureWiki.build(path)
         with_translations('en/About.md' => "Same language.\n") do |translations|
           expect { described_class.new(path, multilingual_options(translations)).build(target) }
-            .to output(/same language as the original/).to_stderr
+            .to raise_error(/same language as the original page/)
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    it 'refuses a special page restated in its own language' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations('en/Home.md' => "Home again.\n") do |translations|
+          expect { described_class.new(path, multilingual_options(translations)).build(target) }
+            .to raise_error(/restates a special page in its own language/)
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    # macOS stores file names decomposed (NFD) where the wiki's
+    # page names are composed (NFC); a translation file named in
+    # the decomposed form still belongs to the same page.
+    it 'reads a translation whose file name is decomposed (NFD)' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        File.write(File.join(path, 'がくせい.md'), "学生についてのページ。\n")
+        FixtureWiki.commit_all(path, message: 'add a page with a decomposable slug')
+        nfd_name = 'en/がくせい.md'.unicode_normalize(:nfd)
+        with_translations(nfd_name => "A page about students.\n") do |translations|
+          described_class.new(path, multilingual_options(translations)).build(target)
+          expect(File.exist?(File.join(target, 'en', 'がくせい.md'))).to be(true)
         end
       ensure
         FileUtils.remove_entry(path)
@@ -978,9 +1008,8 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
                         ])
   end
 
-  it 'warns and skips rows with too few cells' do
-    expect { described_class.parse_row('| [[x]] | |') }.to output(/too few cells/).to_stderr
-    expect(described_class.parse_row('| [[x]] | |')).to be_nil
+  it 'raises on rows with too few cells' do
+    expect { described_class.parse_row('| [[x]] | |') }.to raise_error(/too few cells/)
   end
 
   it 'skips the header row silently' do
@@ -989,22 +1018,19 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
     expect(described_class.parse_row(line)).to be_nil
   end
 
-  it 'warns when a row has no [[Title]] cell' do
+  it 'raises when a row has no [[Title]] cell' do
     line = '| not-a-title | a | b | c | d | e |'
-    expect { described_class.parse_row(line) }.to output(/Title/).to_stderr
-    expect(described_class.parse_row(line)).to be_nil
+    expect { described_class.parse_row(line) }.to raise_error(/Title/)
   end
 
-  it 'keeps the later row when a slug is duplicated, with a warning' do
+  it 'raises when a slug is duplicated' do
     path = Dir.mktmpdir('dup-meta')
     begin
       File.write(File.join(path, 'META.md'), <<~MD)
         | [[page]] | t | d | d | en | |
         | [[page]] | t | d2 | d2 | en | curated |
       MD
-      rows = nil
-      expect { rows = described_class.load(Pathname(path) / 'META.md') }.to output(/duplicate row/).to_stderr
-      expect(rows['page'][:aliases]).to eq(['curated'])
+      expect { described_class.load(Pathname(path) / 'META.md') }.to raise_error(/duplicate row/)
     ensure
       FileUtils.remove_entry(path)
     end
