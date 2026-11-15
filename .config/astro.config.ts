@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import expressiveCode from 'astro-expressive-code';
 
 export default defineConfig({
   srcDir: './templates',
@@ -6,13 +7,12 @@ export default defineConfig({
   // tree like the rest of the site sources.
   publicDir: './templates/public',
   compressHTML: false,
-  markdown: {
-    shikiConfig: {
-      // A light theme, rather than Shiki's default github-dark:
-      // the pages themselves have a light background.
-      theme: 'github-light',
-    },
-  },
+  integrations: [
+    // Code blocks: frames and copy buttons from Expressive
+    // Code. Its options are in ec.config.mjs, the file
+    // Expressive Code reads itself.
+    expressiveCode(),
+  ],
   build: {
     assets: 'assets',
     format: 'file',

@@ -9,6 +9,7 @@
     "@astrojs/check": "^0.9.12",
     "@mlc-ai/web-llm": "^0.2.88",
     "astro": "^7.4.2",
+    "astro-expressive-code": "^0.44.3",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
     "typescript": "^6.0.3"
