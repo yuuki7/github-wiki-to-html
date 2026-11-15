@@ -21,10 +21,14 @@ const timeFmt = new Intl.DateTimeFormat(locale, {
   hour12: true,
 });
 
-// A date is shown as the date alone, with its timezone. The one
-// exception is an article created and last modified on the same
-// day: the two dates would read identically, so in that case both
-// carry their time as well.
+// A date is shown as the date alone, with its timezone. The full
+// form is the short form with the time inserted before the
+// timezone, so a <details> disclosure presents it in place: the
+// summary carries the date, the disclosed content is the time,
+// and the timezone follows the element. The one exception is an
+// article created and last modified on the same day: the two
+// dates would read identically, so both carry their time from
+// the start and there is nothing to disclose.
 const utcDay = (iso: string) => {
   const d = new Date(iso);
   return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
@@ -32,32 +36,72 @@ const utcDay = (iso: string) => {
 const showModified =
   modifiedDate !== undefined && modifiedDate !== creationDate;
 const sameDay = showModified && utcDay(modifiedDate) === utcDay(creationDate);
-const formatDate = (iso: string) =>
-  sameDay
-    ? `${dateFmt.format(new Date(iso))} ${timeFmt.format(new Date(iso))} UTC`
-    : `${dateFmt.format(new Date(iso))} UTC`;
+const formatDate = (iso: string) => dateFmt.format(new Date(iso));
+const formatTime = (iso: string) => timeFmt.format(new Date(iso));
+const formatFull = (iso: string) => `${formatDate(iso)} ${formatTime(iso)} UTC`;
 ---
 
-<p class="article__meta">
+<div class="article__meta">
   <span class="article__author">
     {uiFor(locale).byline} {author}
   </span>
   {" · "}
-  <time class="article__date article__date--created" datetime={creationDate}>
-    {formatDate(creationDate)}
-  </time>
-  {showModified && (
+  {sameDay ? (
+    <time
+      class="article__date article__date--created"
+      datetime={creationDate}
+      title={creationDate}
+    >
+      {formatFull(creationDate)}
+    </time>
+  ) : (
     <>
-      {" · "}
-      <time
-        class="article__date article__date--modified"
-        datetime={modifiedDate}
-      >
-        {formatDate(modifiedDate)}
-      </time>
+      <details class="article__date-details">
+        <summary>
+          <time
+            class="article__date article__date--created"
+            datetime={creationDate}
+            title={creationDate}
+          >
+            {formatDate(creationDate)}
+          </time>
+        </summary>
+        <span class="article__date-time">{formatTime(creationDate)}</span>
+      </details>
+      {" UTC"}
     </>
   )}
-</p>
+  {showModified &&
+    (sameDay ? (
+      <>
+        {" · "}
+        <time
+          class="article__date article__date--modified"
+          datetime={modifiedDate}
+          title={modifiedDate}
+        >
+          {formatFull(modifiedDate)}
+        </time>
+      </>
+    ) : (
+      <>
+        {" · "}
+        <details class="article__date-details">
+          <summary>
+            <time
+              class="article__date article__date--modified"
+              datetime={modifiedDate}
+              title={modifiedDate}
+            >
+              {formatDate(modifiedDate)}
+            </time>
+          </summary>
+          <span class="article__date-time">{formatTime(modifiedDate)}</span>
+        </details>
+        {" UTC"}
+      </>
+    ))}
+</div>
 
 {translation && (
   <p class="article__meta article__meta--translation">
