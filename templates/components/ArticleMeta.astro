@@ -21,13 +21,10 @@ const timeFmt = new Intl.DateTimeFormat(locale, {
   hour12: true,
 });
 
-// A date is shown as the date alone, with its timezone, and the
-// ISO form is in its title. When a modified date follows, the
-// created date drops its timezone: the two dates share it, and
-// the modified date carries it for the line. The one exception
-// is an article created and last modified on the same day: the
-// two dates would read identically, so both carry their time
-// as well.
+// A date is shown as the date alone, and the ISO form is in
+// its title. The one exception is an article created and last
+// modified on the same day: the two dates would read
+// identically, so both carry their time as well.
 const utcDay = (iso: string) => {
   const d = new Date(iso);
   return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
@@ -38,8 +35,7 @@ const sameDay = showModified && utcDay(modifiedDate) === utcDay(creationDate);
 const formatDate = (iso: string) => dateFmt.format(new Date(iso));
 const formatFull = (iso: string) =>
   `${dateFmt.format(new Date(iso))} ${timeFmt.format(new Date(iso))}`;
-const format = (iso: string, withTimezone: boolean) =>
-  `${sameDay ? formatFull(iso) : formatDate(iso)}${withTimezone ? " UTC" : ""}`;
+const format = (iso: string) => (sameDay ? formatFull(iso) : formatDate(iso));
 ---
 
 <p class="article__meta">
@@ -52,7 +48,7 @@ const format = (iso: string, withTimezone: boolean) =>
     datetime={creationDate}
     title={creationDate}
   >
-    {format(creationDate, !showModified)}
+    {format(creationDate)}
   </time>
   {showModified && (
     <>
@@ -62,7 +58,7 @@ const format = (iso: string, withTimezone: boolean) =>
         datetime={modifiedDate}
         title={modifiedDate}
       >
-        {format(modifiedDate, true)}
+        {format(modifiedDate)}
       </time>
     </>
   )}
