@@ -191,8 +191,11 @@ body {
    would override the hidden state. The placement anchors the
    panel to the button; the fixed values before the anchor()
    lines are the fallback for browsers without anchor
-   positioning. */
+   positioning. The inset reset comes first: a popover's
+   built-in style pins all four edges to 0, and an edge left
+   pinned over-constrains the panel against the opposite one. */
 .language-switcher {
+  inset: auto;
   margin: 0;
   margin-top: 0.25em;
   top: 3em;
