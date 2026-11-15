@@ -7,28 +7,12 @@ import Main from "../components/Main.astro";
 import RightSidebar from "../components/RightSidebar.astro";
 import Footer from "../components/Footer.astro";
 import { homeHref, languageName } from "../i18n";
-import type { AlternateLink, ArticleProps } from "../types";
+import type { ArticleProps } from "../types";
 
 type Props = ArticleProps;
 
 const { title, isHome, meta, language, className, alternates, languageLinks } =
   Astro.props;
-
-// The switcher's lines: languages that differ only in a variant
-// tag (the two Chinese scripts) share one line, as one language
-// written two ways.
-const languageGroups: AlternateLink[][] = [];
-for (const link of languageLinks ?? []) {
-  const base = link.language.split("-")[0];
-  const group = languageGroups.find(
-    (candidate) => candidate[0].language.split("-")[0] === base,
-  );
-  if (group) {
-    group.push(link);
-  } else {
-    languageGroups.push([link]);
-  }
-}
 ---
 
 <Base
@@ -53,30 +37,21 @@ for (const link of languageLinks ?? []) {
             {languageName(language)}
           </button>
           <ul class="language-switcher" id="language-switcher" popover>
-            {languageGroups.map((group) => (
-              <li
-                class={
-                  group.length > 1 ? "language-switcher__variants" : undefined
-                }
-              >
-                {group.map((link, index) => (
-                  <>
-                    {index > 0 && " · "}
-                    {link.language === language ? (
-                      <span
-                        aria-current="true"
-                        set:text={languageName(link.language)}
-                      />
-                    ) : (
-                      <a
-                        href={link.href}
-                        hreflang={link.language}
-                        lang={link.language}
-                        set:text={languageName(link.language)}
-                      />
-                    )}
-                  </>
-                ))}
+            {languageLinks.map((link) => (
+              <li>
+                {link.language === language ? (
+                  <span
+                    aria-current="true"
+                    set:text={languageName(link.language)}
+                  />
+                ) : (
+                  <a
+                    href={link.href}
+                    hreflang={link.language}
+                    lang={link.language}
+                    set:text={languageName(link.language)}
+                  />
+                )}
               </li>
             ))}
           </ul>

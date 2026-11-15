@@ -62,7 +62,7 @@ export function directionFor(language: string): "rtl" | "ltr" {
 
 const LANGUAGE_NAMES: Record<string, string> = {
   en: "English",
-  "zh": "简体中文",
+  zh: "简体中文",
   "zh-Hant": "繁體中文",
   ar: "العربية",
   ja: "日本語",

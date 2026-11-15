@@ -223,12 +223,6 @@ body {
   display: block;
 }
 
-/* A line that holds two variants of one language puts its links
-   side by side, not as stacked full-width rows. */
-.language-switcher__variants a {
-  display: inline;
-}
-
 /* On a home page the menu sits at the start of the header, and
    its panel opens from the start as well. */
 .home .header nav {
