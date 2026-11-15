@@ -1,0 +1,64 @@
+// The MathJax configuration. This script must run before the
+// MathJax startup script, so that window.MathJax is in place
+// when MathJax loads.
+
+window.MathJax = {
+  loader: {
+    load: ["input/tex", "output/chtml"],
+  },
+
+  tex: {
+    // Authors write inline math as $...$, in addition to the
+    // default \(...\).
+    inlineMath: [
+      ["\\(", "\\)"],
+      ["$", "$"],
+    ],
+  },
+
+  output: {
+    // Use the Euler font.
+    fontExtensions: ["mathjax-euler"],
+  },
+
+  options: {
+    renderActions: {
+      // The code form of GitHub's math syntax, $`...`$, reaches
+      // the page as a <code> element between two "$" text nodes,
+      // which the delimiter search cannot read as math. Turn
+      // each one into a math item before that search runs, and
+      // take the "$"s away so the search does not see them.
+      findCodeMath: [
+        9,
+        (doc) => {
+          for (const code of document.querySelectorAll("code")) {
+            if (code.closest("pre")) continue;
+
+            const before = code.previousSibling;
+            const after = code.nextSibling;
+            if (!before || before.nodeType !== Node.TEXT_NODE) continue;
+            if (!after || after.nodeType !== Node.TEXT_NODE) continue;
+            if (!before.textContent.endsWith("$")) continue;
+            if (!after.textContent.startsWith("$")) continue;
+
+            before.textContent = before.textContent.slice(0, -1);
+            after.textContent = after.textContent.slice(1);
+
+            const math = new doc.options.MathItem(
+              code.textContent,
+              doc.inputJax.tex,
+              false,
+            );
+            const text = document.createTextNode("");
+            code.parentNode.replaceChild(text, code);
+            math.start = { node: text, delim: "", n: 0 };
+            math.end = { node: text, delim: "", n: 0 };
+            doc.math.push(math);
+          }
+        },
+        "",
+        false,
+      ],
+    },
+  },
+};
