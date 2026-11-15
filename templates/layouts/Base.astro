@@ -15,6 +15,7 @@ const { title, language, className, alternates } = Astro.props;
   <head>
     <BaseHead title={title} alternates={alternates} />
     <slot name="head" />
+    <script is:inline defer src="/copy-button.js"></script>
   </head>
   <body class={className}>
     <slot />

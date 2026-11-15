@@ -972,14 +972,14 @@ end
 RSpec.describe Wikinder::GitHub::Wiki::Language do
   it 'normalizes Chinese to a script code and regions to plain codes' do
     expect(described_class.normalize('zh')).to eq('zh')
-    expect(described_class.normalize('zh-TW')).to eq('zh-Hant')
+    expect(described_class.normalize('zh-TW')).to eq('zh-hant')
     expect(described_class.normalize('zh-Hans')).to eq('zh')
     expect(described_class.normalize('en-US')).to eq('en')
   end
 
   it 'detects the script of Chinese text' do
     expect(described_class.call('这是我的文章，我们学习汉语，讨论数学问题。')).to eq('zh')
-    expect(described_class.call('這是我的文章，我們學習漢語，討論數學問題。')).to eq('zh-Hant')
+    expect(described_class.call('這是我的文章，我們學習漢語，討論數學問題。')).to eq('zh-hant')
   end
 end
 

@@ -2,7 +2,7 @@
   "scripts": {
     "build": "astro build --config .config/astro.config.mjs",
     "preview": "astro preview",
-    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --write templates/**/*.{astro,css} dist/**/*.html"
+    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --write \"templates/**/*.{astro,css,js}\" \"dist/**/*.html\""
   },
   "devDependencies": {
     "astro": "^7.4.2",

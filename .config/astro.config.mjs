@@ -2,6 +2,9 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   srcDir: './templates',
+  // Static files served as they are, inside the templates
+  // tree like the rest of the site sources.
+  publicDir: './templates/public',
   compressHTML: false,
   markdown: {
     shikiConfig: {

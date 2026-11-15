@@ -63,7 +63,7 @@ export function directionFor(language: string): "rtl" | "ltr" {
 const LANGUAGE_NAMES: Record<string, string> = {
   en: "English",
   zh: "简体中文",
-  "zh-Hant": "繁體中文",
+  "zh-hant": "繁體中文",
   ar: "العربية",
   ja: "日本語",
   de: "Deutsch",
@@ -81,7 +81,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   en: {
     en: "English",
     "zh": "Simplified Chinese",
-    "zh-Hant": "Traditional Chinese",
+    "zh-hant": "Traditional Chinese",
     ar: "Arabic",
     ja: "Japanese",
     de: "German",
@@ -89,7 +89,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   ja: {
     en: "英語",
     "zh": "中国語（簡体字）",
-    "zh-Hant": "中国語（繁体字）",
+    "zh-hant": "中国語（繁体字）",
     ar: "アラビア語",
     ja: "日本語",
     de: "ドイツ語",
@@ -97,7 +97,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   de: {
     en: "Englischen",
     "zh": "Chinesischen (vereinfacht)",
-    "zh-Hant": "Chinesischen (traditionell)",
+    "zh-hant": "Chinesischen (traditionell)",
     ar: "Arabischen",
     ja: "Japanischen",
     de: "Deutschen",
@@ -105,15 +105,15 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   "zh": {
     en: "英语",
     "zh": "简体中文",
-    "zh-Hant": "繁体中文",
+    "zh-hant": "繁体中文",
     ar: "阿拉伯语",
     ja: "日语",
     de: "德语",
   },
-  "zh-Hant": {
+  "zh-hant": {
     en: "英語",
     "zh": "簡體中文",
-    "zh-Hant": "繁體中文",
+    "zh-hant": "繁體中文",
     ar: "阿拉伯語",
     ja: "日語",
     de: "德語",
@@ -121,7 +121,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   ar: {
     en: "الإنجليزية",
     "zh": "الصينية المبسطة",
-    "zh-Hant": "الصينية التقليدية",
+    "zh-hant": "الصينية التقليدية",
     ar: "العربية",
     ja: "اليابانية",
     de: "الألمانية",
@@ -134,8 +134,37 @@ export function languageNameIn(language: string, target: string): string {
   return LANGUAGE_NAMES_IN[language]?.[target] ?? languageName(target);
 }
 
+// Language names in the nominative, for the parenthetical in the
+// edit link that names a translation's original language. Most
+// languages use the LANGUAGE_NAMES_IN forms as they are; German's
+// forms there are declined for its notice sentence, so German has
+// its own row here.
+const LANGUAGE_NAMES_NOMINATIVE: Record<string, Record<string, string>> = {
+  de: {
+    en: "Englisch",
+    "zh": "Chinesisch (vereinfacht)",
+    "zh-hant": "Chinesisch (traditionell)",
+    ar: "Arabisch",
+    ja: "Japanisch",
+    de: "Deutsch",
+  },
+};
+
+// The name of the target language in the nominative, as written
+// in the given language.
+export function languageNameInNominative(
+  language: string,
+  target: string,
+): string {
+  return (
+    LANGUAGE_NAMES_NOMINATIVE[language]?.[target] ??
+    languageNameIn(language, target)
+  );
+}
+
 export interface UiStrings {
   editPage: string;
+  editPageFrom: (originalLanguageName: string) => string;
   byline: string;
   translationNotice: (originalLanguageName: string) => string;
   originalArticle: string;
@@ -144,36 +173,42 @@ export interface UiStrings {
 const UI_STRINGS: Record<string, UiStrings> = {
   en: {
     editPage: "Edit this page",
+    editPageFrom: (name) => `Edit this page (${name})`,
     byline: "by",
     translationNotice: (name) => `Translated from ${name}`,
     originalArticle: "Show original",
   },
   ja: {
     editPage: "このページを編集",
+    editPageFrom: (name) => `このページを編集（${name}）`,
     byline: "著者",
-    translationNotice: (name) => `${name}から翻訳`,
-    originalArticle: "原文を見る",
+    translationNotice: (name) => `${name}からの翻訳`,
+    originalArticle: "原文を表示",
   },
   de: {
     editPage: "Diese Seite bearbeiten",
+    editPageFrom: (name) => `Diese Seite bearbeiten (${name})`,
     byline: "von",
     translationNotice: (name) => `Aus dem ${name} übersetzt`,
     originalArticle: "Original anzeigen",
   },
   "zh": {
     editPage: "编辑此页",
+    editPageFrom: (name) => `编辑此页（${name}）`,
     byline: "作者",
     translationNotice: (name) => `译自${name}`,
     originalArticle: "查看原文",
   },
-  "zh-Hant": {
+  "zh-hant": {
     editPage: "編輯此頁",
+    editPageFrom: (name) => `編輯此頁（${name}）`,
     byline: "作者",
     translationNotice: (name) => `譯自${name}`,
     originalArticle: "查看原文",
   },
   ar: {
     editPage: "حرر هذه الصفحة",
+    editPageFrom: (name) => `حرر هذه الصفحة (${name})`,
     byline: "بقلم",
     translationNotice: (name) => `مترجم من ${name}`,
     originalArticle: "عرض الأصل",

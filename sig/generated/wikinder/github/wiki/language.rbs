@@ -6,7 +6,7 @@ module Wikinder
       # Detects and normalizes the language code of a page.
       #
       # Chinese is normalized to one of two codes, 'zh' for
-      # Simplified and 'zh-Hant' for Traditional, because the site
+      # Simplified and 'zh-hant' for Traditional, because the site
       # treats the two scripts as separate languages and plain 'zh'
       # names the default script, Simplified. The script is decided
       # by counting characters that exist in only one of the two
@@ -24,7 +24,7 @@ module Wikinder
         def self.call: (String?) -> String
 
         # Normalizes a language code to the form the site uses as a
-        # directory name. Chinese codes resolve to 'zh' or 'zh-Hant'
+        # directory name. Chinese codes resolve to 'zh' or 'zh-hant'
         # (the script detected from +text+ when available); region
         # variants of the supported languages collapse to the plain
         # code. Unknown codes pass through unchanged.

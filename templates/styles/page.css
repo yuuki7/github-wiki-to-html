@@ -108,10 +108,34 @@ body {
    the code with a light theme whose background is white like
    the page itself, so the block needs its own border and
    padding to stand as a block. The border colour is the one
-   GitHub pairs with that theme. */
+   GitHub pairs with that theme. The margin is the block's own:
+   the copy-button script wraps each block in a .code-block, so
+   the rule for direct children of the article no longer
+   reaches it. */
 .astro-code {
+  margin: 0;
   padding: 1em;
   border: 1px solid #d0d7de;
+}
+
+/* The wrapper and copy button exist only when the script in
+   public/copy-button.js runs. The button sits at the block's
+   end corner; the wrapper does not scroll, so the button stays
+   in place when a long line scrolls under it. */
+.code-block {
+  position: relative;
+}
+
+.copy-button {
+  position: absolute;
+  top: 0.5em;
+  inset-inline-end: 0.5em;
+  padding: 0.25em 0.75em;
+  border: 1px solid #d0d7de;
+  background-color: #fff;
+  font: inherit;
+  font-size: 85%;
+  cursor: pointer;
 }
 
 /* Sidebars: share the article body row */

@@ -2,7 +2,14 @@
 import { getCollection, render } from "astro:content";
 import HomePage from "../layouts/HomePage.astro";
 import site from "../../site.json";
-import { homeHref, pageHref, supportedLanguages } from "../i18n";
+import {
+  defaultLanguage,
+  homeHref,
+  languageNameInNominative,
+  pageHref,
+  supportedLanguages,
+  uiFor,
+} from "../i18n";
 
 // One language's home page, listing that language's articles.
 const { lang } = Astro.props;
@@ -45,6 +52,8 @@ const languageLinks = homeLanguages.map((language) => ({
   href: homeHref(language),
 }));
 
+const ui = uiFor(lang);
+
 const { Content: HomeContent } = home ? await render(home) : { Content: null };
 const { Content: FooterContent } = footer
   ? await render(footer)
@@ -81,5 +90,12 @@ const { Content: FooterContent } = footer
 
   {HomeContent && <HomeContent />}
 
-  <Fragment slot="footer">{FooterContent && <FooterContent />}</Fragment>
+  <Fragment slot="footer">
+    {FooterContent && <FooterContent />}
+    <a href={`${site.wiki_url}/${encodeURIComponent("Home")}`}>
+      {lang === defaultLanguage
+        ? ui.editPage
+        : ui.editPageFrom(languageNameInNominative(lang, defaultLanguage))}
+    </a>
+  </Fragment>
 </HomePage>

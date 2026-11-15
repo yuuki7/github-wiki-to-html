@@ -4,7 +4,12 @@ import IndividualPage from "../layouts/IndividualPage.astro";
 import site from "../../site.json";
 import Redirect from "../layouts/Redirect.astro";
 import Toc from "./Toc.astro";
-import { pageHref, supportedLanguages, uiFor } from "../i18n";
+import {
+  languageNameInNominative,
+  pageHref,
+  supportedLanguages,
+  uiFor,
+} from "../i18n";
 
 // One article page, or one redirect stub. `lang` is the language
 // the page is served for: the article's own language, or, for a
@@ -120,11 +125,13 @@ const rendered = isRedirect ? null : await render(entry);
 
     <Fragment slot="footer">
       {FooterContent && <FooterContent />}
-      {!isTranslation && (
-        <a href={`${site.wiki_url}/${encodeURIComponent(entry.data.slug)}`}>
-          {ui.editPage}
-        </a>
-      )}
+      <a href={`${site.wiki_url}/${encodeURIComponent(entry.data.slug)}`}>
+        {isTranslation
+          ? ui.editPageFrom(
+              languageNameInNominative(lang, originalLanguage ?? lang),
+            )
+          : ui.editPage}
+      </a>
     </Fragment>
   </IndividualPage>
 )}
