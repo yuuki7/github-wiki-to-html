@@ -235,13 +235,16 @@ body {
   inset-inline-start: anchor(--language-menu-button start);
 }
 
-/* Table of contents */
+/* Table of contents. The depth offset is a margin, not padding:
+   with the default outside list marker, padding would move the
+   item's text but leave its bullet in the list's marker column,
+   while a margin moves the item as a whole, bullet included. */
 .toc__item--depth-2 {
-  padding-inline-start: 0;
+  margin-inline-start: 0;
 }
 .toc__item--depth-3 {
-  padding-inline-start: 1.5em;
+  margin-inline-start: 1.5em;
 }
 .toc__item--depth-4 {
-  padding-inline-start: 3em;
+  margin-inline-start: 3em;
 }

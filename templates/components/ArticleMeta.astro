@@ -20,8 +20,22 @@ const timeFmt = new Intl.DateTimeFormat(locale, {
   minute: "2-digit",
   hour12: true,
 });
+
+// A date is shown as the date alone, with its timezone. The one
+// exception is an article created and last modified on the same
+// day: the two dates would read identically, so in that case both
+// carry their time as well.
+const utcDay = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+};
+const showModified =
+  modifiedDate !== undefined && modifiedDate !== creationDate;
+const sameDay = showModified && utcDay(modifiedDate) === utcDay(creationDate);
 const formatDate = (iso: string) =>
-  `${dateFmt.format(new Date(iso))} ${timeFmt.format(new Date(iso))} UTC`;
+  sameDay
+    ? `${dateFmt.format(new Date(iso))} ${timeFmt.format(new Date(iso))} UTC`
+    : `${dateFmt.format(new Date(iso))} UTC`;
 ---
 
 <p class="article__meta">
@@ -32,7 +46,7 @@ const formatDate = (iso: string) =>
   <time class="article__date article__date--created" datetime={creationDate}>
     {formatDate(creationDate)}
   </time>
-  {modifiedDate && modifiedDate !== creationDate && (
+  {showModified && (
     <>
       {" · "}
       <time

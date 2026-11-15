@@ -135,7 +135,7 @@ export function languageNameIn(language: string, target: string): string {
 }
 
 export interface UiStrings {
-  editOnWiki: string;
+  editPage: string;
   byline: string;
   translationNotice: (originalLanguageName: string) => string;
   originalArticle: string;
@@ -143,37 +143,37 @@ export interface UiStrings {
 
 const UI_STRINGS: Record<string, UiStrings> = {
   en: {
-    editOnWiki: "Edit this page on GitHub Wiki",
+    editPage: "Edit this page",
     byline: "by",
     translationNotice: (name) => `Translated from ${name}`,
     originalArticle: "Show original",
   },
   ja: {
-    editOnWiki: "GitHub Wikiでこのページを編集",
+    editPage: "このページを編集",
     byline: "著者",
     translationNotice: (name) => `${name}から翻訳`,
     originalArticle: "原文を見る",
   },
   de: {
-    editOnWiki: "Diese Seite im GitHub Wiki bearbeiten",
+    editPage: "Diese Seite bearbeiten",
     byline: "von",
     translationNotice: (name) => `Aus dem ${name} übersetzt`,
     originalArticle: "Original anzeigen",
   },
   "zh": {
-    editOnWiki: "在 GitHub Wiki 上编辑此页",
+    editPage: "编辑此页",
     byline: "作者",
     translationNotice: (name) => `译自${name}`,
     originalArticle: "查看原文",
   },
   "zh-Hant": {
-    editOnWiki: "在 GitHub Wiki 上編輯此頁",
+    editPage: "編輯此頁",
     byline: "作者",
     translationNotice: (name) => `譯自${name}`,
     originalArticle: "查看原文",
   },
   ar: {
-    editOnWiki: "حرر هذه الصفحة على GitHub Wiki",
+    editPage: "حرر هذه الصفحة",
     byline: "بقلم",
     translationNotice: (name) => `مترجم من ${name}`,
     originalArticle: "عرض الأصل",

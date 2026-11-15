@@ -122,7 +122,7 @@ const rendered = isRedirect ? null : await render(entry);
       {FooterContent && <FooterContent />}
       {!isTranslation && (
         <a href={`${site.wiki_url}/${encodeURIComponent(entry.data.slug)}`}>
-          {ui.editOnWiki}
+          {ui.editPage}
         </a>
       )}
     </Fragment>
