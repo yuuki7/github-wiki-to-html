@@ -12,6 +12,7 @@ const props = Astro.props;
 <Page {...props} className="individual" isHome={false}>
   <slot name="head" slot="head" />
   <slot name="left-sidebar" slot="left-sidebar" />
+  <slot name="right-sidebar" slot="right-sidebar" />
   <slot />
   <slot name="footer" slot="footer" />
 </Page>

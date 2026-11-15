@@ -126,6 +126,21 @@ const rendered = isRedirect ? null : await render(entry);
       <Toc headings={rendered.headings} />
     </Fragment>
 
+    <Fragment slot="right-sidebar">
+      <section
+        class="ai-assistant"
+        data-summarize={ui.aiSummarize}
+        data-loading={ui.aiLoading}
+        data-send={ui.aiSend}
+        data-unsupported={ui.aiUnsupported}
+        data-error={ui.aiError}
+      >
+        <h2 class="ai-assistant__title">AI</h2>
+        <p class="ai-assistant__status" hidden></p>
+        <div class="ai-assistant__log"></div>
+      </section>
+    </Fragment>
+
     <rendered.Content />
 
     <Fragment slot="footer">

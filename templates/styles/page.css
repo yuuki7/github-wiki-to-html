@@ -138,12 +138,11 @@ body {
   cursor: pointer;
 }
 
-/* Sidebars: share the article body row */
+/* Sidebars: share the article body row. Only the left sidebar
+   sticks; the right one scrolls away with the page. */
 .left-sidebar,
 .right-sidebar {
   grid-row: article-main;
-  position: sticky;
-  top: var(--body-row-gap);
   align-self: start;
   width: fit-content;
   max-width: var(--side-line-length);
@@ -153,6 +152,8 @@ body {
 .left-sidebar {
   grid-column: 1;
   justify-self: end;
+  position: sticky;
+  top: var(--body-row-gap);
 }
 
 .right-sidebar {
@@ -275,6 +276,63 @@ body {
   inset-inline-end: auto;
   inset-inline-start: var(--body-margin-horizontal);
   inset-inline-start: anchor(--language-menu-button start);
+}
+
+/* The AI box in an article's right sidebar. The box is a
+   heading until the script in public/ai-assistant.js adds its
+   form; the log's messages stack with a gap, and the reader's
+   own messages sit in a tinted block so the two sides of the
+   conversation read apart. */
+.ai-assistant__title {
+  font-size: 100%;
+}
+
+.ai-assistant__send {
+  padding: 0.25em 0.75em;
+  border: 1px solid #d0d7de;
+  background-color: #fff;
+  font: inherit;
+  font-size: 85%;
+  cursor: pointer;
+}
+
+.ai-assistant__status {
+  font-size: 90%;
+}
+
+.ai-assistant__log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.ai-assistant__log:empty {
+  display: none;
+}
+
+.ai-assistant__message {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.ai-assistant__message--user {
+  padding: 0.5em;
+  background-color: #f6f8fa;
+}
+
+.ai-assistant__form {
+  display: flex;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+
+.ai-assistant__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25em 0.5em;
+  border: 1px solid #d0d7de;
+  font: inherit;
+  font-size: 90%;
 }
 
 /* Table of contents: each depth steps the item in with a

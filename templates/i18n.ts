@@ -168,6 +168,11 @@ export interface UiStrings {
   byline: string;
   translationNotice: (originalLanguageName: string) => string;
   originalArticle: string;
+  aiSummarize: string;
+  aiLoading: string;
+  aiSend: string;
+  aiUnsupported: string;
+  aiError: string;
 }
 
 const UI_STRINGS: Record<string, UiStrings> = {
@@ -177,6 +182,12 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "by",
     translationNotice: (name) => `Translated from ${name}`,
     originalArticle: "Show original",
+    aiSummarize: "Summarize this article",
+    aiLoading: "Loading the model…",
+    aiSend: "Send",
+    aiUnsupported:
+      "This browser does not support WebGPU, so the assistant cannot run.",
+    aiError: "Something went wrong. Please try again.",
   },
   ja: {
     editPage: "このページを編集",
@@ -184,6 +195,12 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "著者",
     translationNotice: (name) => `${name}からの翻訳`,
     originalArticle: "原文を表示",
+    aiSummarize: "この記事を要約",
+    aiLoading: "モデルを読み込んでいます…",
+    aiSend: "送信",
+    aiUnsupported:
+      "このブラウザはWebGPUに対応していないため、AIアシスタントは動作しません。",
+    aiError: "問題が発生しました。もう一度お試しください。",
   },
   de: {
     editPage: "Diese Seite bearbeiten",
@@ -191,6 +208,12 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "von",
     translationNotice: (name) => `Aus dem ${name} übersetzt`,
     originalArticle: "Original anzeigen",
+    aiSummarize: "Diesen Artikel zusammenfassen",
+    aiLoading: "Das Modell wird geladen…",
+    aiSend: "Senden",
+    aiUnsupported:
+      "Dieser Browser unterstützt kein WebGPU, daher kann der Assistent nicht laufen.",
+    aiError: "Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.",
   },
   "zh": {
     editPage: "编辑此页",
@@ -198,6 +221,11 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "作者",
     translationNotice: (name) => `译自${name}`,
     originalArticle: "查看原文",
+    aiSummarize: "总结这篇文章",
+    aiLoading: "正在加载模型…",
+    aiSend: "发送",
+    aiUnsupported: "此浏览器不支持 WebGPU，因此助手无法运行。",
+    aiError: "出现问题。请再试一次。",
   },
   "zh-hant": {
     editPage: "編輯此頁",
@@ -205,6 +233,11 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "作者",
     translationNotice: (name) => `譯自${name}`,
     originalArticle: "查看原文",
+    aiSummarize: "總結這篇文章",
+    aiLoading: "正在載入模型…",
+    aiSend: "傳送",
+    aiUnsupported: "此瀏覽器不支援 WebGPU，因此助手無法運行。",
+    aiError: "出現問題。請再試一次。",
   },
   ar: {
     editPage: "حرر هذه الصفحة",
@@ -212,6 +245,11 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "بقلم",
     translationNotice: (name) => `مترجم من ${name}`,
     originalArticle: "عرض الأصل",
+    aiSummarize: "لخّص هذه المقالة",
+    aiLoading: "جارٍ تحميل النموذج…",
+    aiSend: "إرسال",
+    aiUnsupported: "هذا المتصفح لا يدعم WebGPU، لذا لا يمكن للمساعد أن يعمل.",
+    aiError: "حدث خطأ ما. حاول مرة أخرى.",
   },
 };
 
