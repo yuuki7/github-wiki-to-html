@@ -8,11 +8,12 @@ module Wikinder
     class Wiki
       # Detects and normalizes the language code of a page.
       #
-      # Chinese is normalized to a script variant (zh-Hans or zh-Hant),
-      # because the site treats the two scripts as separate languages:
-      # a bare 'zh' cannot name the directory a page belongs in. The
-      # script is decided by counting characters that exist in only one
-      # of the two scripts; text without any such character defaults to
+      # Chinese is normalized to one of two codes, 'zh' for
+      # Simplified and 'zh-Hant' for Traditional, because the site
+      # treats the two scripts as separate languages and plain 'zh'
+      # names the default script, Simplified. The script is decided
+      # by counting characters that exist in only one of the two
+      # scripts; text without any such character defaults to
       # Simplified, the larger of the two readerships.
       module Language
         # High-frequency characters written differently in the two
@@ -46,10 +47,10 @@ module Wikinder
         end
 
         # Normalizes a language code to the form the site uses as a
-        # directory name. Chinese codes gain a script suffix (detected
-        # from +text+ when available); region variants of the supported
-        # languages collapse to the plain code. Unknown codes pass
-        # through unchanged.
+        # directory name. Chinese codes resolve to 'zh' or 'zh-Hant'
+        # (the script detected from +text+ when available); region
+        # variants of the supported languages collapse to the plain
+        # code. Unknown codes pass through unchanged.
         #: (String?, ?String?) -> String?
         def self.normalize(code, text = nil)
           return nil if code.nil? || code.empty?
@@ -64,12 +65,12 @@ module Wikinder
         #: (String, String?) -> String
         def self.chinese_variant(code, text)
           return 'zh-Hant' if %w[zh-tw zh-hk zh-mo zh-hant].include?(code)
-          return 'zh-Hans' if %w[zh-cn zh-sg zh-my zh-hans].include?(code)
-          return 'zh-Hans' if text.nil? || text.empty?
+          return 'zh' if %w[zh-cn zh-sg zh-my zh-hans].include?(code)
+          return 'zh' if text.nil? || text.empty?
 
           simplified = text.each_char.count { |char| SIMPLIFIED_ONLY.include?(char) }
           traditional = text.each_char.count { |char| TRADITIONAL_ONLY.include?(char) }
-          traditional > simplified ? 'zh-Hant' : 'zh-Hans'
+          traditional > simplified ? 'zh-Hant' : 'zh'
         end
       end
     end

@@ -62,7 +62,7 @@ export function directionFor(language: string): "rtl" | "ltr" {
 
 const LANGUAGE_NAMES: Record<string, string> = {
   en: "English",
-  "zh-Hans": "简体中文",
+  "zh": "简体中文",
   "zh-Hant": "繁體中文",
   ar: "العربية",
   ja: "日本語",
@@ -80,7 +80,7 @@ export function languageName(language: string): string {
 const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   en: {
     en: "English",
-    "zh-Hans": "Simplified Chinese",
+    "zh": "Simplified Chinese",
     "zh-Hant": "Traditional Chinese",
     ar: "Arabic",
     ja: "Japanese",
@@ -88,7 +88,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   ja: {
     en: "英語",
-    "zh-Hans": "中国語（簡体字）",
+    "zh": "中国語（簡体字）",
     "zh-Hant": "中国語（繁体字）",
     ar: "アラビア語",
     ja: "日本語",
@@ -96,15 +96,15 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   de: {
     en: "Englischen",
-    "zh-Hans": "Chinesischen (vereinfacht)",
+    "zh": "Chinesischen (vereinfacht)",
     "zh-Hant": "Chinesischen (traditionell)",
     ar: "Arabischen",
     ja: "Japanischen",
     de: "Deutschen",
   },
-  "zh-Hans": {
+  "zh": {
     en: "英语",
-    "zh-Hans": "简体中文",
+    "zh": "简体中文",
     "zh-Hant": "繁体中文",
     ar: "阿拉伯语",
     ja: "日语",
@@ -112,7 +112,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   "zh-Hant": {
     en: "英語",
-    "zh-Hans": "簡體中文",
+    "zh": "簡體中文",
     "zh-Hant": "繁體中文",
     ar: "阿拉伯語",
     ja: "日語",
@@ -120,7 +120,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   ar: {
     en: "الإنجليزية",
-    "zh-Hans": "الصينية المبسطة",
+    "zh": "الصينية المبسطة",
     "zh-Hant": "الصينية التقليدية",
     ar: "العربية",
     ja: "اليابانية",
@@ -160,7 +160,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     translationNotice: (name) => `Aus dem ${name} übersetzt`,
     originalArticle: "Original anzeigen",
   },
-  "zh-Hans": {
+  "zh": {
     editOnWiki: "在 GitHub Wiki 上编辑此页",
     byline: "作者",
     translationNotice: (name) => `译自${name}`,
