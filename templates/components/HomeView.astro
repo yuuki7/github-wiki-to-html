@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import HomePage from "../layouts/HomePage.astro";
 import site from "../../site.json";
 import {
+  absoluteUrl,
   defaultLanguage,
   homeHref,
   languageNameInNominative,
@@ -67,9 +68,15 @@ const { Content: FooterContent } = footer
   isHome
   alternates={languageLinks}
   languageLinks={languageLinks}
+  canonical={absoluteUrl(homeHref(lang))}
+  ogType="website"
 >
   <Fragment slot="head">
-    <link rel="alternate" hreflang="x-default" href={homeHref(site.language)} />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={absoluteUrl(homeHref(site.language))}
+    />
   </Fragment>
 
   <ul slot="left-sidebar">

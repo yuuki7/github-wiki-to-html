@@ -1,5 +1,6 @@
 ---
 import Base from "./Base.astro";
+import { absoluteUrl } from "../i18n";
 import type { RedirectProps } from "../types";
 
 type Props = RedirectProps;
@@ -8,7 +9,12 @@ const { title, language = "en", className, targetHref } = Astro.props;
 const target = targetHref;
 ---
 
-<Base title={title} language={language} className={className}>
+<Base
+  title={title}
+  language={language}
+  className={className}
+  canonical={absoluteUrl(targetHref)}
+>
   <Fragment slot="head">
     <meta http-equiv="refresh" content={`0; url=${target}`} />
   </Fragment>

@@ -24,6 +24,13 @@ export interface BaseProps {
   language: string;
   className?: string;
   alternates?: AlternateLink[];
+  // The page's canonical URL, absolute. A redirect stub has no
+  // canonical version of its own, so it points this at its target.
+  canonical?: string;
+  // The page's Open Graph type: "article" for an article page,
+  // "website" for a home page. Redirect stubs set neither this
+  // nor the tags that go with it.
+  ogType?: "article" | "website";
 }
 
 export type ArticleProps = BaseProps & {

@@ -1,19 +1,39 @@
 ---
 import BaseHead from "../components/BaseHead.astro";
 import { directionFor } from "../i18n";
-import type { BaseProps } from "../types";
+import type { ArticleMetaProps, BaseProps } from "../types";
 
 import "../styles/page.css";
 
-type Props = BaseProps;
+type Props = BaseProps & {
+  meta?: ArticleMetaProps;
+  isHome?: boolean;
+};
 
-const { title, language, className, alternates } = Astro.props;
+const {
+  title,
+  language,
+  className,
+  alternates,
+  canonical,
+  ogType,
+  meta,
+  isHome,
+} = Astro.props;
 ---
 
 <!doctype html>
 <html lang={language} dir={directionFor(language)}>
-  <head>
-    <BaseHead title={title} alternates={alternates} />
+  <head prefix="og: https://ogp.me/ns#">
+    <BaseHead
+      title={title}
+      language={language}
+      alternates={alternates}
+      canonical={canonical}
+      ogType={ogType}
+      meta={meta}
+      isHome={isHome}
+    />
     <slot name="head" />
     <script is:inline defer src="/site.js"></script>
     <script is:inline defer src="/assets/js/mathjax-config.js"></script>

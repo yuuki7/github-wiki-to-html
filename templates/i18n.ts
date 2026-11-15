@@ -233,6 +233,17 @@ export function pageHref(
     : `/${encodeURIComponent(slug)}`;
 }
 
+// The site's canonical base URL, without a trailing slash, from
+// the site metadata.
+export const siteUrl: string = site.url ?? "";
+
+// A root-relative href as the absolute URL it is served at, for
+// the places that require absolute URLs: canonical links,
+// hreflang links, Open Graph tags and the sitemap.
+export function absoluteUrl(href: string): string {
+  return href === "/" ? siteUrl : `${siteUrl}${href}`;
+}
+
 // The URL of a language's home page: the site root for the default
 // language, the language's code for every other language. The site
 // is built as files (one HTML file per page), so the other

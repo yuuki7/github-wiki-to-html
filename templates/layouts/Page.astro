@@ -11,8 +11,17 @@ import type { ArticleProps } from "../types";
 
 type Props = ArticleProps;
 
-const { title, isHome, meta, language, className, alternates, languageLinks } =
-  Astro.props;
+const {
+  title,
+  isHome,
+  meta,
+  language,
+  className,
+  alternates,
+  languageLinks,
+  canonical,
+  ogType,
+} = Astro.props;
 ---
 
 <Base
@@ -20,6 +29,10 @@ const { title, isHome, meta, language, className, alternates, languageLinks } =
   language={language}
   className={className}
   alternates={alternates}
+  canonical={canonical}
+  ogType={ogType}
+  meta={meta}
+  isHome={isHome}
 >
   <slot name="head" slot="head" />
 

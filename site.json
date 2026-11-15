@@ -1,5 +1,6 @@
 {
   "name": "Wikinder",
+  "url": "https://wikinder.org",
   "wiki_url": "https://github.com/yuuki7/yuukinder/wiki",
   "language": "en",
   "languages": ["ar", "de", "en", "ja", "zh", "zh-hant"]
