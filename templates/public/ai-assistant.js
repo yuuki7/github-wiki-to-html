@@ -12,6 +12,12 @@
 // aid, not a source.
 const modelId = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
 
+// Where the box remembers which model it used last time, so
+// that a model the site no longer uses can be dropped from
+// the browser's cache: the cache holds one model, the
+// current one.
+const modelStorageKey = "ai-assistant-model";
+
 // WebLLM itself, loaded on first use from the same CDN the site
 // already uses for MathJax.
 const libraryUrl = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.88/+esm";
@@ -123,6 +129,32 @@ if (box) {
     }
   };
 
+  // Drop the previous model from the browser's cache, when
+  // the site's model has changed since the last visit, and
+  // remember the current one. Neither a cache that cannot be
+  // deleted nor storage that cannot be used is worth failing
+  // the load over: both are simply left as they are.
+  const dropPreviousModel = async (webllm) => {
+    let previous = null;
+    try {
+      previous = localStorage.getItem(modelStorageKey);
+    } catch {
+      previous = null;
+    }
+    if (previous !== null && previous !== modelId) {
+      try {
+        await webllm.deleteModelAllInfoInCache(previous);
+      } catch {
+        // The old cache stays.
+      }
+    }
+    try {
+      localStorage.setItem(modelStorageKey, modelId);
+    } catch {
+      // The record is not kept.
+    }
+  };
+
   // Create the engine from an imported library. The loading
   // progress is reported only for an uncached model: a cached
   // model loads with no progress shown at all.
@@ -177,6 +209,7 @@ if (box) {
         if (!navigator.gpu) throw new Error(texts.unsupported);
         const found = await checkCache();
         if (!found) throw new Error(texts.error);
+        await dropPreviousModel(found.webllm);
         engine = await createEngine(found);
         showStatus(null);
       }
