@@ -8,7 +8,7 @@ node_modules/
 dist/**
 !dist/**/
 !dist/index.html
-!dist/en/Wikinder.html
+!dist/Wikinder.html
 
 md/**
 !md/**/

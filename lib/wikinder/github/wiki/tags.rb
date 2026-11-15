@@ -401,11 +401,13 @@ module Wikinder
         # (e.g. "a?b" becomes "a%3Fb") but left as-is for non-ASCII, so
         # links remain human-readable for UTF-8 slugs.
         #
-        # When the caller supplies +routes+ (a map of slug to language,
-        # computed for the page being rendered), the link is prefixed
-        # with that language: the same-language version of the target
-        # when one exists, the target's original language otherwise.
-        # Without +routes+ the historical root-relative form is kept.
+        # When the caller supplies +routes+ (a map of slug to URL
+        # prefix, computed for the page being rendered), the link
+        # takes that prefix: a translation lives under its language,
+        # so a target with a translation in the rendered page's
+        # language is prefixed with that language; an original lives
+        # at the site root, so its prefix is empty. Without +routes+
+        # the historical root-relative form is kept.
         #: (String, link_index?, link_routes?) -> String
         def self.resolve_link_target(target, link_index, routes)
           return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
@@ -418,8 +420,8 @@ module Wikinder
           name = path.end_with?('.md') ? path.sub(/\.md\z/, '') : path
           canonical = link_index && index_lookup(link_index[:pages], name)
           slug = canonical || Slugs.for_title(name)
-          language = routes && (routes[slug] || (canonical && routes[canonical]))
-          resolved = language ? "/#{language}/#{escape_url_path(slug)}" : "/#{escape_url_path(slug)}"
+          prefix = routes && (routes[slug] || (canonical && routes[canonical]))
+          resolved = prefix ? "#{prefix}/#{escape_url_path(slug)}" : "/#{escape_url_path(slug)}"
           anchor ? "#{resolved}##{anchor}" : resolved
         end
 

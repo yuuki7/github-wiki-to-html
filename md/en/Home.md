@@ -5,7 +5,7 @@ slug: Home
 language: en
 ---
 
-[About](/en/Wikinder) · [Linktree](https://linktr.ee/wikinder)
+[About](/Wikinder) · [Linktree](https://linktr.ee/wikinder)
 
 $(a + b)^2 = a^2 + 2ab + b^2$
 

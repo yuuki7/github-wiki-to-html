@@ -251,7 +251,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
         expect(File.exist?(File.join(target, 'en', 'About.md'))).to be(true)
         expect(File.exist?(File.join(target, 'ja', 'Japanese-page.md'))).to be(true)
         about = File.read(File.join(target, 'en', 'About.md'))
-        expect(about).to include('[Japanese-page](/ja/Japanese-page)')
+        expect(about).to include('[Japanese-page](/Japanese-page)')
       end
     end
 
@@ -265,6 +265,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
         FixtureWiki.build(path)
         with_translations(
           'de/About.md' => "---\ntitle: Über uns\n---\n\nDeutscher Text. Siehe [[Japanese-page]].\n",
+          'de/Japanese-page.md' => "Deutscher Text. Siehe [[About]].\n",
           'ja/Home.md' => "翻訳されたホーム。[[About]]へのリンク。\n"
         ) do |translations|
           described_class.new(path, multilingual_options(translations)).build(target)
@@ -277,13 +278,21 @@ RSpec.describe Wikinder::GitHub::Wiki do
           expect(meta['translation']).to be(true)
           expect(meta['title']).to eq('Über uns')
           expect(meta['author']).to eq('fixture-bot')
-          expect(translated).to include('[Japanese-page](/ja/Japanese-page)')
+          # Japanese-page has a German translation in this fixture,
+          # so the German About links to it under the /de prefix.
+          expect(translated).to include('[Japanese-page](/de/Japanese-page)')
+
+          # A link from a translation to a page that also has a
+          # translation in the same language keeps the language
+          # prefix; only originals live at the root.
+          german_page = File.read(File.join(target, 'de', 'Japanese-page.md'))
+          expect(german_page).to include('[About](/de/About)')
 
           home = File.read(File.join(target, 'ja', 'Home.md'))
           home_meta = YAML.safe_load(home.split("---\n")[1])
           expect(home_meta['kind']).to eq('special')
           expect(home_meta['language']).to eq('ja')
-          expect(home).to include('[About](/en/About)')
+          expect(home).to include('[About](/About)')
 
           # The original Home belongs to the site's default language,
           # and no German Home exists until one is translated.
@@ -582,8 +591,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
         begin
           described_class.new(scratch, { ungenerated_pages: Set['META'], unlisted_pages: Set[] }).build(out)
           built = File.read(File.join(out, 'en', 'Index.md'))
-          expect(built).to include('[my page](/en/My-Page)')
-          expect(built).to include('[MY-PAGE](/en/My-Page)')
+          expect(built).to include('[my page](/My-Page)')
+          expect(built).to include('[MY-PAGE](/My-Page)')
         ensure
           FileUtils.remove_entry(out)
         end

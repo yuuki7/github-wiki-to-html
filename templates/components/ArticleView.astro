@@ -1,0 +1,131 @@
+---
+import { getCollection, render } from "astro:content";
+import IndividualPage from "../layouts/IndividualPage.astro";
+import site from "../../site.json";
+import Redirect from "../layouts/Redirect.astro";
+import Toc from "./Toc.astro";
+import { pageHref, supportedLanguages, uiFor } from "../i18n";
+
+// One article page, or one redirect stub. `lang` is the language
+// the page is served for: the article's own language, or, for a
+// redirect (which carries no language), its directory's language.
+const { entry, lang } = Astro.props;
+const isRedirect = entry.data.kind === "redirect";
+
+const entries = await getCollection("pages");
+
+// The footer in this page's language, falling back to the site's
+// default language when the footer has not been translated.
+const footerFragment =
+  entries.find(
+    (f) =>
+      f.data.kind === "special" &&
+      f.data.slug === "_Footer" &&
+      f.data.language === lang,
+  ) ??
+  entries.find(
+    (f) =>
+      f.data.kind === "special" &&
+      f.data.slug === "_Footer" &&
+      f.data.language === site.language,
+  );
+const { Content: FooterContent } = footerFragment
+  ? await render(footerFragment)
+  : { Content: null };
+
+// The article's original language: the page's own language for an
+// original, the recorded original language for a translation.
+// Which languages have a version of the article is never checked
+// here. Every supported language is expected to have one, and
+// seeing to that is the translation side's responsibility.
+const originalLanguage =
+  entry.data.kind === "article"
+    ? (entry.data.original_language ?? entry.data.language)
+    : undefined;
+
+// This article in every supported language, for the language
+// switcher and the hreflang links alike: the original at the
+// root, a translation under its language.
+const articleLinks = isRedirect
+  ? []
+  : supportedLanguages.map((language) => ({
+      language,
+      href: pageHref(language, entry.data.slug, language !== originalLanguage),
+    }));
+
+// For a redirect, the target in the language the redirect serves:
+// the original at the root when that is the target's original
+// language, the translation under its language otherwise.
+const targetOriginal = isRedirect
+  ? entries.find(
+      (e) =>
+        e.data.kind === "article" &&
+        e.data.slug === entry.data.target_slug &&
+        !e.data.translation,
+    )
+  : undefined;
+const targetHref = isRedirect
+  ? pageHref(
+      lang,
+      entry.data.target_slug,
+      lang !== targetOriginal?.data.language,
+    )
+  : undefined;
+
+const isTranslation =
+  entry.data.kind === "article" && (entry.data.translation ?? false);
+const ui = uiFor(lang);
+
+const rendered = isRedirect ? null : await render(entry);
+---
+
+{isRedirect ? (
+  <Redirect title={entry.data.title} targetHref={targetHref} />
+) : (
+  <IndividualPage
+    title={entry.data.title}
+    language={entry.data.language}
+    alternates={articleLinks}
+    languageLinks={articleLinks}
+    meta={{
+      author: entry.data.author,
+      creationDate: entry.data.creation_date,
+      modifiedDate: entry.data.modified_date,
+      language: entry.data.language,
+    }}
+  >
+    <Fragment slot="head">
+      {originalLanguage && (
+        <link
+          rel="alternate"
+          hreflang="x-default"
+          href={pageHref(originalLanguage, entry.data.slug)}
+        />
+      )}
+    </Fragment>
+
+    <Fragment slot="left-sidebar">
+      <Toc headings={rendered.headings} />
+    </Fragment>
+
+    {isTranslation && (
+      <p class="translation-notice">
+        {ui.translationNotice}{" "}
+        <a href={pageHref(originalLanguage ?? lang, entry.data.slug)}>
+          {ui.originalArticle}
+        </a>
+      </p>
+    )}
+
+    <rendered.Content />
+
+    <Fragment slot="footer">
+      {FooterContent && <FooterContent />}
+      {!isTranslation && (
+        <a href={`${site.wiki_url}/${encodeURIComponent(entry.data.slug)}`}>
+          {ui.editOnWiki}
+        </a>
+      )}
+    </Fragment>
+  </IndividualPage>
+)}

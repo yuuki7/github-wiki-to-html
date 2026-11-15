@@ -401,25 +401,27 @@ module Wikinder
       end
 
       # For every emitted language, the routes its pages link with:
-      # slug -> the language a link to that slug must point at from a
-      # page in this language. A target that exists in the reader's
-      # language wins; anything else falls back to the original.
-      # Aliases route within the reader's language, where a redirect
-      # for them is generated (see redirect_outputs).
+      # slug -> the URL prefix a link to that slug must use from a
+      # page in this language. An original page lives at the site
+      # root, so its prefix is empty; a translation lives under its
+      # language, so its prefix is that language. A target that
+      # exists as a translation in the reader's language wins;
+      # anything else falls back to the original at the root.
+      # Aliases route to the redirect generated for them, which is
+      # served at the root in the target's original language and
+      # under the reader's language elsewhere (see redirect_outputs).
       #: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, Hash[String, String]]
       def routes_by_language(languages, versions, meta)
         result = {} #: Hash[String, Hash[String, String]]
         languages.each do |language|
           routes = {} #: Hash[String, String]
           versions.each do |slug, by_language|
-            routes[slug] = if by_language.key?(language)
-                             language
-                           else
-                             by_language.key(false) || language
-                           end
+            routes[slug] = by_language[language] ? "/#{language}" : ''
           end
-          meta.each_value do |row|
-            row[:aliases].each { |title| routes[Slugs.for_title(title)] = language }
+          meta.each do |target_slug, row|
+            original_language = versions[target_slug]&.key(false)
+            prefix = original_language == language ? '' : "/#{language}"
+            row[:aliases].each { |title| routes[Slugs.for_title(title)] = prefix }
           end
           result[language] = routes
         end

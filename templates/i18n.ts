@@ -84,13 +84,22 @@ export function uiFor(language: string): UiStrings {
   return UI_STRINGS[language] ?? UI_STRINGS[defaultLanguage] ?? UI_STRINGS.en;
 }
 
-// The URL of one page in one language.
-export function pageHref(language: string, slug: string): string {
-  return `/${language}/${encodeURIComponent(slug)}`;
+// The URL of one page in one language. An original page lives at
+// the site root; a translation lives under its language.
+export function pageHref(
+  language: string,
+  slug: string,
+  translation = false,
+): string {
+  return translation
+    ? `/${language}/${encodeURIComponent(slug)}`
+    : `/${encodeURIComponent(slug)}`;
 }
 
-// The URL of a language's home page. The site is built as files
-// (one HTML file per page), so this is `/en`, not `/en/`.
+// The URL of a language's home page: the site root for the default
+// language, the language's code for every other language. The site
+// is built as files (one HTML file per page), so the other
+// languages' homes are `/ja`, not `/ja/`.
 export function homeHref(language: string): string {
-  return `/${language}`;
+  return language === defaultLanguage ? "/" : `/${language}`;
 }

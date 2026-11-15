@@ -12,7 +12,7 @@ listed: false
 <table>
   <tbody><tr>
     <th scope="row">Founder</th>
-    <td><a href="/en/bear">bear</a></td>
+    <td><a href="/bear">bear</a></td>
   </tr>
   <tr>
     <th scope="row">Founding date</th>

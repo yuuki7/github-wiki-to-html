@@ -1,18 +1,8 @@
 ---
-import Base from "../layouts/Base.astro";
-import site from "../../site.json";
-import { homeHref } from "../i18n";
+import HomeView from "../components/HomeView.astro";
+import { defaultLanguage } from "../i18n";
 
 // The site's root is the default language's home page.
-const target = homeHref(site.language);
 ---
 
-<Base title={site.name} language={site.language}>
-  <Fragment slot="head">
-    <meta http-equiv="refresh" content={`0; url=${target}`} />
-  </Fragment>
-
-  <p>
-    <a href={target}>{site.name}</a>
-  </p>
-</Base>
+<HomeView lang={defaultLanguage} />

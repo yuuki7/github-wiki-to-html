@@ -1,86 +1,19 @@
 ---
-import { getCollection, render } from "astro:content";
-import HomePage from "../../layouts/HomePage.astro";
-import site from "../../../site.json";
-import { homeHref, pageHref, supportedLanguages } from "../../i18n";
+import HomeView from "../../components/HomeView.astro";
+import { defaultLanguage, supportedLanguages } from "../../i18n";
 
 export function getStaticPaths() {
   // Every language the site declares gets a home page, whether or
   // not it has any page yet. The list comes from site.json (via
   // i18n's supportedLanguages), never from the content itself.
-  return supportedLanguages.map((lang) => ({
-    params: { lang },
-    props: { lang },
-  }));
+  // The default language's home is the site root instead (see
+  // pages/index.astro), so it is not generated here.
+  return supportedLanguages
+    .filter((lang) => lang !== defaultLanguage)
+    .map((lang) => ({ params: { lang }, props: { lang } }));
 }
 
 const { lang } = Astro.props;
-const pages = await getCollection("pages");
-
-const home = pages.find(
-  (f) =>
-    f.data.kind === "special" &&
-    f.data.slug === "Home" &&
-    f.data.language === lang,
-);
-const footer =
-  pages.find(
-    (f) =>
-      f.data.kind === "special" &&
-      f.data.slug === "_Footer" &&
-      f.data.language === lang,
-  ) ??
-  pages.find(
-    (f) =>
-      f.data.kind === "special" &&
-      f.data.slug === "_Footer" &&
-      f.data.language === site.language,
-  );
-
-const listedPages = pages
-  .filter(
-    (p) =>
-      p.data.kind === "article" &&
-      p.data.language === lang &&
-      (p.data.listed ?? true),
-  )
-  .sort((a, b) => b.data.creation_date.localeCompare(a.data.creation_date));
-
-// The other languages' home pages, for the switcher and hreflang:
-// the site's declared languages, in site.json order.
-const homeLanguages = supportedLanguages;
-const languageLinks = homeLanguages.map((language) => ({
-  language,
-  href: homeHref(language),
-}));
-
-const { Content: HomeContent } = home ? await render(home) : { Content: null };
-const { Content: FooterContent } = footer
-  ? await render(footer)
-  : { Content: null };
 ---
 
-<HomePage
-  className="home"
-  title={site.name}
-  language={lang}
-  isHome
-  alternates={languageLinks}
-  languageLinks={languageLinks}
->
-  <Fragment slot="head">
-    <link rel="alternate" hreflang="x-default" href={homeHref(site.language)} />
-  </Fragment>
-
-  <ul slot="left-sidebar">
-    {listedPages.map((entry) => (
-      <li>
-        <a href={pageHref(lang, entry.data.slug)}>{entry.data.title}</a>
-      </li>
-    ))}
-  </ul>
-
-  {HomeContent && <HomeContent />}
-
-  <Fragment slot="footer">{FooterContent && <FooterContent />}</Fragment>
-</HomePage>
+<HomeView lang={lang} />

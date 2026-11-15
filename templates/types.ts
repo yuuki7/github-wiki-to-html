@@ -34,8 +34,8 @@ export type RedirectProps = Omit<BaseProps, "language"> & {
   // A redirect stub's only text is the English word "Redirect", so the
   // component itself supplies the language; callers do not pass one.
   language?: string;
-  targetSlug: string;
-  // The language of the target page's best version (the redirect's own
-  // language when the target exists in it, the original otherwise).
-  targetLanguage?: string;
+  // The URL of the target page's best version (the version in the
+  // redirect's own language when one exists, the original otherwise),
+  // already resolved to the version's own URL form.
+  targetHref: string;
 };
