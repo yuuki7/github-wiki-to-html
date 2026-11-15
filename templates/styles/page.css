@@ -88,28 +88,6 @@ body {
   margin-inline-end: 0.25em;
 }
 
-/* A date is an inline disclosure: the summary shows the date,
-   and opening it inserts the time before the timezone. The box
-   is a flex row, because the disclosed content otherwise forms
-   its own block row below the summary: with display: inline the
-   box takes the whole line and pushes the timezone after it
-   onto the next line, and with inline-block the opened time
-   still lands on a second line. */
-.article__date-details {
-  display: inline-flex;
-}
-.article__date-time {
-  margin-inline-start: 0.25em;
-}
-.article__date-details summary {
-  display: inline;
-  list-style: none;
-  cursor: pointer;
-}
-.article__date-details summary::-webkit-details-marker {
-  display: none;
-}
-
 /* Article main */
 .article__main {
   grid-row: article-main;
