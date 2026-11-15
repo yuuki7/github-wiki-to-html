@@ -10,7 +10,7 @@ translations/<language>/<Slug>.md
 - `<Slug>` is the slug of the original page, unchanged. `Home.md` and `_Footer.md` translate the special pages.
 - The original Home and footer belong to the site's default language, named by `language` in `site.json`. Their files here are translations into the other languages.
 - The body is Markdown in the same wiki dialect as the original pages. Wikilinks (`[[...]]`) are resolved for the translation's language when the page is built: a link points at the same-language version of its target when one exists, and at the original otherwise.
-- A file may start with a YAML front matter block. The only key the converter reads is `title`, the page's title in the translated language:
+- A file may start with a YAML front matter block. The only key `bin/convert.rb` reads is `title`, the page's title in the translated language:
 
   ```markdown
   ---

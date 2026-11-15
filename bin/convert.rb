@@ -59,6 +59,7 @@ Dir.chdir(__dir__) do
       translations_dir: TRANSLATIONS_DIR
     }
   )
+
   # Build, and record the wiki's current HEAD. The next build
   # reads it back as prev_head for the incremental META.md sync.
   wiki.build(MD_DIR)
