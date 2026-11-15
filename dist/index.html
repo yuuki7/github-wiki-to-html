@@ -62,8 +62,8 @@
 
     <link rel="alternate" hreflang="x-default" href="https://wikinder.org" />
 
-    <script defer src="/site.js"></script>
-    <script defer src="/ai-assistant.js"></script>
+    <script defer src="/assets/js/site.js"></script>
+    <script defer src="/assets/js/ai-assistant.js"></script>
     <script defer src="/assets/js/mathjax-config.js"></script>
     <script
       defer
@@ -217,7 +217,18 @@
     </main>
 
     <aside class="right-sidebar">
-      <p>aaa</p>
+      <section
+        class="ai-assistant"
+        data-summarize="Summarize this article"
+        data-loading="Loading the model…"
+        data-send="Send"
+        data-unsupported="This browser does not support WebGPU, so the assistant cannot run."
+        data-error="Something went wrong. Please try again."
+      >
+        <h2 class="ai-assistant__title">AI</h2>
+        <div class="ai-assistant__log"></div>
+        <p class="ai-assistant__status" hidden></p>
+      </section>
     </aside>
 
     <footer class="footer">
