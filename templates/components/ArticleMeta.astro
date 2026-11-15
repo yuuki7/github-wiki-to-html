@@ -1,10 +1,11 @@
 ---
-import { defaultLanguage, uiFor } from "../i18n";
+import { defaultLanguage, languageNameIn, uiFor } from "../i18n";
 import type { ArticleMetaProps } from "../types";
 
 interface Props extends ArticleMetaProps {}
 
-const { author, creationDate, modifiedDate, language } = Astro.props;
+const { author, creationDate, modifiedDate, language, translation } =
+  Astro.props;
 const locale = language ?? defaultLanguage;
 
 const dateFmt = new Intl.DateTimeFormat(locale, {
@@ -43,3 +44,12 @@ const formatDate = (iso: string) =>
     </>
   )}
 </p>
+
+{translation && (
+  <p class="article__meta article__meta--translation">
+    {uiFor(locale).translationNotice(
+      languageNameIn(locale, translation.originalLanguage),
+    )}{" "}
+    <a href={translation.originalHref}>{uiFor(locale).originalArticle}</a>
+  </p>
+)}

@@ -3,6 +3,13 @@ export interface ArticleMetaProps {
   creationDate: string;
   modifiedDate?: string;
   language?: string;
+  // Set when the page is a translation: the language the original
+  // is written in and the original's URL, so the header can state
+  // the page's provenance next to its byline.
+  translation?: {
+    originalLanguage: string;
+    originalHref: string;
+  };
 }
 
 // One version of a page in one language, for hreflang links and the

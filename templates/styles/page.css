@@ -235,12 +235,6 @@ body {
   inset-inline-start: anchor(--language-menu-button start);
 }
 
-/* Translation notice at the top of a translated article */
-.translation-notice {
-  border: 1px solid currentColor;
-  padding: 0.5em 1em;
-}
-
 /* Table of contents */
 .toc__item--depth-2 {
   padding-left: 0;
