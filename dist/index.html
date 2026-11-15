@@ -16,12 +16,12 @@
   
     <nav>
       
-      <details class="language-menu">
-          <summary class="language-menu__button">
+      <div class="language-menu">
+          <button type="button" class="language-menu__button" popovertarget="language-switcher">
             <span aria-hidden="true">🌐</span>
             English
-          </summary>
-          <ul class="language-switcher">
+          </button>
+          <ul class="language-switcher" id="language-switcher" popover>
             <li>
                 <a href="/ar" hreflang="ar" lang="ar">
                     العربية
@@ -46,7 +46,7 @@
                   </a>
               </li>
           </ul>
-        </details>
+        </div>
     </nav>
   
 </header>

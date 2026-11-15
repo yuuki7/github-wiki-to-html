@@ -165,21 +165,20 @@ body {
 
 /* The language menu: a button showing the current language,
    opening a panel with every language. However many languages the
-   site gains, the header keeps this one control. */
-.language-menu {
-  position: relative;
-}
-
+   site gains, the header keeps this one control. The panel is a
+   popover, so clicking anywhere outside it (or pressing Escape)
+   closes it, with no script. */
 .language-menu__button {
   display: inline-flex;
   align-items: baseline;
   gap: 0.4em;
-  list-style: none;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
-}
-
-.language-menu__button::-webkit-details-marker {
-  display: none;
+  anchor-name: --language-menu-button;
 }
 
 .language-menu__button::after {
@@ -187,24 +186,34 @@ body {
   font-size: 80%;
 }
 
+/* While closed, the browser keeps a popover out of view; the
+   flex layout therefore applies only in the open state, or it
+   would override the hidden state. The placement anchors the
+   panel to the button; the fixed values before the anchor()
+   lines are the fallback for browsers without anchor
+   positioning. */
 .language-switcher {
-  position: absolute;
-  top: calc(100% + 0.25em);
-  inset-inline-end: 0;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25em;
+  margin: 0;
+  margin-top: 0.25em;
+  top: 3em;
+  top: anchor(--language-menu-button bottom);
+  inset-inline-end: var(--body-margin-horizontal);
+  inset-inline-end: anchor(--language-menu-button end);
   min-width: 10em;
   max-height: 60vh;
   overflow-y: auto;
   list-style: none;
-  margin: 0;
   padding: 0.5em 0.75em;
   border: 1px solid currentColor;
   background-color: #fff;
   box-shadow: 0 0.25em 1em rgb(0 0 0 / 0.15);
   font-size: 95%;
+}
+
+.language-switcher:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
 }
 
 .language-switcher a {
@@ -218,8 +227,9 @@ body {
 }
 
 .home .language-switcher {
-  inset-inline-start: 0;
   inset-inline-end: auto;
+  inset-inline-start: var(--body-margin-horizontal);
+  inset-inline-start: anchor(--language-menu-button start);
 }
 
 /* Translation notice at the top of a translated article */

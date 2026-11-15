@@ -27,12 +27,16 @@ const { title, isHome, meta, language, className, alternates, languageLinks } =
     <nav>
       {!isHome && <a href={homeHref(language)}>{site.name}</a>}
       {languageLinks && languageLinks.length > 1 && (
-        <details class="language-menu">
-          <summary class="language-menu__button">
+        <div class="language-menu">
+          <button
+            type="button"
+            class="language-menu__button"
+            popovertarget="language-switcher"
+          >
             <span aria-hidden="true">🌐</span>
             {languageName(language)}
-          </summary>
-          <ul class="language-switcher">
+          </button>
+          <ul class="language-switcher" id="language-switcher" popover>
             {languageLinks.map((link) => (
               <li>
                 {link.language === language ? (
@@ -49,7 +53,7 @@ const { title, isHome, meta, language, className, alternates, languageLinks } =
               </li>
             ))}
           </ul>
-        </details>
+        </div>
       )}
     </nav>
   </Header>
