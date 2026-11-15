@@ -187,7 +187,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#build_anchor-class_method" title="build_anchor (class method)">.<strong>build_anchor</strong>(document, inner, link_index)  &#x21d2; Object </a>
+      <a href="#build_anchor-class_method" title="build_anchor (class method)">.<strong>build_anchor</strong>(document, inner, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -201,7 +201,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -&gt; Nokogiri::XML::Node.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (Nokogiri::XML::Document, String, link_index?, link_routes?) -&gt; Nokogiri::XML::Node.</p></div></span>
   
 </li>
 
@@ -209,7 +209,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#build_elements-class_method" title="build_elements (class method)">.<strong>build_elements</strong>(document, match, link_index)  &#x21d2; Object </a>
+      <a href="#build_elements-class_method" title="build_elements (class method)">.<strong>build_elements</strong>(document, match, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -245,7 +245,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -&gt; Nokogiri::XML::Node.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (Nokogiri::XML::Document, String, link_index?) -&gt; Nokogiri::XML::Node.</p></div></span>
   
 </li>
 
@@ -583,7 +583,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#render-class_method" title="render (class method)">.<strong>render</strong>(source, link_index: nil)  &#x21d2; Object </a>
+      <a href="#render-class_method" title="render (class method)">.<strong>render</strong>(source, link_index: nil, routes: nil)  &#x21d2; Object </a>
     
 
     
@@ -597,7 +597,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String, ?link_index: Hash[Symbol, Hash[String, String]]?) -&gt; String.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (String, ?link_index: link_index?, ?routes: link_routes?) -&gt; String.</p></div></span>
   
 </li>
 
@@ -619,7 +619,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (String, link_index?) -&gt; String.</p></div></span>
   
 </li>
 
@@ -627,7 +627,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#render_markdown_anchor-class_method" title="render_markdown_anchor (class method)">.<strong>render_markdown_anchor</strong>(ref, link_index)  &#x21d2; Object </a>
+      <a href="#render_markdown_anchor-class_method" title="render_markdown_anchor (class method)">.<strong>render_markdown_anchor</strong>(ref, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -641,7 +641,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (String, link_index?, link_routes?) -&gt; String.</p></div></span>
   
 </li>
 
@@ -649,7 +649,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#resolve_link_target-class_method" title="resolve_link_target (class method)">.<strong>resolve_link_target</strong>(target, link_index)  &#x21d2; Object </a>
+      <a href="#resolve_link_target-class_method" title="resolve_link_target (class method)">.<strong>resolve_link_target</strong>(target, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -671,7 +671,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#rewrite-class_method" title="rewrite (class method)">.<strong>rewrite</strong>(source, segments, link_index)  &#x21d2; Object </a>
+      <a href="#rewrite-class_method" title="rewrite (class method)">.<strong>rewrite</strong>(source, segments, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -693,7 +693,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#rewrite_fragment-class_method" title="rewrite_fragment (class method)">.<strong>rewrite_fragment</strong>(text, link_index)  &#x21d2; Object </a>
+      <a href="#rewrite_fragment-class_method" title="rewrite_fragment (class method)">.<strong>rewrite_fragment</strong>(text, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -715,7 +715,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#rewrite_fragment_text_nodes-class_method" title="rewrite_fragment_text_nodes (class method)">.<strong>rewrite_fragment_text_nodes</strong>(fragment, link_index)  &#x21d2; Object </a>
+      <a href="#rewrite_fragment_text_nodes-class_method" title="rewrite_fragment_text_nodes (class method)">.<strong>rewrite_fragment_text_nodes</strong>(fragment, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -737,7 +737,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#rewrite_html_block-class_method" title="rewrite_html_block (class method)">.<strong>rewrite_html_block</strong>(fragment_text, link_index)  &#x21d2; Object </a>
+      <a href="#rewrite_html_block-class_method" title="rewrite_html_block (class method)">.<strong>rewrite_html_block</strong>(fragment_text, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -759,7 +759,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#rewrite_html_stream-class_method" title="rewrite_html_stream (class method)">.<strong>rewrite_html_stream</strong>(blocks, link_index)  &#x21d2; Object </a>
+      <a href="#rewrite_html_stream-class_method" title="rewrite_html_stream (class method)">.<strong>rewrite_html_stream</strong>(blocks, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -781,7 +781,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#split_and_replace_wikilinks-class_method" title="split_and_replace_wikilinks (class method)">.<strong>split_and_replace_wikilinks</strong>(node, link_index)  &#x21d2; Object </a>
+      <a href="#split_and_replace_wikilinks-class_method" title="split_and_replace_wikilinks (class method)">.<strong>split_and_replace_wikilinks</strong>(node, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -795,7 +795,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (Nokogiri::XML::Node, Hash[Symbol, Hash[String, String]]?) -&gt; void.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>: (Nokogiri::XML::Node, link_index?, link_routes?) -&gt; void.</p></div></span>
   
 </li>
 
@@ -803,7 +803,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#split_ref-class_method" title="split_ref (class method)">.<strong>split_ref</strong>(ref, link_index)  &#x21d2; Object </a>
+      <a href="#split_ref-class_method" title="split_ref (class method)">.<strong>split_ref</strong>(ref, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -869,7 +869,7 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#typed_ranges-class_method" title="typed_ranges (class method)">.<strong>typed_ranges</strong>(source, offsets, link_index)  &#x21d2; Object </a>
+      <a href="#typed_ranges-class_method" title="typed_ranges (class method)">.<strong>typed_ranges</strong>(source, offsets, link_index, routes)  &#x21d2; Object </a>
     
 
     
@@ -901,7 +901,7 @@ the scan linear, and a match can never span lines.</p>
       <div class="method_details first">
   <h3 class="signature first" id="build_anchor-class_method">
   
-    .<strong>build_anchor</strong>(document, inner, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>build_anchor</strong>(document, inner, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -909,7 +909,7 @@ the scan linear, and a match can never span lines.</p>
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -&gt; Nokogiri::XML::Node</p>
+    <p>: (Nokogiri::XML::Document, String, link_index?, link_routes?) -&gt; Nokogiri::XML::Node</p>
 
   </div>
 </div>
@@ -922,19 +922,19 @@ the scan linear, and a match can never span lines.</p>
       <pre class="lines">
 
 
-261
 262
 263
 264
 265
 266
-267</pre>
+267
+268</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 261</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 262</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_anchor'>build_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_href'>href</span><span class='comma'>,</span> <span class='id identifier rubyid_label'>label</span> <span class='op'>=</span> <span class='id identifier rubyid_split_ref'>split_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_anchor'>build_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_href'>href</span><span class='comma'>,</span> <span class='id identifier rubyid_label'>label</span> <span class='op'>=</span> <span class='id identifier rubyid_split_ref'>split_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_element'>element</span> <span class='op'>=</span> <span class='id identifier rubyid_document'>document</span><span class='period'>.</span><span class='id identifier rubyid_create_element'>create_element</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>a</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_element'>element</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>href</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_href'>href</span>
   <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_label'>label</span>
@@ -948,7 +948,7 @@ the scan linear, and a match can never span lines.</p>
       <div class="method_details ">
   <h3 class="signature " id="build_elements-class_method">
   
-    .<strong>build_elements</strong>(document, match, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>build_elements</strong>(document, match, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -961,7 +961,7 @@ alone — in gollum the leading '!' is not an image marker at
 all. It is consumed when the target is an image (the usual
 embed spelling); before a page link it stays as literal text,
 so ![[Page]] renders as &quot;!&quot; followed by a link to Page.
-: (Nokogiri::XML::Document, MatchData, Hash[Symbol, Hash[String, String]]?) -&gt; <a href="Nokogiri::XML::Node">Array</a></p>
+: (Nokogiri::XML::Document, MatchData, link_index?, link_routes?) -&gt; <a href="Nokogiri::XML::Node">Array</a></p>
 
   </div>
 </div>
@@ -974,7 +974,6 @@ so ![[Page]] renders as &quot;!&quot; followed by a link to Page.
       <pre class="lines">
 
 
-238
 239
 240
 241
@@ -985,21 +984,22 @@ so ![[Page]] renders as &quot;!&quot; followed by a link to Page.
 246
 247
 248
-249</pre>
+249
+250</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 239</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_elements'>build_elements</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_match'>match</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_elements'>build_elements</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_match'>match</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_inner'>inner</span> <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='int'>1</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_toc_literal?'>toc_literal?</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
     <span class='lbracket'>[</span><span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>XML</span><span class='op'>::</span><span class='const'>Text</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='id identifier rubyid_document'>document</span><span class='rparen'>)</span><span class='rbracket'>]</span>
   <span class='kw'>elsif</span> <span class='id identifier rubyid_image_target?'>image_target?</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
     <span class='lbracket'>[</span><span class='id identifier rubyid_build_image'>build_image</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='rbracket'>]</span>
   <span class='kw'>elsif</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>!</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='lbracket'>[</span><span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>XML</span><span class='op'>::</span><span class='const'>Text</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>!</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_document'>document</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_build_anchor'>build_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='rbracket'>]</span>
+    <span class='lbracket'>[</span><span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>XML</span><span class='op'>::</span><span class='const'>Text</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>!</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_document'>document</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_build_anchor'>build_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span><span class='rbracket'>]</span>
   <span class='kw'>else</span>
-    <span class='lbracket'>[</span><span class='id identifier rubyid_build_anchor'>build_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='rbracket'>]</span>
+    <span class='lbracket'>[</span><span class='id identifier rubyid_build_anchor'>build_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span><span class='rbracket'>]</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1018,7 +1018,7 @@ so ![[Page]] renders as &quot;!&quot; followed by a link to Page.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (Nokogiri::XML::Document, String, Hash[Symbol, Hash[String, String]]?) -&gt; Nokogiri::XML::Node</p>
+    <p>: (Nokogiri::XML::Document, String, link_index?) -&gt; Nokogiri::XML::Node</p>
 
   </div>
 </div>
@@ -1031,17 +1031,17 @@ so ![[Page]] renders as &quot;!&quot; followed by a link to Page.
       <pre class="lines">
 
 
-270
 271
 272
 273
 274
 275
 276
-277</pre>
+277
+278</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 270</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 271</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_image'>build_image</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='id identifier rubyid_alt'>alt</span> <span class='op'>=</span> <span class='id identifier rubyid_image_parts'>image_parts</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
@@ -1172,7 +1172,7 @@ only after folding keep the first page in the order given.
     <p>Canonicalizes an image/file target against the link index, the
 same lenient lookup pages get; unmatched targets pass through
 as written.
-: (Hash[Symbol, Hash[String, String]]?, String) -&gt; String</p>
+: (link_index?, String) -&gt; String</p>
 
   </div>
 </div>
@@ -1185,16 +1185,16 @@ as written.
       <pre class="lines">
 
 
-422
-423
-424
-425
-426
-427
-428</pre>
+432
+433
+434
+435
+436
+437
+438</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 422</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 432</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_canonical_file_name'>canonical_file_name</span><span class='lparen'>(</span><span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_target'>target</span> <span class='kw'>if</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1232,10 +1232,10 @@ as written.
       <pre class="lines">
 
 
-450</pre>
+460</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 450</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 460</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_escape_markdown_text'>escape_markdown_text</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\\\</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>[</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\[</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>]</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\]</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></pre>
     </td>
@@ -1269,12 +1269,12 @@ angle brackets allow spaces and parens in the destination.
       <pre class="lines">
 
 
-455
-456
-457</pre>
+465
+466
+467</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 455</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 465</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_escape_markdown_url'>escape_markdown_url</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_url'>url</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>)</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_url'>url</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_url'>url</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>(</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='id identifier rubyid_url'>url</span>
@@ -1312,12 +1312,12 @@ does when generating out/ from the markdown tree.
       <pre class="lines">
 
 
-435
-436
-437</pre>
+445
+446
+447</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 435</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 445</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_escape_url_path'>escape_url_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>[^\u{80}-\u{10FFFF}A-Za-z0-9\-._~,]</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_c'>c</span><span class='op'>|</span> <span class='id identifier rubyid_format'>format</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>%%%02X</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_c'>c</span><span class='period'>.</span><span class='id identifier rubyid_ord'>ord</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
@@ -1395,14 +1395,14 @@ blocks with it cannot collide with page content.
       <pre class="lines">
 
 
-171
 172
 173
 174
-175</pre>
+175
+176</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 171</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 172</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_gap_marker'>gap_marker</span><span class='lparen'>(</span><span class='id identifier rubyid_blocks'>blocks</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_marker'>marker</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>wikinder-gap</span><span class='tstring_end'>&#39;</span></span>
@@ -1444,7 +1444,6 @@ parse_tag_parts.
       <pre class="lines">
 
 
-352
 353
 354
 355
@@ -1452,10 +1451,11 @@ parse_tag_parts.
 357
 358
 359
-360</pre>
+360
+361</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 352</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 353</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_image_parts'>image_parts</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_ref'>ref</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>|</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:strip</span><span class='rparen'>)</span>
@@ -1508,15 +1508,15 @@ parse_tag_parts.
       <pre class="lines">
 
 
-440
-441
-442
-443
-444
-445</pre>
+450
+451
+452
+453
+454
+455</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 440</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 450</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_image_target?'>image_target?</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_ref'>ref</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>#</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1606,12 +1606,12 @@ parse_tag_parts.
       <pre class="lines">
 
 
-207
 208
-209</pre>
+209
+210</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_inside_raw_text?'>inside_raw_text?</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_node'>node</span><span class='period'>.</span><span class='id identifier rubyid_ancestors'>ancestors</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_ancestor'>ancestor</span><span class='op'>|</span> <span class='const'><span class='object_link'><a href="#RAW_TEXT_ELEMENTS-constant" title="Wikinder::GitHub::Wiki::Tags::RAW_TEXT_ELEMENTS (constant)">RAW_TEXT_ELEMENTS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_ancestor'>ancestor</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
@@ -1696,12 +1696,12 @@ parse_tag_parts.
       <pre class="lines">
 
 
-178
 179
-180</pre>
+180
+181</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 178</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 179</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_parse_fragment'>parse_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
   <span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>HTML5</span><span class='period'>.</span><span class='id identifier rubyid_fragment'>fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span><span class='rparen'>)</span>
@@ -1735,7 +1735,6 @@ parse_tag_parts.
       <pre class="lines">
 
 
-280
 281
 282
 283
@@ -1744,10 +1743,11 @@ parse_tag_parts.
 286
 287
 288
-289</pre>
+289
+290</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 280</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 281</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_range_for'>range_for</span><span class='lparen'>(</span><span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_source_position'>source_position</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_start_line'>start_line</span> <span class='op'>=</span> <span class='id identifier rubyid_source_position'>source_position</span><span class='lbracket'>[</span><span class='symbol'>:start_line</span><span class='rbracket'>]</span>
@@ -1767,7 +1767,7 @@ parse_tag_parts.
       <div class="method_details ">
   <h3 class="signature " id="render-class_method">
   
-    .<strong>render</strong>(source, link_index: nil)  &#x21d2; <tt>Object</tt> 
+    .<strong>render</strong>(source, link_index: nil, routes: nil)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1775,7 +1775,7 @@ parse_tag_parts.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String, ?link_index: Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+    <p>: (String, ?link_index: link_index?, ?routes: link_routes?) -&gt; String</p>
 
   </div>
 </div>
@@ -1797,10 +1797,10 @@ parse_tag_parts.
     <td>
       <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 40</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='label'>link_index:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='label'>link_index:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>routes:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_offsets'>offsets</span> <span class='op'>=</span> <span class='id identifier rubyid_line_offsets'>line_offsets</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_segments'>segments</span> <span class='op'>=</span> <span class='id identifier rubyid_typed_ranges'>typed_ranges</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_rewrite'>rewrite</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_segments'>segments</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_segments'>segments</span> <span class='op'>=</span> <span class='id identifier rubyid_typed_ranges'>typed_ranges</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_rewrite'>rewrite</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_segments'>segments</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1818,7 +1818,7 @@ parse_tag_parts.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+    <p>: (String, link_index?) -&gt; String</p>
 
   </div>
 </div>
@@ -1831,15 +1831,15 @@ parse_tag_parts.
       <pre class="lines">
 
 
-338
 339
 340
 341
 342
-343</pre>
+343
+344</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 338</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 339</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_render_image'>render_image</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='id identifier rubyid_alt'>alt</span> <span class='op'>=</span> <span class='id identifier rubyid_image_parts'>image_parts</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
@@ -1855,7 +1855,7 @@ parse_tag_parts.
       <div class="method_details ">
   <h3 class="signature " id="render_markdown_anchor-class_method">
   
-    .<strong>render_markdown_anchor</strong>(ref, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>render_markdown_anchor</strong>(ref, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1863,7 +1863,7 @@ parse_tag_parts.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+    <p>: (String, link_index?, link_routes?) -&gt; String</p>
 
   </div>
 </div>
@@ -1876,16 +1876,16 @@ parse_tag_parts.
       <pre class="lines">
 
 
-332
 333
 334
-335</pre>
+335
+336</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 332</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 333</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_render_markdown_anchor'>render_markdown_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_href'>href</span><span class='comma'>,</span> <span class='id identifier rubyid_label'>label</span> <span class='op'>=</span> <span class='id identifier rubyid_split_ref'>split_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_render_markdown_anchor'>render_markdown_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_href'>href</span><span class='comma'>,</span> <span class='id identifier rubyid_label'>label</span> <span class='op'>=</span> <span class='id identifier rubyid_split_ref'>split_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_markdown_text'>escape_markdown_text</span><span class='lparen'>(</span><span class='id identifier rubyid_label'>label</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>](</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_markdown_url'>escape_markdown_url</span><span class='lparen'>(</span><span class='id identifier rubyid_href'>href</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1896,7 +1896,7 @@ parse_tag_parts.
       <div class="method_details ">
   <h3 class="signature " id="resolve_link_target-class_method">
   
-    .<strong>resolve_link_target</strong>(target, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>resolve_link_target</strong>(target, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1921,8 +1921,15 @@ survive intact while only the page path component loses .md.
 A leading '#' is an in-page anchor and passes through unchanged.
 The path is percent-encoded for URL-unsafe ASCII characters
 (e.g. &quot;a?b&quot; becomes &quot;a%3Fb&quot;) but left as-is for non-ASCII, so
-links remain human-readable for UTF-8 slugs.
-: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+links remain human-readable for UTF-8 slugs.</p>
+<p>When the caller supplies <code>routes</code> (a map of slug to URL
+prefix, computed for the page being rendered), the link
+takes that prefix: a translation lives under its language,
+so a target with a translation in the rendered page's
+language is prefixed with that language; an original lives
+at the site root, so its prefix is empty. Without <code>routes</code>
+the historical root-relative form is kept.
+: (String, link_index?, link_routes?) -&gt; String</p>
 
   </div>
 </div>
@@ -1935,25 +1942,26 @@ links remain human-readable for UTF-8 slugs.
       <pre class="lines">
 
 
-403
-404
-405
-406
-407
-408
-409
-410
-411
 412
 413
 414
 415
-416</pre>
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 403</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 412</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_resolve_link_target'>resolve_link_target</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_resolve_link_target'>resolve_link_target</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_target'>target</span> <span class='kw'>if</span> <span class='id identifier rubyid_target'>target</span> <span class='op'>=~</span> <span class='tstring'><span class='regexp_beg'>%r{</span><span class='tstring_content'>\A[a-z][a-z0-9+.-]*://</span><span class='regexp_end'>}i</span></span>
   <span class='kw'>return</span> <span class='id identifier rubyid_target'>target</span> <span class='kw'>if</span> <span class='id identifier rubyid_target'>target</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_target'>target</span> <span class='kw'>if</span> <span class='id identifier rubyid_target'>target</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>#</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1964,7 +1972,8 @@ links remain human-readable for UTF-8 slugs.
   <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_sub'>sub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\.md\z</span><span class='regexp_end'>/</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_path'>path</span>
   <span class='id identifier rubyid_canonical'>canonical</span> <span class='op'>=</span> <span class='id identifier rubyid_link_index'>link_index</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_index_lookup'>index_lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_link_index'>link_index</span><span class='lbracket'>[</span><span class='symbol'>:pages</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='id identifier rubyid_canonical'>canonical</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="Slugs.html" title="Wikinder::GitHub::Wiki::Slugs (module)">Slugs</a></span></span><span class='period'>.</span><span class='id identifier rubyid_for_title'><span class='object_link'><a href="Slugs.html#for_title-class_method" title="Wikinder::GitHub::Wiki::Slugs.for_title (method)">for_title</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_resolved'>resolved</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_url_path'>escape_url_path</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_prefix'>prefix</span> <span class='op'>=</span> <span class='id identifier rubyid_routes'>routes</span> <span class='op'>&amp;&amp;</span> <span class='lparen'>(</span><span class='id identifier rubyid_routes'>routes</span><span class='lbracket'>[</span><span class='id identifier rubyid_slug'>slug</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lparen'>(</span><span class='id identifier rubyid_canonical'>canonical</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_routes'>routes</span><span class='lbracket'>[</span><span class='id identifier rubyid_canonical'>canonical</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_resolved'>resolved</span> <span class='op'>=</span> <span class='id identifier rubyid_prefix'>prefix</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_prefix'>prefix</span><span class='embexpr_end'>}</span><span class='tstring_content'>/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_url_path'>escape_url_path</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_url_path'>escape_url_path</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
   <span class='id identifier rubyid_anchor'>anchor</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_resolved'>resolved</span><span class='embexpr_end'>}</span><span class='tstring_content'>#</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_anchor'>anchor</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='id identifier rubyid_resolved'>resolved</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1975,7 +1984,7 @@ links remain human-readable for UTF-8 slugs.
       <div class="method_details ">
   <h3 class="signature " id="rewrite-class_method">
   
-    .<strong>rewrite</strong>(source, segments, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>rewrite</strong>(source, segments, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1985,7 +1994,7 @@ links remain human-readable for UTF-8 slugs.
   <div class="discussion">
     <p>Rebuild the source from typed segments, splicing gaps through the
 Markdown rewriter.
-: (String, Array[[Range[Integer], String]], Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+: (String, Array[[Range[Integer], String]], link_index?, link_routes?) -&gt; String</p>
 
   </div>
 </div>
@@ -1998,7 +2007,6 @@ Markdown rewriter.
       <pre class="lines">
 
 
-294
 295
 296
 297
@@ -2008,20 +2016,21 @@ Markdown rewriter.
 301
 302
 303
-304</pre>
+304
+305</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 294</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 295</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite'>rewrite</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_segments'>segments</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite'>rewrite</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_segments'>segments</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_out'>out</span> <span class='op'>=</span> <span class='op'>+</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span>
   <span class='id identifier rubyid_position'>position</span> <span class='op'>=</span> <span class='int'>0</span>
   <span class='id identifier rubyid_segments'>segments</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_range'>range</span><span class='comma'>,</span> <span class='id identifier rubyid_content'>content</span><span class='op'>|</span>
-    <span class='id identifier rubyid_out'>out</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='period'>.</span><span class='id identifier rubyid_byteslice'>byteslice</span><span class='lparen'>(</span><span class='id identifier rubyid_position'>position</span><span class='op'>...</span><span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_begin'>begin</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_out'>out</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='period'>.</span><span class='id identifier rubyid_byteslice'>byteslice</span><span class='lparen'>(</span><span class='id identifier rubyid_position'>position</span><span class='op'>...</span><span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_begin'>begin</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_out'>out</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_content'>content</span>
     <span class='id identifier rubyid_position'>position</span> <span class='op'>=</span> <span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_end'>end</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_out'>out</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='period'>.</span><span class='id identifier rubyid_byteslice'>byteslice</span><span class='lparen'>(</span><span class='id identifier rubyid_position'>position</span><span class='op'>..</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_out'>out</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='period'>.</span><span class='id identifier rubyid_byteslice'>byteslice</span><span class='lparen'>(</span><span class='id identifier rubyid_position'>position</span><span class='op'>..</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_out'>out</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -2032,7 +2041,7 @@ Markdown rewriter.
       <div class="method_details ">
   <h3 class="signature " id="rewrite_fragment-class_method">
   
-    .<strong>rewrite_fragment</strong>(text, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>rewrite_fragment</strong>(text, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2041,7 +2050,7 @@ Markdown rewriter.
 </h3><div class="docstring">
   <div class="discussion">
     <p>Rewrite wikilinks in a Markdown source fragment.
-: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+: (String, link_index?, link_routes?) -&gt; String</p>
 
   </div>
 </div>
@@ -2054,7 +2063,6 @@ Markdown rewriter.
       <pre class="lines">
 
 
-308
 309
 310
 311
@@ -2073,12 +2081,13 @@ Markdown rewriter.
 324
 325
 326
-327</pre>
+327
+328</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 308</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 309</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#WIKILINK_PATTERN-constant" title="Wikinder::GitHub::Wiki::Tags::WIKILINK_PATTERN (constant)">WIKILINK_PATTERN</a></span></span><span class='rparen'>)</span> <span class='kw'>do</span>
     <span class='id identifier rubyid_match'>match</span> <span class='op'>=</span> <span class='const'>Regexp</span><span class='period'>.</span><span class='id identifier rubyid_last_match'>last_match</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>gsub block without match data</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -2092,9 +2101,9 @@ Markdown rewriter.
       <span class='comment'># The output is itself Markdown, so a bare &#39;!&#39; in front of
 </span>      <span class='comment'># the link would be re-parsed downstream as an image. The
 </span>      <span class='comment'># escape keeps it the literal text GitHub renders.
-</span>      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\\!</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_render_markdown_anchor'>render_markdown_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+</span>      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\\!</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_render_markdown_anchor'>render_markdown_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>else</span>
-      <span class='id identifier rubyid_render_markdown_anchor'>render_markdown_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_render_markdown_anchor'>render_markdown_anchor</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -2106,7 +2115,7 @@ Markdown rewriter.
       <div class="method_details ">
   <h3 class="signature " id="rewrite_fragment_text_nodes-class_method">
   
-    .<strong>rewrite_fragment_text_nodes</strong>(fragment, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>rewrite_fragment_text_nodes</strong>(fragment, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2117,7 +2126,7 @@ Markdown rewriter.
     <p>Rewrites wikilinks in the text nodes of a parsed fragment.
 Raw-text element contents (script, style, textarea, title) are
 left verbatim, as are attribute values.
-: (Nokogiri::XML::DocumentFragment, Hash[Symbol, Hash[String, String]]?) -&gt; void</p>
+: (Nokogiri::XML::DocumentFragment, link_index?, link_routes?) -&gt; void</p>
 
   </div>
 </div>
@@ -2130,24 +2139,24 @@ left verbatim, as are attribute values.
       <pre class="lines">
 
 
-186
 187
 188
 189
 190
 191
 192
-193</pre>
+193
+194</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 186</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 187</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_fragment'>fragment</span><span class='period'>.</span><span class='id identifier rubyid_traverse'>traverse</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_node'>node</span><span class='op'>|</span>
     <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_node'>node</span><span class='period'>.</span><span class='id identifier rubyid_text?'>text?</span>
     <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_inside_raw_text?'>inside_raw_text?</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='rparen'>)</span>
 
-    <span class='id identifier rubyid_split_and_replace_wikilinks'>split_and_replace_wikilinks</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_split_and_replace_wikilinks'>split_and_replace_wikilinks</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -2158,7 +2167,7 @@ left verbatim, as are attribute values.
       <div class="method_details ">
   <h3 class="signature " id="rewrite_html_block-class_method">
   
-    .<strong>rewrite_html_block</strong>(fragment_text, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>rewrite_html_block</strong>(fragment_text, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2170,7 +2179,7 @@ left verbatim, as are attribute values.
 splits each text node at wikilinks, producing anchor/image
 elements. Used for pages whose blocks cannot be joined (see
 rewrite_html_stream).
-: (String, Hash[Symbol, Hash[String, String]]?) -&gt; String</p>
+: (String, link_index?, link_routes?) -&gt; String</p>
 
   </div>
 </div>
@@ -2183,18 +2192,18 @@ rewrite_html_stream).
       <pre class="lines">
 
 
-200
 201
 202
 203
-204</pre>
+204
+205</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 200</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 201</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_html_block'>rewrite_html_block</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment_text'>fragment_text</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_html_block'>rewrite_html_block</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment_text'>fragment_text</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_fragment'>fragment</span> <span class='op'>=</span> <span class='id identifier rubyid_parse_fragment'>parse_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment_text'>fragment_text</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_fragment'>fragment</span><span class='period'>.</span><span class='id identifier rubyid_to_html'>to_html</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -2205,7 +2214,7 @@ rewrite_html_stream).
       <div class="method_details ">
   <h3 class="signature " id="rewrite_html_stream-class_method">
   
-    .<strong>rewrite_html_stream</strong>(blocks, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>rewrite_html_stream</strong>(blocks, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2224,7 +2233,7 @@ the round trip — it can be swallowed as raw text, e.g. by a</p>
 <script> spanning several blocks — each block is rewritten on
 its own instead, so the result is never worse than per-block
 parsing.
-: (Array[String], Hash[Symbol, Hash[String, String]]?) -> Array[String]
+: (Array[String], link_index?, link_routes?) -> Array[String]
 
   </div>
 </div>
@@ -2237,7 +2246,6 @@ parsing.
       <pre class="lines">
 
 
-138
 139
 140
 141
@@ -2250,12 +2258,13 @@ parsing.
 148
 149
 150
-151</pre>
+151
+152</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 138</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 139</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_html_stream'>rewrite_html_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_blocks'>blocks</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_html_stream'>rewrite_html_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_blocks'>blocks</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
 
   <span class='id identifier rubyid_marker'>marker</span> <span class='op'>=</span> <span class='id identifier rubyid_gap_marker'>gap_marker</span><span class='lparen'>(</span><span class='id identifier rubyid_blocks'>blocks</span><span class='rparen'>)</span>
@@ -2263,9 +2272,9 @@ parsing.
   <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_each_with_index'>each_with_index</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_index'>index</span><span class='op'>|</span> <span class='id identifier rubyid_stream'>stream</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;!--</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_marker'>marker</span><span class='embexpr_end'>}</span><span class='tstring_content'>:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_index'>index</span><span class='embexpr_end'>}</span><span class='tstring_content'>--&gt;</span><span class='tstring_end'>&quot;</span></span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_text'>text</span> <span class='rbrace'>}</span>
   <span class='id identifier rubyid_stream'>stream</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;!--</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_marker'>marker</span><span class='embexpr_end'>}</span><span class='tstring_content'>:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='embexpr_end'>}</span><span class='tstring_content'>--&gt;</span><span class='tstring_end'>&quot;</span></span>
   <span class='id identifier rubyid_fragment'>fragment</span> <span class='op'>=</span> <span class='id identifier rubyid_parse_fragment'>parse_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_stream'>stream</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_pieces'>pieces</span> <span class='op'>=</span> <span class='id identifier rubyid_split_stream'>split_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='period'>.</span><span class='id identifier rubyid_to_html'>to_html</span><span class='comma'>,</span> <span class='id identifier rubyid_marker'>marker</span><span class='comma'>,</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_text'>text</span><span class='op'>|</span> <span class='id identifier rubyid_rewrite_html_block'>rewrite_html_block</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span> <span class='rbrace'>}</span> <span class='kw'>if</span> <span class='id identifier rubyid_pieces'>pieces</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_text'>text</span><span class='op'>|</span> <span class='id identifier rubyid_rewrite_html_block'>rewrite_html_block</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span> <span class='rbrace'>}</span> <span class='kw'>if</span> <span class='id identifier rubyid_pieces'>pieces</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
 
   <span class='id identifier rubyid_pieces'>pieces</span>
 <span class='kw'>end</span></pre>
@@ -2277,7 +2286,7 @@ parsing.
       <div class="method_details ">
   <h3 class="signature " id="split_and_replace_wikilinks-class_method">
   
-    .<strong>split_and_replace_wikilinks</strong>(node, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>split_and_replace_wikilinks</strong>(node, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2285,7 +2294,7 @@ parsing.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (Nokogiri::XML::Node, Hash[Symbol, Hash[String, String]]?) -&gt; void</p>
+    <p>: (Nokogiri::XML::Node, link_index?, link_routes?) -&gt; void</p>
 
   </div>
 </div>
@@ -2298,7 +2307,6 @@ parsing.
       <pre class="lines">
 
 
-212
 213
 214
 215
@@ -2316,12 +2324,13 @@ parsing.
 227
 228
 229
-230</pre>
+230
+231</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 212</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 213</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_and_replace_wikilinks'>split_and_replace_wikilinks</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_and_replace_wikilinks'>split_and_replace_wikilinks</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='id identifier rubyid_node'>node</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span>
   <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>[[</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 
@@ -2332,7 +2341,7 @@ parsing.
     <span class='id identifier rubyid_pre'>pre</span> <span class='op'>=</span> <span class='id identifier rubyid_rest'>rest</span><span class='lbracket'>[</span><span class='int'>0</span><span class='op'>...</span><span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_begin'>begin</span><span class='lparen'>(</span><span class='int'>0</span><span class='rparen'>)</span><span class='rbracket'>]</span>
     <span class='id identifier rubyid_nodes'>nodes</span> <span class='op'>&lt;&lt;</span> <span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>XML</span><span class='op'>::</span><span class='const'>Text</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_pre'>pre</span><span class='comma'>,</span> <span class='id identifier rubyid_document'>document</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_pre'>pre</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_pre'>pre</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
 
-    <span class='id identifier rubyid_nodes'>nodes</span><span class='period'>.</span><span class='id identifier rubyid_concat'>concat</span><span class='lparen'>(</span><span class='id identifier rubyid_build_elements'>build_elements</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_match'>match</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_nodes'>nodes</span><span class='period'>.</span><span class='id identifier rubyid_concat'>concat</span><span class='lparen'>(</span><span class='id identifier rubyid_build_elements'>build_elements</span><span class='lparen'>(</span><span class='id identifier rubyid_document'>document</span><span class='comma'>,</span> <span class='id identifier rubyid_match'>match</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_rest'>rest</span> <span class='op'>=</span> <span class='id identifier rubyid_rest'>rest</span><span class='lbracket'>[</span><span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_end'>end</span><span class='lparen'>(</span><span class='int'>0</span><span class='rparen'>)</span><span class='op'>..</span><span class='rbracket'>]</span>
   <span class='kw'>end</span>
   <span class='id identifier rubyid_nodes'>nodes</span> <span class='op'>&lt;&lt;</span> <span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>XML</span><span class='op'>::</span><span class='const'>Text</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_rest'>rest</span><span class='comma'>,</span> <span class='id identifier rubyid_document'>document</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_rest'>rest</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_rest'>rest</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -2348,7 +2357,7 @@ parsing.
       <div class="method_details ">
   <h3 class="signature " id="split_ref-class_method">
   
-    .<strong>split_ref</strong>(ref, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>split_ref</strong>(ref, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2360,7 +2369,7 @@ parsing.
 parse_tag_parts; anything past the second is discarded, and a
 trailing empty segment disappears with the split, so
 [[Page|]] is an ordinary link to Page.
-: (String, Hash[Symbol, Hash[String, String]]?) -&gt; [String, String]</p>
+: (String, link_index?, link_routes?) -&gt; [String, String]</p>
 
   </div>
 </div>
@@ -2373,7 +2382,6 @@ trailing empty segment disappears with the split, so
       <pre class="lines">
 
 
-367
 368
 369
 370
@@ -2387,23 +2395,24 @@ trailing empty segment disappears with the split, so
 378
 379
 380
-381</pre>
+381
+382</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 367</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 368</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_ref'>split_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_ref'>split_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_ref'>ref</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>|</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:strip</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_parts'>parts</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;=</span> <span class='int'>2</span>
     <span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='id identifier rubyid_parts'>parts</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
     <span class='id identifier rubyid_target'>target</span> <span class='op'>=</span> <span class='id identifier rubyid_parts'>parts</span><span class='lbracket'>[</span><span class='int'>1</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-    <span class='lbracket'>[</span><span class='id identifier rubyid_resolve_link_target'>resolve_link_target</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_text'>text</span><span class='rbracket'>]</span>
+    <span class='lbracket'>[</span><span class='id identifier rubyid_resolve_link_target'>resolve_link_target</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_text'>text</span><span class='rbracket'>]</span>
   <span class='kw'>else</span>
     <span class='id identifier rubyid_single'>single</span> <span class='op'>=</span> <span class='id identifier rubyid_parts'>parts</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
     <span class='kw'>if</span> <span class='id identifier rubyid_single'>single</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>#</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
       <span class='lbracket'>[</span><span class='id identifier rubyid_single'>single</span><span class='comma'>,</span> <span class='id identifier rubyid_single'>single</span><span class='period'>.</span><span class='id identifier rubyid_delete_prefix'>delete_prefix</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>#</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='rbracket'>]</span>
     <span class='kw'>else</span>
-      <span class='lbracket'>[</span><span class='id identifier rubyid_resolve_link_target'>resolve_link_target</span><span class='lparen'>(</span><span class='id identifier rubyid_single'>single</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_single'>single</span><span class='rbracket'>]</span>
+      <span class='lbracket'>[</span><span class='id identifier rubyid_resolve_link_target'>resolve_link_target</span><span class='lparen'>(</span><span class='id identifier rubyid_single'>single</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_single'>single</span><span class='rbracket'>]</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -2439,7 +2448,6 @@ survive in order.
       <pre class="lines">
 
 
-157
 158
 159
 160
@@ -2448,10 +2456,11 @@ survive in order.
 163
 164
 165
-166</pre>
+166
+167</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 157</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 158</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_stream'>split_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_serialized'>serialized</span><span class='comma'>,</span> <span class='id identifier rubyid_marker'>marker</span><span class='comma'>,</span> <span class='id identifier rubyid_count'>count</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_serialized'>serialized</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>&lt;!--</span><span class='embexpr_beg'>#{</span><span class='const'>Regexp</span><span class='period'>.</span><span class='id identifier rubyid_escape'>escape</span><span class='lparen'>(</span><span class='id identifier rubyid_marker'>marker</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>:(\d+)--&gt;</span><span class='regexp_end'>/</span></span><span class='comma'>,</span> <span class='op'>-</span><span class='int'>1</span><span class='rparen'>)</span>
@@ -2509,12 +2518,12 @@ turning them into links.
       <pre class="lines">
 
 
-256
 257
-258</pre>
+258
+259</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 256</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 257</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_toc_literal?'>toc_literal?</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="#TOC_LITERALS-constant" title="Wikinder::GitHub::Wiki::Tags::TOC_LITERALS (constant)">TOC_LITERALS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
@@ -2527,7 +2536,7 @@ turning them into links.
       <div class="method_details ">
   <h3 class="signature " id="typed_ranges-class_method">
   
-    .<strong>typed_ranges</strong>(source, offsets, link_index)  &#x21d2; <tt>Object</tt> 
+    .<strong>typed_ranges</strong>(source, offsets, link_index, routes)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -2539,7 +2548,7 @@ turning them into links.
 either the verbatim source bytes (for tags/code/inline HTML that
 stay as written) or a rewritten fragment — Nokogiri output for
 raw HTML blocks.
-: (String, <a href="Integer">Array</a>, Hash[Symbol, Hash[String, String]]?) -&gt; Array[[Range[Integer], String]]</p>
+: (String, <a href="Integer">Array</a>, link_index?, link_routes?) -&gt; Array[[Range[Integer], String]]</p>
 
   </div>
 </div>
@@ -2574,12 +2583,13 @@ raw HTML blocks.
 121
 122
 123
-124</pre>
+124
+125</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 102</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_typed_ranges'>typed_ranges</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_typed_ranges'>typed_ranges</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_ranges'>ranges</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[[Range[Integer], String]]
 </span>  <span class='id identifier rubyid_html_blocks'>html_blocks</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[[Range[Integer], String]]
 </span>  <span class='const'>Commonmarker</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='label'>options:</span> <span class='lbrace'>{</span> <span class='label'>extension:</span> <span class='lbrace'>{</span> <span class='label'>math_dollars:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>math_code:</span> <span class='kw'>true</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_node'>node</span><span class='op'>|</span>
@@ -2595,7 +2605,8 @@ raw HTML blocks.
       <span class='id identifier rubyid_html_blocks'>html_blocks</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_sp_range'>sp_range</span><span class='comma'>,</span> <span class='id identifier rubyid_source'>source</span><span class='period'>.</span><span class='id identifier rubyid_byteslice'>byteslice</span><span class='lparen'>(</span><span class='id identifier rubyid_sp_range'>sp_range</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_rewrite_html_stream'>rewrite_html_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_html_blocks'>html_blocks</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid__range'>_range</span><span class='comma'>,</span> <span class='id identifier rubyid_text'>text</span><span class='op'>|</span> <span class='id identifier rubyid_text'>text</span> <span class='rbrace'>}</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each_with_index'>each_with_index</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_rewritten'>rewritten</span><span class='comma'>,</span> <span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
+  <span class='id identifier rubyid_rewritten_blocks'>rewritten_blocks</span> <span class='op'>=</span> <span class='id identifier rubyid_rewrite_html_stream'>rewrite_html_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_html_blocks'>html_blocks</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid__range'>_range</span><span class='comma'>,</span> <span class='id identifier rubyid_text'>text</span><span class='op'>|</span> <span class='id identifier rubyid_text'>text</span> <span class='rbrace'>}</span><span class='comma'>,</span> <span class='id identifier rubyid_link_index'>link_index</span><span class='comma'>,</span> <span class='id identifier rubyid_routes'>routes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_rewritten_blocks'>rewritten_blocks</span><span class='period'>.</span><span class='id identifier rubyid_each_with_index'>each_with_index</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_rewritten'>rewritten</span><span class='comma'>,</span> <span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
     <span class='id identifier rubyid_range'>range</span><span class='comma'>,</span> <span class='id identifier rubyid__text'>_text</span> <span class='op'>=</span> <span class='id identifier rubyid_html_blocks'>html_blocks</span><span class='lbracket'>[</span><span class='id identifier rubyid_index'>index</span><span class='rbracket'>]</span>
     <span class='id identifier rubyid_ranges'>ranges</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_range'>range</span><span class='comma'>,</span> <span class='id identifier rubyid_rewritten'>rewritten</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_range'>range</span>
   <span class='kw'>end</span>

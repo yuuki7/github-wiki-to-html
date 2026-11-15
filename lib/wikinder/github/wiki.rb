@@ -49,22 +49,22 @@ module Wikinder
       #   'META', '_Footer'] — the same set the conversion CLI passes —
       #   so Home/_Footer are not emitted as ordinary articles by default.
       #   Pass Set['META'] (or any subset) explicitly to opt out of each.
-      # @param options[:ignore_meta] Ignore committed META.md and derive
+      # @option options :ignore_meta Ignore committed META.md and derive
       #   authorship metadata from git history instead. Used for testing.
-      # @param options[:prev_head] SHA of the commit this repo was last read
+      # @option options :prev_head SHA of the commit this repo was last read
       #   at. Used for incremental META.md sync.
-      # @param options[:site_language] The site's language, stamped onto
+      # @option options :site_language The site's language, stamped onto
       #   special pages. Site metadata is the caller's business (the
       #   conversion CLI maintains it); the module never reads a site
       #   file itself and never detects a language for site parts.
       #   It is also the language the original special pages belong to:
       #   every output is written under a language directory named by
       #   the page's own language.
-      # @param options[:supported_languages] The languages the site
+      # @option options :supported_languages The languages the site
       #   offers translations in. Translation directories naming any
       #   other language are ignored. When empty, every language found
       #   under the translations directory is accepted.
-      # @param options[:translations_dir] Directory holding translated
+      # @option options :translations_dir Directory holding translated
       #   pages as data, one subdirectory per language
       #   (translations/<language>/<Slug>.md). Translation itself is
       #   not this module's business; the files are inputs, produced
