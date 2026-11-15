@@ -1,13 +1,15 @@
 {
   "scripts": {
-    "build": "astro build --config .config/astro.config.mjs",
+    "build": "tsc --project tsconfig.json && prettier --config .config/.prettierrc --write \"templates/public/assets/js/*.js\" && astro build --config .config/astro.config.ts",
     "preview": "astro preview",
-    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --write \"templates/**/*.{astro,css,js}\" \"dist/**/*.html\""
+    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --write \"templates/**/*.{astro,css,js,ts}\" \"dist/**/*.html\""
   },
   "devDependencies": {
+    "@mlc-ai/web-llm": "^0.2.88",
     "astro": "^7.4.2",
     "prettier": "^3.9.10",
-    "prettier-plugin-astro": "^1.1.2"
+    "prettier-plugin-astro": "^1.1.2",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "hastscript": "^9.0.3",

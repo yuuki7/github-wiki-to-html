@@ -80,7 +80,7 @@ export function languageName(language: string): string {
 const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   en: {
     en: "English",
-    "zh": "Simplified Chinese",
+    zh: "Simplified Chinese",
     "zh-hant": "Traditional Chinese",
     ar: "Arabic",
     ja: "Japanese",
@@ -88,7 +88,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   ja: {
     en: "英語",
-    "zh": "中国語（簡体字）",
+    zh: "中国語（簡体字）",
     "zh-hant": "中国語（繁体字）",
     ar: "アラビア語",
     ja: "日本語",
@@ -96,15 +96,15 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   de: {
     en: "Englischen",
-    "zh": "Chinesischen (vereinfacht)",
+    zh: "Chinesischen (vereinfacht)",
     "zh-hant": "Chinesischen (traditionell)",
     ar: "Arabischen",
     ja: "Japanischen",
     de: "Deutschen",
   },
-  "zh": {
+  zh: {
     en: "英语",
-    "zh": "简体中文",
+    zh: "简体中文",
     "zh-hant": "繁体中文",
     ar: "阿拉伯语",
     ja: "日语",
@@ -112,7 +112,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   "zh-hant": {
     en: "英語",
-    "zh": "簡體中文",
+    zh: "簡體中文",
     "zh-hant": "繁體中文",
     ar: "阿拉伯語",
     ja: "日語",
@@ -120,7 +120,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
   },
   ar: {
     en: "الإنجليزية",
-    "zh": "الصينية المبسطة",
+    zh: "الصينية المبسطة",
     "zh-hant": "الصينية التقليدية",
     ar: "العربية",
     ja: "اليابانية",
@@ -142,7 +142,7 @@ export function languageNameIn(language: string, target: string): string {
 const LANGUAGE_NAMES_NOMINATIVE: Record<string, Record<string, string>> = {
   de: {
     en: "Englisch",
-    "zh": "Chinesisch (vereinfacht)",
+    zh: "Chinesisch (vereinfacht)",
     "zh-hant": "Chinesisch (traditionell)",
     ar: "Arabisch",
     ja: "Japanisch",
@@ -215,7 +215,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
       "Dieser Browser unterstützt kein WebGPU, daher kann der Assistent nicht laufen.",
     aiError: "Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.",
   },
-  "zh": {
+  zh: {
     editPage: "编辑此页",
     editPageFrom: (name) => `编辑此页（${name}）`,
     byline: "作者",

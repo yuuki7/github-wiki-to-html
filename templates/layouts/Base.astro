@@ -3,8 +3,6 @@ import BaseHead from "../components/BaseHead.astro";
 import { directionFor } from "../i18n";
 import type { ArticleMetaProps, BaseProps } from "../types";
 
-import "../assets/page.css";
-
 type Props = BaseProps & {
   meta?: ArticleMetaProps;
   isHome?: boolean;
@@ -34,6 +32,7 @@ const {
       meta={meta}
       isHome={isHome}
     />
+    <link rel="stylesheet" href="/assets/css/page.css" />
     <slot name="head" />
     <script is:inline defer src="/assets/js/site.js"></script>
     <script is:inline defer src="/assets/js/ai-assistant.js"></script>
