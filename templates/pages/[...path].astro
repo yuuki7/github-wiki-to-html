@@ -9,9 +9,8 @@ import site from "../../site.json";
 export async function getStaticPaths() {
   const entries = await getCollection("pages");
 
-  // Pages link to every language's version unconditionally, so a
-  // missing version would leave dead links. Refuse to build until
-  // every version exists.
+  // Refuse to build while any page lacks a version in some
+  // language; missingVersions in i18n.ts states the rule.
   const missing = missingVersions(entries);
   if (missing.length > 0) {
     throw new Error(`missing translations: ${missing.join(", ")}`);

@@ -3,9 +3,8 @@
 // form, answered by a small language model that runs entirely
 // in the reader's browser, through WebLLM. Nothing is sent to
 // a server. The library and the model are loaded when the
-// reader first submits the form, and the browser caches the
-// model for the whole site, so later pages reuse the one
-// download. The form is made here, by script: without script
+// reader first submits the form. The form is made here, by
+// script: without script
 // there is no form, rather than a form that does nothing.
 // The model: small, and covered for the site's languages. Its
 // answers are not checked for accuracy; the box is a reading
@@ -19,9 +18,8 @@ const modelStorageKey = "ai-assistant-model";
 // WebLLM itself, loaded on first use from the same CDN the site
 // already uses for MathJax.
 const libraryUrl = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.88/+esm";
-// The model reads at most this much of the article. Its context
-// window is 4096 tokens, and the rest of the window is needed
-// for the conversation and the answer.
+// The model reads at most this much of the article: its context
+// window must also hold the conversation and the answer.
 const articleTextLimit = 6000;
 // How much of the conversation is kept, in messages. Older
 // exchanges are dropped, so a long chat still fits the window.

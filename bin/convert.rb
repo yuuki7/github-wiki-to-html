@@ -36,8 +36,8 @@ OptionParser.new do |opts|
 end.parse!
 
 Dir.chdir(__dir__) do
-  # The site's language lives in the site metadata; the converter only
-  # receives the value, never the file.
+  # Site metadata is read here. The converter receives the values,
+  # never the file.
   site = File.exist?(SITE_PATH) ? JSON.parse(File.read(SITE_PATH)) : {}
 
   # Read the previous HEAD for incremental META.md sync.
@@ -59,6 +59,8 @@ Dir.chdir(__dir__) do
       translations_dir: TRANSLATIONS_DIR
     }
   )
+  # Build, and record the wiki's current HEAD. The next build
+  # reads it back as prev_head for the incremental META.md sync.
   wiki.build(MD_DIR)
   FileUtils.mkdir_p(File.dirname(CACHE_PATH))
   File.write(CACHE_PATH, "#{wiki.head}\n")

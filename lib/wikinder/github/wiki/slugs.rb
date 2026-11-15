@@ -4,11 +4,13 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Consistent title ↔ slug conversion shared across the suite,
-      # mirroring gollum's handling of page files: spaces become hyphens,
-      # everything else passes through unchanged. The transform is lossy by
-      # design — a literal hyphen in a title is indistinguishable from the
-      # space→hyphen mapping, so title_for collapses both to spaces and no
+      # Converts between page titles and slugs.
+      #
+      # The conversion mirrors gollum's handling of page files:
+      # spaces become hyphens, and everything else passes through
+      # unchanged. The transform is lossy by design — a literal
+      # hyphen in a title is indistinguishable from the space→hyphen
+      # mapping, so title_for collapses both to spaces and no
       # round-trip is assumed.
       module Slugs
         #: (String) -> String
@@ -32,8 +34,8 @@ module Wikinder
           return false if slug.include?('/') || slug.include?('\\')
           return false if slug.start_with?('.') # dotfiles are never wiki pages
           # Filesystems cap the length of any single path component
-          # (typically at 255 bytes). The .md extension consumes at most
-          # 3 bytes, leaving 252 for the slug itself.
+          # (typically at 255 bytes); the cap here leaves room for
+          # the .md extension on top of the slug.
           return false if slug.bytesize > 252
 
           true

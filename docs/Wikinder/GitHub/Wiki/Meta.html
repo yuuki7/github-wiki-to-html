@@ -95,9 +95,8 @@ missing or deleted pages are rebuilt from history. Language is
 detected once, when a row is created, and never refreshed — the
 detection is heuristic and flipping it after the fact would silently
 rewrite a value a human may already have reviewed.</p>
-<p>Aliases that slugify to a name already used by an existing page are
-dropped instead of rendering a redirect there: the existing page
-always wins over a generated redirect.</p>
+<p>Aliases that would shadow an existing page are dropped; see
+prune_colliding_aliases!.</p>
 <p>With ignore_meta set, every row is rebuilt from history and the
 previously committed META.md is disregarded.</p>
 <p>Cells are written with backslash escapes — '|' for a literal pipe
@@ -182,7 +181,7 @@ those tolerances are intentional rather than optional.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Builds a fresh row purely from git + text.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Builds a fresh row from git history and the page's own text.</p></div></span>
   
 </li>
 
@@ -204,7 +203,7 @@ those tolerances are intentional rather than optional.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (String?) -&gt; String.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Escapes a value for one META.md table cell.</p></div></span>
   
 </li>
 
@@ -248,7 +247,7 @@ those tolerances are intentional rather than optional.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (Pathname, ?ignore_meta: bool) -&gt; Hash[String, meta_row].</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>The rows already in META.md, keyed by slug.</p></div></span>
   
 </li>
 
@@ -402,7 +401,7 @@ those tolerances are intentional rather than optional.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>: (Pathname, Hash[String, meta_row]) -&gt; void.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Writes the rows as the META.md table: newest first by creation date, ties broken by slug.</p></div></span>
   
 </li>
 
@@ -450,7 +449,7 @@ those tolerances are intentional rather than optional.</p>
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Builds a fresh row purely from git + text.
+    <p>Builds a fresh row from git history and the page's own text.
 : (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?<a href="String">Array</a>) -&gt; meta_row</p>
 
   </div>
@@ -464,7 +463,6 @@ those tolerances are intentional rather than optional.</p>
       <pre class="lines">
 
 
-289
 290
 291
 292
@@ -480,10 +478,11 @@ those tolerances are intentional rather than optional.</p>
 302
 303
 304
-305</pre>
+305
+306</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 289</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 290</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_row'>build_row</span><span class='lparen'>(</span><span class='id identifier rubyid_wiki'>wiki</span><span class='comma'>,</span> <span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='id identifier rubyid_bounds'>bounds</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_renames'>renames</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -518,7 +517,8 @@ those tolerances are intentional rather than optional.</p>
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (String?) -&gt; String</p>
+    <p>Escapes a value for one META.md table cell.
+: (String?) -&gt; String</p>
 
   </div>
 </div>
@@ -572,7 +572,6 @@ and every predecessor slug from rename history otherwise.
       <pre class="lines">
 
 
-256
 257
 258
 259
@@ -580,10 +579,11 @@ and every predecessor slug from rename history otherwise.
 261
 262
 263
-264</pre>
+264
+265</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 256</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 257</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_inherited_row'>inherited_row</span><span class='lparen'>(</span><span class='id identifier rubyid_wiki'>wiki</span><span class='comma'>,</span> <span class='id identifier rubyid_previously'>previously</span><span class='comma'>,</span> <span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_previously'>previously</span><span class='lbracket'>[</span><span class='id identifier rubyid_slug'>slug</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_previously'>previously</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
@@ -610,7 +610,9 @@ and every predecessor slug from rename history otherwise.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (Pathname, ?ignore_meta: bool) -&gt; Hash[String, meta_row]</p>
+    <p>The rows already in META.md, keyed by slug. Empty when
+ignore_meta is set or the file does not exist.
+: (Pathname, ?ignore_meta: bool) -&gt; Hash[String, meta_row]</p>
 
   </div>
 </div>
@@ -623,8 +625,6 @@ and every predecessor slug from rename history otherwise.
       <pre class="lines">
 
 
-85
-86
 87
 88
 89
@@ -640,10 +640,12 @@ and every predecessor slug from rename history otherwise.
 99
 100
 101
-102</pre>
+102
+103
+104</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 87</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_meta_path'>meta_path</span><span class='comma'>,</span> <span class='label'>ignore_meta:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='kw'>if</span> <span class='id identifier rubyid_ignore_meta'>ignore_meta</span>
@@ -692,12 +694,12 @@ and every predecessor slug from rename history otherwise.
       <pre class="lines">
 
 
-308
 309
-310</pre>
+310
+311</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 308</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 309</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_merge_aliases'>merge_aliases</span><span class='lparen'>(</span><span class='id identifier rubyid_existing'>existing</span><span class='comma'>,</span> <span class='id identifier rubyid_absorbed'>absorbed</span><span class='rparen'>)</span>
   <span class='lparen'>(</span><span class='id identifier rubyid_existing'>existing</span> <span class='op'>+</span> <span class='id identifier rubyid_absorbed'>absorbed</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_reject'>reject</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:empty?</span><span class='rparen'>)</span>
@@ -736,8 +738,6 @@ that breaks a row must be fixed, not silently absorbed.</p>
       <pre class="lines">
 
 
-110
-111
 112
 113
 114
@@ -770,10 +770,12 @@ that breaks a row must be fixed, not silently absorbed.</p>
 141
 142
 143
-144</pre>
+144
+145
+146</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 110</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 112</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_parse_row'>parse_row</span><span class='lparen'>(</span><span class='id identifier rubyid_line'>line</span><span class='comma'>,</span> <span class='id identifier rubyid_line_number'>line_number</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_location'>location</span> <span class='op'>=</span> <span class='id identifier rubyid_line_number'>line_number</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> (line </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_line_number'>line_number</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span>
@@ -853,7 +855,6 @@ on a case-insensitive filesystem.
       <pre class="lines">
 
 
-217
 218
 219
 220
@@ -887,10 +888,11 @@ on a case-insensitive filesystem.
 248
 249
 250
-251</pre>
+251
+252</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 217</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 218</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_prune_colliding_aliases!'>prune_colliding_aliases!</span><span class='lparen'>(</span><span class='id identifier rubyid_rows'>rows</span><span class='comma'>,</span> <span class='id identifier rubyid_pages'>pages</span><span class='comma'>,</span> <span class='id identifier rubyid_ungenerated_pages'>ungenerated_pages</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_occupied'>occupied</span> <span class='op'>=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_ungenerated_pages'>ungenerated_pages</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:downcase</span><span class='rparen'>)</span><span class='rparen'>)</span>
@@ -957,7 +959,6 @@ on a case-insensitive filesystem.
       <pre class="lines">
 
 
-268
 269
 270
 271
@@ -974,10 +975,11 @@ on a case-insensitive filesystem.
 282
 283
 284
-285</pre>
+285
+286</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 268</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 269</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_refresh_row'>refresh_row</span><span class='lparen'>(</span><span class='id identifier rubyid_wiki'>wiki</span><span class='comma'>,</span> <span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='id identifier rubyid_previous'>previous</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_slug'>slug</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1119,11 +1121,10 @@ followed by any other byte is kept verbatim.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Syncs META.md with the given pages and returns the merged rows,
-keyed by slug.
-Reads the rows already present in META.md and merges them with
-what git says. With prev_head available, pages untouched since
-prev_head keep their row verbatim (incremental sync).
+    <p>Syncs META.md with the given pages and returns the merged
+rows, keyed by slug. With prev_head available, pages
+untouched since prev_head keep their row verbatim
+(incremental sync).
 : (Wiki, <a href="String">Array</a>, Pathname, ?ignore_meta: bool, ?prev_head: String?) -&gt; Hash[String, meta_row]</p>
 
   </div>
@@ -1137,7 +1138,6 @@ prev_head keep their row verbatim (incremental sync).
       <pre class="lines">
 
 
-152
 153
 154
 155
@@ -1182,10 +1182,11 @@ prev_head keep their row verbatim (incremental sync).
 194
 195
 196
-197</pre>
+197
+198</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 152</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 153</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_sync!'>sync!</span><span class='lparen'>(</span><span class='id identifier rubyid_wiki'>wiki</span><span class='comma'>,</span> <span class='id identifier rubyid_pages'>pages</span><span class='comma'>,</span> <span class='id identifier rubyid_meta_path'>meta_path</span><span class='comma'>,</span> <span class='label'>ignore_meta:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>prev_head:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='comment'># diff_paths returns nil for &quot;full rebuild&quot; (ignore_meta or no valid
@@ -1197,12 +1198,12 @@ prev_head keep their row verbatim (incremental sync).
   <span class='id identifier rubyid_changed'>changed</span> <span class='op'>=</span> <span class='id identifier rubyid_prev_head'>prev_head</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_ignore_meta'>ignore_meta</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='id identifier rubyid_wiki'>wiki</span><span class='period'>.</span><span class='id identifier rubyid_diff_paths'>diff_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_prev_head'>prev_head</span><span class='rparen'>)</span>
 
   <span class='kw'>if</span> <span class='id identifier rubyid_changed'>changed</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_changed'>changed</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-    <span class='comment'># Nothing in the changes itself, but META.md may have drifted from
-</span>    <span class='comment'># this repo (reverted or hand-edited). Keep the rows we already
-</span>    <span class='comment'># have, but rebuild rows for pages the rows no longer cover —
-</span>    <span class='comment'># via refresh_row, so rename inheritance and curated fields are
-</span>    <span class='comment'># honoured exactly as in a full rebuild, not dropped to
-</span>    <span class='comment'># git-derived defaults.
+    <span class='comment'># No page changed since prev_head, but META.md itself may
+</span>    <span class='comment'># have drifted (reverted or hand-edited). Keep the rows we
+</span>    <span class='comment'># already have, but rebuild rows for pages they no longer
+</span>    <span class='comment'># cover — via refresh_row, so rename inheritance and
+</span>    <span class='comment'># curated fields are honoured exactly as in a full rebuild,
+</span>    <span class='comment'># not dropped to git-derived defaults.
 </span>    <span class='id identifier rubyid_still_current'>still_current</span> <span class='op'>=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_pages'>pages</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_page'>page</span><span class='op'>|</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_page'>page</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_previously'>previously</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_slug'>slug</span><span class='comma'>,</span> <span class='id identifier rubyid_row'>row</span><span class='op'>|</span> <span class='id identifier rubyid_rows'>rows</span><span class='lbracket'>[</span><span class='id identifier rubyid_slug'>slug</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_row'>row</span> <span class='rbrace'>}</span>
     <span class='id identifier rubyid_pages'>pages</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_page'>page</span><span class='op'>|</span>
@@ -1249,7 +1250,10 @@ prev_head keep their row verbatim (incremental sync).
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>: (Pathname, Hash[String, meta_row]) -&gt; void</p>
+    <p>Writes the rows as the META.md table: newest first by
+creation date, ties broken by slug. Does nothing when the
+file already holds exactly this content.
+: (Pathname, Hash[String, meta_row]) -&gt; void</p>
 
   </div>
 </div>
@@ -1262,10 +1266,6 @@ prev_head keep their row verbatim (incremental sync).
       <pre class="lines">
 
 
-313
-314
-315
-316
 317
 318
 319
@@ -1285,10 +1285,14 @@ prev_head keep their row verbatim (incremental sync).
 333
 334
 335
-336</pre>
+336
+337
+338
+339
+340</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 313</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 317</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='id identifier rubyid_meta_path'>meta_path</span><span class='comma'>,</span> <span class='id identifier rubyid_rows'>rows</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_sorted'>sorted</span> <span class='op'>=</span> <span class='id identifier rubyid_rows'>rows</span><span class='period'>.</span><span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_a'>a</span><span class='comma'>,</span> <span class='id identifier rubyid_b'>b</span><span class='op'>|</span>
@@ -1345,18 +1349,18 @@ META.md truncated or half-written for the next invocation.
       <pre class="lines">
 
 
-341
-342
-343
-344
 345
 346
 347
 348
-349</pre>
+349
+350
+351
+352
+353</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 341</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/meta.rb', line 345</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_write_atomically'>write_atomically</span><span class='lparen'>(</span><span class='id identifier rubyid_meta_path'>meta_path</span><span class='comma'>,</span> <span class='id identifier rubyid_content'>content</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_temp'>temp</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_meta_path'>meta_path</span><span class='embexpr_end'>}</span><span class='tstring_content'>.tmp.</span><span class='embexpr_beg'>#{</span><span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_pid'>pid</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>

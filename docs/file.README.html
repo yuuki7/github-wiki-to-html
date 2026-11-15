@@ -86,12 +86,12 @@ Starts the preview server.</li>
 <p>We only support Markdown articles.</p>
 <pre class="code mermaid"><code class="mermaid">graph TD
     A[&quot;GitHub Wiki (Markdown files)&quot;] --&gt;|&quot;Wikinder::GitHub::Wiki (Ruby)&quot;| B[&quot;GFM with YAML front matter&quot;]
-    B --&gt;|&quot;Astro (JavaScript)&quot;| C[&quot;Static HTML site&quot;]
+    B --&gt;|&quot;Astro (TypeScript)&quot;| C[&quot;Static HTML site&quot;]
 </code></pre>
 <p>We are considering converting GitHub Wiki Markdown (including the internal link syntax <code>[[...]]</code>) to GFM with YAML front matter, and then converting the GFM to HTML with a static site generator (SSG). This makes the wiki article files more interchangeable.</p>
 <p>The Ruby library gollum-lib offers no readable API for Markdown-to-Markdown conversion, so we are considering building a separate, compatible Ruby module from a copy of its code (which would also make it easier to port to other languages).</p>
 <p>For the SSG, we are considering Astro, which is written in TypeScript.</p>
-<p>Each page is published under a directory named by its language: the language the page itself is written in for originals, and the target language for translations. The site's languages are listed in <code>site.json</code> (English, Simplified and Traditional Chinese, Arabic, Japanese, and German); the first entry's sibling key <code>language</code> names the default language, which the original Home and footer belong to. Translations are not produced by the converter. They are supplied as data under <code>translations/&lt;language&gt;/&lt;Slug&gt;.md</code> (see <code>translations/README.md</code>) and built like the originals, marked as translations with a notice and a link to the original at the top. Internal links point at the same-language version of their target when one exists, and at the original otherwise.</p>
+<p>An original page is published at the site root, and each translation under its language's code. The converter does not produce translations. They are supplied as data under <code>translations/</code> and built like the originals. See <code>translations/README.md</code> for how translations are supplied and how the site's languages are declared.</p>
 <h2 id="Directory_structure">Directory structure</h2>
 <ul>
 <li><code>.config/</code> — Configuration files</li>
@@ -118,12 +118,16 @@ Starts the preview server.</li>
 <li><code>templates/</code> — Astro templates</li>
 <li><code>test/</code> — RSpec tests</li>
 <li><code>translations/</code> — Translated pages, one directory per language</li>
+<li><code>tsconfig.json</code> — TypeScript configuration</li>
+<li><code>tsconfig.scripts.json</code> — TypeScript configuration for the browser scripts</li>
 </ul>
 <h2 id="Development">Development</h2>
 <p>This project uses the following tools for maintainability:</p>
 <ul>
-<li><strong>Rubocop</strong>: Linter and code formatter.</li>
-<li><strong>RBS &amp; Steep</strong>: Static type checker using <code>rbs-inline</code> annotations.</li>
+<li><strong>RuboCop</strong>: Linter and formatter for Ruby.</li>
+<li><strong>RBS and Steep</strong>: Type checking for Ruby, from <code>rbs-inline</code> annotations in the code.</li>
+<li><strong>TypeScript</strong>: Type checking for the templates and browser scripts, through <code>astro check</code> and <code>tsc</code>.</li>
+<li><strong>Prettier</strong>: Formatter for the templates and the built site.</li>
 </ul></div></div>
 
       <div id="footer">

@@ -88,11 +88,12 @@
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-    <p>Consistent title ↔ slug conversion shared across the suite,
-mirroring gollum's handling of page files: spaces become hyphens,
-everything else passes through unchanged. The transform is lossy by
-design — a literal hyphen in a title is indistinguishable from the
-space→hyphen mapping, so title_for collapses both to spaces and no
+    <p>Converts between page titles and slugs.</p>
+<p>The conversion mirrors gollum's handling of page files:
+spaces become hyphens, and everything else passes through
+unchanged. The transform is lossy by design — a literal
+hyphen in a title is indistinguishable from the space→hyphen
+mapping, so title_for collapses both to spaces and no
 round-trip is assumed.</p>
 
   </div>
@@ -215,12 +216,12 @@ round-trip is assumed.</p>
       <pre class="lines">
 
 
-15
-16
-17</pre>
+17
+18
+19</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 15</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 17</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_for_title'>for_title</span><span class='lparen'>(</span><span class='id identifier rubyid_title'>title</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_title'>title</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>-</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -273,8 +274,6 @@ escape the output directory or collapse onto site routes.
       <pre class="lines">
 
 
-29
-30
 31
 32
 33
@@ -284,10 +283,12 @@ escape the output directory or collapse onto site routes.
 37
 38
 39
-40</pre>
+40
+41
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 29</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 31</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_safe?'>safe?</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -295,8 +296,8 @@ escape the output directory or collapse onto site routes.
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='comment'># dotfiles are never wiki pages
 </span>  <span class='comment'># Filesystems cap the length of any single path component
-</span>  <span class='comment'># (typically at 255 bytes). The .md extension consumes at most
-</span>  <span class='comment'># 3 bytes, leaving 252 for the slug itself.
+</span>  <span class='comment'># (typically at 255 bytes); the cap here leaves room for
+</span>  <span class='comment'># the .md extension on top of the slug.
 </span>  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_bytesize'>bytesize</span> <span class='op'>&gt;</span> <span class='int'>252</span>
 
   <span class='kw'>true</span>
@@ -330,10 +331,10 @@ escape the output directory or collapse onto site routes.
       <pre class="lines">
 
 
-20</pre>
+22</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 20</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/slugs.rb', line 22</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_title_for'>title_for</span><span class='lparen'>(</span><span class='id identifier rubyid_slug'>slug</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_slug'>slug</span><span class='period'>.</span><span class='id identifier rubyid_tr'>tr</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>-</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></pre>
     </td>

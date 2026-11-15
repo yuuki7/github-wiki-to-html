@@ -33,6 +33,8 @@ module Wikinder
 
         IMAGE_EXTENSIONS: ::Regexp
 
+        # Converts one page of GitHub Wiki Markdown to standard
+        # GFM Markdown.
         # : (String, ?link_index: link_index?, ?routes: link_routes?) -> String
         def self.render: (String, ?link_index: link_index?, ?routes: link_routes?) -> String
 
@@ -76,11 +78,11 @@ module Wikinder
         # later one; after rewriting, the stream is split at the markers
         # again. Content the parser moved across a marker (an unclosed
         # element before the first block, auto-closures after the last)
-        # is folded into the nearest block. If a marker does not survive
-        # the round trip — it can be swallowed as raw text, e.g. by a
-        # <script> spanning several blocks — each block is rewritten on
-        # its own instead, so the result is never worse than per-block
-        # parsing.
+        # is added to the nearest block. If a marker does not survive
+        # the round trip — a <script> spanning several blocks can hold
+        # it as raw text, so it is no longer a comment — each block is
+        # rewritten on its own instead, so the result is never worse
+        # than per-block parsing.
         # : (Array[String], link_index?, link_routes?) -> Array[String]
         def self.rewrite_html_stream: (Array[String], link_index?, link_routes?) -> Array[String]
 
@@ -114,6 +116,8 @@ module Wikinder
         # : (Nokogiri::XML::Node) -> bool
         def self.inside_raw_text?: (Nokogiri::XML::Node) -> bool
 
+        # Splits a text node at its wikilinks, replacing it with
+        # the text and element nodes the links produce.
         # : (Nokogiri::XML::Node, link_index?, link_routes?) -> void
         def self.split_and_replace_wikilinks: (Nokogiri::XML::Node, link_index?, link_routes?) -> void
 
@@ -157,11 +161,10 @@ module Wikinder
         def self.render_image: (String, link_index?) -> String
 
         # Gollum reads the part after the pipe as image options
-        # (width=100, frame, ...). Standard Markdown cannot express
-        # them, so — by established design — the converter treats that
-        # part as the image's alt text instead of dropping it entirely.
-        # Segments past the second are ignored, as in gollum's
-        # parse_tag_parts.
+        # (width=100, frame, and so on). Standard Markdown cannot
+        # express them, so the converter uses that part as the
+        # image's alt text instead of dropping it. Segments past the
+        # second are ignored, as in gollum's parse_tag_parts.
         # : (String) -> [String, String]
         def self.image_parts: (String) -> [ String, String ]
 
@@ -172,33 +175,27 @@ module Wikinder
         # : (String, link_index?, link_routes?) -> [String, String]
         def self.split_ref: (String, link_index?, link_routes?) -> [ String, String ]
 
-        # When the caller supplies the wiki's link index, a target that
-        # names an existing page is canonicalized to that page's own
-        # spelling — GitHub Wiki resolves internal links leniently
-        # (spaces/hyphens folded, case-insensitive), so the written form
-        # need not match the file name. A target that matches nothing is
-        # rendered as a regular link in its written form: marking missing
-        # pages (Gollum's "absent" class in HTML output) has no place in
-        # Markdown output and belongs, if anywhere, to the site layer.
+        # When the caller supplies the wiki's link index, a target
+        # that names an existing page is canonicalized to that
+        # page's own spelling. GitHub Wiki resolves internal links
+        # leniently (spaces and hyphens folded, case-insensitive),
+        # so the written form need not match the file name. A target
+        # that matches nothing is rendered as a regular link in its
+        # written form: marking missing pages (Gollum's "absent"
+        # class in HTML output) has no place in Markdown output
+        # and belongs, if anywhere, to the site layer.
         #
-        # The piped form never special-cases a leading '#': in gollum's one
-        # fixed rule the first thing is the display text, so [[#math|Math]]
-        # renders [#math](/Math). Anchor handling applies only to the
-        # single-part form ([[#anchor]] -> [anchor](#anchor)).
-        # Handles [[File.md#anchor]] explicitly: the anchor fragment must
-        # survive intact while only the page path component loses .md.
-        # A leading '#' is an in-page anchor and passes through unchanged.
-        # The path is percent-encoded for URL-unsafe ASCII characters
-        # (e.g. "a?b" becomes "a%3Fb") but left as-is for non-ASCII, so
-        # links remain human-readable for UTF-8 slugs.
+        # The piped form never special-cases a leading '#': in
+        # gollum's one fixed rule the first part is the display
+        # text, so [[#math|Math]] renders as [#math](/Math). Anchor
+        # handling applies only to the single-part form ([[#anchor]]
+        # becomes [anchor](#anchor)). In [[File.md#anchor]] only
+        # the page part loses its .md; the fragment survives intact.
         #
-        # When the caller supplies +routes+ (a map of slug to URL
-        # prefix, computed for the page being rendered), the link
-        # takes that prefix: a translation lives under its language,
-        # so a target with a translation in the rendered page's
-        # language is prefixed with that language; an original lives
-        # at the site root, so its prefix is empty. Without +routes+
-        # the historical root-relative form is kept.
+        # When the caller supplies +routes+, the link takes the
+        # prefix routes give for the target's slug (see
+        # Wiki#routes_by_language). Without routes, the historical
+        # root-relative form is kept.
         # : (String, link_index?, link_routes?) -> String
         def self.resolve_link_target: (String, link_index?, link_routes?) -> String
 
@@ -208,10 +205,9 @@ module Wikinder
         # : (link_index?, String) -> String
         def self.canonical_file_name: (link_index?, String) -> String
 
-        # Percent-encodes ASCII characters that are unsafe in a URL path
-        # segment; leaves non-ASCII (UTF-8 IRI) characters alone so that
-        # Japanese slugs remain readable. Mirrors what a typical SSG/Astro
-        # does when generating out/ from the markdown tree.
+        # Percent-encodes ASCII characters that are unsafe in a URL
+        # path segment. Non-ASCII (UTF-8 IRI) characters are left
+        # alone, so Japanese slugs remain readable.
         # : (String) -> String
         def self.escape_url_path: (String) -> String
 

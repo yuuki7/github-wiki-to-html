@@ -31,7 +31,7 @@ for (const pre of document.querySelectorAll("pre.astro-code")) {
     } catch {
       return;
     }
-    // Show the copied label for two seconds, then go back.
+    // Show the copied label briefly, then go back.
     button.textContent = copiedLabel;
     clearTimeout(timer);
     timer = setTimeout(() => {

@@ -29,8 +29,7 @@ const organization = {
 };
 
 // The site's structured data, in the shape the previous site
-// declared: the site itself, published by the Wikinder
-// organization under a Creative Commons license.
+// declared.
 const websiteData = {
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -42,9 +41,8 @@ const websiteData = {
   publisher: organization,
 };
 
-// An article's structured data: the article itself, with its
-// author and dates, published by the same organization under
-// the same license.
+// An article's structured data: its author and dates, with the
+// same publisher and license as the site's.
 const articleData =
   ogType === "article" && meta
     ? {

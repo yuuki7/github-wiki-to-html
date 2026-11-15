@@ -31,7 +31,7 @@ We only support Markdown articles.
 ```mermaid
 graph TD
     A["GitHub Wiki (Markdown files)"] -->|"Wikinder::GitHub::Wiki (Ruby)"| B["GFM with YAML front matter"]
-    B -->|"Astro (JavaScript)"| C["Static HTML site"]
+    B -->|"Astro (TypeScript)"| C["Static HTML site"]
 ```
 
 We are considering converting GitHub Wiki Markdown (including the internal link syntax `[[...]]`) to GFM with YAML front matter, and then converting the GFM to HTML with a static site generator (SSG). This makes the wiki article files more interchangeable.
@@ -40,7 +40,7 @@ The Ruby library gollum-lib offers no readable API for Markdown-to-Markdown conv
 
 For the SSG, we are considering Astro, which is written in TypeScript.
 
-Each page is published under a directory named by its language: the language the page itself is written in for originals, and the target language for translations. The site's languages are listed in `site.json` (English, Simplified and Traditional Chinese, Arabic, Japanese, and German); the first entry's sibling key `language` names the default language, which the original Home and footer belong to. Translations are not produced by the converter. They are supplied as data under `translations/<language>/<Slug>.md` (see `translations/README.md`) and built like the originals, marked as translations with a notice and a link to the original at the top. Internal links point at the same-language version of their target when one exists, and at the original otherwise.
+An original page is published at the site root, and each translation under its language's code. The converter does not produce translations. They are supplied as data under `translations/` and built like the originals. See `translations/README.md` for how translations are supplied and how the site's languages are declared.
 
 ## Directory structure
 
@@ -64,10 +64,14 @@ Each page is published under a directory named by its language: the language the
 - `templates/` — Astro templates
 - `test/` — RSpec tests
 - `translations/` — Translated pages, one directory per language
+- `tsconfig.json` — TypeScript configuration
+- `tsconfig.scripts.json` — TypeScript configuration for the browser scripts
 
 ## Development
 
 This project uses the following tools for maintainability:
 
-- **Rubocop**: Linter and code formatter.
-- **RBS & Steep**: Static type checker using `rbs-inline` annotations.
+- **RuboCop**: Linter and formatter for Ruby.
+- **RBS and Steep**: Type checking for Ruby, from `rbs-inline` annotations in the code.
+- **TypeScript**: Type checking for the templates and browser scripts, through `astro check` and `tsc`.
+- **Prettier**: Formatter for the templates and the built site.

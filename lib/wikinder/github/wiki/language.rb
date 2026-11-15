@@ -38,6 +38,8 @@ module Wikinder
                            '況凍淨涼減湊凜幾鳳鳧憑凱擊鑿芻劃劉剛創刪' \
                            '別剄剮劍劇勸辦務動勵勁勞勢勳'
 
+        # The language of a page body, as a normalized code. Empty
+        # or unrecognized text counts as English.
         #: (String?) -> String
         def self.call(text)
           return 'en' if text.nil? || text.strip.empty?
@@ -62,6 +64,8 @@ module Wikinder
           %w[en ja de ar].include?(base) ? base : code
         end
 
+        # Which Chinese script a code names. Region codes decide
+        # it directly; any other code is decided by the text.
         #: (String, String?) -> String
         def self.chinese_variant(code, text)
           return 'zh-hant' if %w[zh-tw zh-hk zh-mo zh-hant].include?(code)

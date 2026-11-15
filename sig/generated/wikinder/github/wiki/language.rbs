@@ -20,6 +20,8 @@ module Wikinder
 
         TRADITIONAL_ONLY: ::String
 
+        # The language of a page body, as a normalized code. Empty
+        # or unrecognized text counts as English.
         # : (String?) -> String
         def self.call: (String?) -> String
 
@@ -31,6 +33,8 @@ module Wikinder
         # : (String?, ?String?) -> String?
         def self.normalize: (String?, ?String?) -> String?
 
+        # Which Chinese script a code names. Region codes decide
+        # it directly; any other code is decided by the text.
         # : (String, String?) -> String
         def self.chinese_variant: (String, String?) -> String
       end

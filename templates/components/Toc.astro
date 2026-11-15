@@ -10,6 +10,8 @@ type Props = {
 };
 
 const { headings } = Astro.props;
+// Depths 2 to 4, without the heading the renderer adds for the
+// footnotes section: the list is the article's own structure.
 const items = headings.filter(
   (h) => h.depth >= 2 && h.depth <= 4 && h.slug !== "footnote-label",
 );

@@ -14,7 +14,7 @@ require_relative 'wiki/meta'
 
 module Wikinder
   module GitHub
-    # Represents a GitHub Wiki repository as a coherent set of Markdown pages.
+    # Represents the Wikinder GitHub Wiki.
     #
     # The wiki repository contains .md files; this class enumerates them,
     # rewrites wiki-specific syntax, and produces YAML front matter
@@ -44,28 +44,39 @@ module Wikinder
       # Creates a new wiki instance.
       #
       # @param path [String | Pathname] path to the wiki repository.
-      # @param options [Hash] unlisted_pages/ungenerated_pages Sets.
-      #   ungenerated_pages defaults to Set['Home', 'README', 'LICENSE',
-      #   'META', '_Footer'] — the same set the conversion CLI passes —
-      #   so Home/_Footer are not emitted as ordinary articles by default.
-      #   Pass Set['META'] (or any subset) explicitly to opt out of each.
-      # @option options :ignore_meta Ignore committed META.md and derive
-      #   authorship metadata from git history instead. Used for testing.
-      # @option options :prev_head SHA of the commit this repo was last read
-      #   at. Used for incremental META.md sync.
-      # @option options :site_language The site's language, stamped onto
-      #   special pages. Site metadata is the caller's business (the
-      #   conversion CLI maintains it); the module never reads a site
-      #   file itself and never detects a language for site parts.
-      #   It is also the language the original special pages belong to:
-      #   every output is written under a language directory named by
-      #   the page's own language.
-      # @option options :supported_languages The languages the site
-      #   offers translations in. Translation directories naming any
-      #   other language are ignored. When empty, every language found
-      #   under the translations directory is accepted.
-      # @option options :translations_dir Directory holding translated
-      #   pages as data, one subdirectory per language
+      # @param options [Hash] Options for the build. Each key is
+      #   documented below.
+      # @option options [Set[String]] :ungenerated_pages Pages the
+      #   build never generates as articles. The default is the
+      #   same set the conversion CLI passes — the site parts and
+      #   repository files that are not articles — so Home and
+      #   _Footer are not emitted as ordinary articles by default.
+      #   Pass Set['META'] (or any subset) explicitly to opt out of
+      #   each.
+      # @option options [Set[String]] :unlisted_pages Pages kept out
+      #   of the home page's list of articles.
+      # @option options [Boolean] :ignore_meta Ignore committed
+      #   META.md and derive authorship metadata from git history
+      #   instead. Used for testing.
+      # @option options [String, nil] :prev_head SHA of the commit
+      #   this repo was last read at. Used for incremental META.md
+      #   sync.
+      # @option options [String, nil] :site_language The site's
+      #   language, stamped onto special pages. Site metadata belongs
+      #   to the caller (the conversion CLI maintains it); the
+      #   module never reads a site file itself and never detects a
+      #   language for site parts. It is also the language the
+      #   original special pages belong to: every output is written
+      #   under a language directory named by the page's own
+      #   language.
+      # @option options [Array[String]] :supported_languages The
+      #   languages the site offers translations in. A translation
+      #   directory naming any other language fails the build. When
+      #   empty, every language found under the translations
+      #   directory is accepted.
+      # @option options [String, Pathname, nil] :translations_dir
+      #   Directory holding translated pages as data, one
+      #   subdirectory per language
       #   (translations/<language>/<Slug>.md). Translation itself is
       #   not this module's business; the files are inputs, produced
       #   elsewhere, and may carry a YAML front matter whose only key
@@ -128,7 +139,7 @@ module Wikinder
       private
 
       # Refuses to build when any output path would escape the output
-      # directory — callers get a loud error before any filesystem write
+      # directory. The error is raised before any filesystem write
       # happens.
       #: (String, Hash[String, String]) -> void
       def verify_confined!(target_dir, outputs)
@@ -149,7 +160,7 @@ module Wikinder
       # destination — anything matching the generated extensions (Markdown
       # or common image types) that the current build did not produce is
       # removed, at any depth (outputs live in per-language directories),
-      # along with `.tmp.<pid>` stragglers from a crash-during-write.
+      # along with `.tmp.<pid>` files left by a crash during a write.
       # Files with other extensions (e.g. site assets shared with the SSG)
       # are left untouched. Directories left empty by a removal (a
       # language with no pages left) are removed as well.
@@ -313,6 +324,8 @@ module Wikinder
         records
       end
 
+      # One translation file as a record, checked against the
+      # originals first (load_translations states the rules).
       #: (String, String, Hash[String, original_page]) -> translation_record
       def translation_record(file, language, originals)
         # A file name read from disk may be decomposed (NFD), as
@@ -390,7 +403,7 @@ module Wikinder
 
       # Every language this build emits anything in: the originals'
       # languages, the translations' languages, and the site language
-      # (home of the original special pages).
+      # (the original special pages belong to it).
       #: (page_versions, Array[translation_record]) -> Array[String]
       def active_languages(versions, translations)
         languages = Set.new
@@ -484,10 +497,9 @@ module Wikinder
         raise "could not render page #{page}: #{e.class}: #{e.message}"
       end
 
-      # Special pages are site parts, not articles: their language is
-      # the site's language as supplied by the caller, never a language
-      # detected from the body. When the caller supplies none, the key
-      # is omitted rather than invented.
+      # Special pages are site parts, not articles. The language
+      # stamped here is the site language the caller supplied; when
+      # none was supplied, the key is omitted rather than invented.
       #: (String, String, ?Hash[String, String]?) -> String
       def special_output(name, file_name, routes = nil)
         front_matter = {
@@ -547,6 +559,9 @@ module Wikinder
         occupied
       end
 
+      # The pages this build generates, in order: the safe
+      # Markdown pages at the repository root that are not
+      # ungenerated.
       #: () -> Array[String]
       def collect_pages
         result = [] #: Array[String]
@@ -576,6 +591,9 @@ module Wikinder
         (tree || @tree)[path]
       end
 
+      # The text of a page or file in the wiki. Line endings and
+      # encoding are normalized for the parser; see the notes
+      # inline.
       #: (String) -> String
       def text_for(name)
         entry = tree_entry(name)
@@ -594,6 +612,9 @@ module Wikinder
         content.scrub
       end
 
+      # The earliest and latest commits that touched a page,
+      # following its renames. When META.md has no row for the page,
+      # these commits are the source of its author and dates.
       #: (String) -> Hash[Symbol, Rugged::Commit?]
       def commit_bounds_for(path)
         @commit_bounds ||= {} #: Hash[String, Hash[Symbol, Rugged::Commit?]]
@@ -794,6 +815,8 @@ module Wikinder
       #: (String) -> String
       def detect_language(text) = Language.call(text)
 
+      # Whether a commit touched a path. A root commit touches
+      # every path in its tree.
       #: (Rugged::Commit, String) -> bool
       def touched?(commit, path)
         parents = commit.parents
@@ -807,9 +830,9 @@ module Wikinder
         end
       end
 
-      # The wiki repository is flat: all pages live at the repository root,
-      # so a single tree lookup resolves the path.
-
+      # One article's front matter. The values come from the
+      # page's META row when it has one, and from git history
+      # otherwise.
       #: (String, ?Hash[String, meta_row]) -> String
       def article_front_matter(page_name, meta = {})
         slug = File.basename(page_name, '.md')

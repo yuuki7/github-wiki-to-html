@@ -15,9 +15,8 @@ module Wikinder
       # detection is heuristic and flipping it after the fact would silently
       # rewrite a value a human may already have reviewed.
       #
-      # Aliases that slugify to a name already used by an existing page are
-      # dropped instead of rendering a redirect there: the existing page
-      # always wins over a generated redirect.
+      # Aliases that would shadow an existing page are dropped; see
+      # prune_colliding_aliases!.
       #
       # With ignore_meta set, every row is rebuilt from history and the
       # previously committed META.md is disregarded.
@@ -36,6 +35,7 @@ module Wikinder
         ].freeze #: Array[String]
         ALIAS_SEPARATOR = '<br>' #: String
 
+        # Escapes a value for one META.md table cell.
         #: (String?) -> String
         def self.escape_cell(text)
           text.to_s.gsub('\\', '\\\\\\\\').gsub('|', '\\|').gsub(/[\r\n]+/, ' ').strip
@@ -81,6 +81,8 @@ module Wikinder
           cells.map(&:strip)
         end
 
+        # The rows already in META.md, keyed by slug. Empty when
+        # ignore_meta is set or the file does not exist.
         #: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
         def self.load(meta_path, ignore_meta: false)
           return {} if ignore_meta
@@ -143,11 +145,10 @@ module Wikinder
           }
         end
 
-        # Syncs META.md with the given pages and returns the merged rows,
-        # keyed by slug.
-        # Reads the rows already present in META.md and merges them with
-        # what git says. With prev_head available, pages untouched since
-        # prev_head keep their row verbatim (incremental sync).
+        # Syncs META.md with the given pages and returns the merged
+        # rows, keyed by slug. With prev_head available, pages
+        # untouched since prev_head keep their row verbatim
+        # (incremental sync).
         #: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
         def self.sync!(wiki, pages, meta_path, ignore_meta: false, prev_head: nil)
           # diff_paths returns nil for "full rebuild" (ignore_meta or no valid
@@ -159,12 +160,12 @@ module Wikinder
           changed = prev_head.nil? || ignore_meta ? nil : wiki.diff_paths(prev_head)
 
           if changed && changed.empty?
-            # Nothing in the changes itself, but META.md may have drifted from
-            # this repo (reverted or hand-edited). Keep the rows we already
-            # have, but rebuild rows for pages the rows no longer cover —
-            # via refresh_row, so rename inheritance and curated fields are
-            # honoured exactly as in a full rebuild, not dropped to
-            # git-derived defaults.
+            # No page changed since prev_head, but META.md itself may
+            # have drifted (reverted or hand-edited). Keep the rows we
+            # already have, but rebuild rows for pages they no longer
+            # cover — via refresh_row, so rename inheritance and
+            # curated fields are honoured exactly as in a full rebuild,
+            # not dropped to git-derived defaults.
             still_current = Set.new(pages.map { |page| File.basename(page, '.md') })
             previously.each { |slug, row| rows[slug] = row }
             pages.each do |page|
@@ -284,7 +285,7 @@ module Wikinder
           build_row(wiki, page, bounds, renames)
         end
 
-        # Builds a fresh row purely from git + text.
+        # Builds a fresh row from git history and the page's own text.
         #: (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
         def self.build_row(wiki, page, bounds = nil, renames = nil)
           slug = File.basename(page, '.md')
@@ -309,6 +310,9 @@ module Wikinder
           (existing + absorbed).uniq.reject(&:empty?)
         end
 
+        # Writes the rows as the META.md table: newest first by
+        # creation date, ties broken by slug. Does nothing when the
+        # file already holds exactly this content.
         #: (Pathname, Hash[String, meta_row]) -> void
         def self.write(meta_path, rows)
           sorted = rows.values.sort do |a, b|
