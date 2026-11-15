@@ -1,5 +1,13 @@
+# The collection's nokogiri signatures predate HTML5 and do not
+# declare it at all, so the parts this project uses are declared
+# here. At runtime HTML5::DocumentFragment descends from
+# XML::DocumentFragment (through HTML4::DocumentFragment, which
+# the collection does not declare either).
 module Nokogiri
   module HTML5
-    def self.fragment: (String) -> untyped
+    def self.fragment: (String, ?String?) -> DocumentFragment
+
+    class DocumentFragment < Nokogiri::XML::DocumentFragment
+    end
   end
 end

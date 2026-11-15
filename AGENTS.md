@@ -15,6 +15,8 @@ Gotchas:
 - Type information lives in `# rbs_inline:` annotations inside `lib/*.rb`, not in separate RBS files; keep them in sync with the code or `rake check` fails.
 - Avoid `untyped` as much as possible.
 - Keep inline type declarations from becoming verbose by defining type aliases in `sig/wikinder.rbs`.
+- Signatures in `sig/` for a library (for example `rugged.rbs`) must match the library's actual API, independently of how this project uses it. Do not narrow a type to what the current call sites happen to need.
+- Hand-written signatures in `sig/` for libraries that are not our own module (for example `gollum-lib.rbs` and `github/markup.rbs`) are kept even when nothing currently uses them. Do not remove them as dead code.
 
 ## How to Judge Behaviour
 
@@ -30,6 +32,7 @@ In order of precedence:
 
 Settled questions — do not re-litigate:
 
+- `bin/convert.rb` is not type-checked, and adding it to a Steep target would not close any gap. RBS describes classes and modules; a top-level script's constants have no declarations (Steep reports them all as unknown constants), and the values the script passes to `Wiki.new` come from `JSON.parse`, whose result is untyped, so Steep cannot check that flow either.
 - Wikilink pipe order is `[[Display|Target]]`; piped images are the reverse (`[[Path|Caption]]`). Verified against gollum-lib's own tests (positional parsing — `reverse_links` applies only to creole/mediawiki, and we support Markdown only) and consistent with live-wiki rendering.
 - Rugged's `a.diff(b)` treats `a` as the old side, so `commit.diff(parent)` is chronologically reversed — the rename-map comment in `wiki.rb` is correct as written.
 - CommonMarker 2.x `source_position` values are 1-based byte columns; `end_column` is the column of the last byte, inclusive.

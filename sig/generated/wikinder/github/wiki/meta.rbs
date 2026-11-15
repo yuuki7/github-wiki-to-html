@@ -45,13 +45,13 @@ module Wikinder
         # : (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
         def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
 
-        # : (String, ?Integer, Integer?) -> meta_row?
+        # : (String, ?Integer?) -> meta_row?
         #  Line numbers are only used for diagnostics. A broken row is
         #  a fatal error, not a skip: the sync rewrites META.md from
         #  the rows it read, so a skipped row would lose its curated
         #  fields (aliases, language) without a trace. A hand edit
         #  that breaks a row must be fixed, not silently absorbed.
-        def self.parse_row: (String, ?Integer, Integer?) -> meta_row?
+        def self.parse_row: (String, ?Integer?) -> meta_row?
 
         # Syncs META.md with the given pages and returns the merged
         # rows, keyed by slug. With prev_head available, pages
@@ -90,8 +90,8 @@ module Wikinder
         def self.refresh_row: (Wiki, String, meta_row?) -> meta_row
 
         # Builds a fresh row from git history and the page's own text.
-        # : (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
-        def self.build_row: (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
+        # : (Wiki, String, ?commit_bounds, ?Array[String]) -> meta_row
+        def self.build_row: (Wiki, String, ?commit_bounds, ?Array[String]) -> meta_row
 
         # : (Array[String], Array[String]) -> Array[String]
         def self.merge_aliases: (Array[String], Array[String]) -> Array[String]

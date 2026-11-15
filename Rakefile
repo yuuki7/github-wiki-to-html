@@ -16,7 +16,7 @@ task :check do
   # Style, Layout and Lint cops fail the build (convention and above).
   sh 'rubocop --config .config/.rubocop.yaml --fail-level convention'
   sh 'rbs-inline --output sig lib'
-  sh 'rbs validate'
+  sh 'rbs --collection .config/rbs_collection.yaml -I sig validate'
   sh 'steep check --steepfile .config/Steepfile'
 end
 

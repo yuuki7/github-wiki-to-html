@@ -47,3 +47,7 @@ type link_routes = Hash[String, String]
 # Slug -> language -> true for a translation, false for the
 # original.
 type page_versions = Hash[String, Hash[String, bool]]
+
+# The earliest and latest commits that touched a page, under
+# :earliest and :latest. See Wiki#commit_bounds_for.
+type commit_bounds = Hash[Symbol, Rugged::Commit?]

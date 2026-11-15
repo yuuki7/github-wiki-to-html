@@ -3,8 +3,14 @@ import { getCollection } from "astro:content";
 import ArticleView from "../components/ArticleView.astro";
 import Redirect from "../layouts/Redirect.astro";
 import { defaultLanguage, missingVersions, pageHref } from "../i18n";
-import type { ArticleEntry } from "../types";
+import type { ArticleEntry, PageEntry } from "../types";
 import site from "../../site.json";
+
+// One route getStaticPaths hands to Astro: either a page to
+// render or a stub that redirects to it.
+type StaticPath =
+  | { params: { path: string }; props: { entry: PageEntry; lang: string } }
+  | { params: { path: string }; props: { title: string; redirectTo: string } };
 
 export async function getStaticPaths() {
   const entries = await getCollection("pages");
@@ -33,7 +39,7 @@ export async function getStaticPaths() {
         !e.data.translation,
     );
 
-  const paths = [];
+  const paths: StaticPath[] = [];
 
   for (const entry of entries) {
     if (entry.data.kind === "article") {

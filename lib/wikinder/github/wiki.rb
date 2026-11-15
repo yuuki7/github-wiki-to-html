@@ -26,10 +26,10 @@ module Wikinder
     class Wiki
       # @rbs @path: Pathname
       # @rbs @repo: Rugged::Repository
-      # @rbs @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
+      # @rbs @commit_bounds: Hash[String, commit_bounds]
       # @rbs @rename_deltas: Hash[String, String]
       # @rbs @diffs: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
-      # @rbs @link_index: Hash[Symbol, Hash[String, String]]?
+      # @rbs @link_index: link_index?
       # @rbs @tree: Rugged::Tree
       # @rbs @ignore_meta: bool
       # @rbs @prev_head: String?
@@ -86,9 +86,12 @@ module Wikinder
         @path = Pathname(path.to_s).expand_path
         @repo = Rugged::Repository.new(@path.to_s)
         @head = @repo.head.target_id
+        head_commit = rev_parse(@head)
+        raise 'error: HEAD does not name a commit' unless head_commit
+
         # Capture the tree once so walking / lookup during build does not
         # change mid-build (the wiki could otherwise move under a build).
-        @tree = (@repo.rev_parse(@head) || @repo.head.target).tree
+        @tree = head_commit.tree
         @ungenerated_pages = Array(
           options.fetch(:ungenerated_pages) { Set['Home', 'README', 'LICENSE', 'META', '_Footer'] }
         ).to_set.freeze
@@ -98,9 +101,8 @@ module Wikinder
         @prev_head = prev_head.is_a?(String) ? prev_head : nil
         site_language = options[:site_language]
         @site_language = site_language.is_a?(String) ? Language.normalize(site_language) : nil
-        supported = options[:supported_languages]
-        supported_list = [] #: Array[String]
-        supported_list = supported.filter_map { |code| Language.normalize(code.to_s) } if supported.is_a?(Array)
+        supported = options[:supported_languages] || []
+        supported_list = supported.filter_map { |code| Language.normalize(code) }
         @supported_languages = supported_list.uniq.freeze
         translations_dir = options[:translations_dir]
         @translations_dir = translations_dir ? Pathname(translations_dir.to_s).expand_path.to_s : nil
@@ -255,7 +257,10 @@ module Wikinder
           next unless image_extensions.include?(File.extname(path).downcase)
           next if path.start_with?('.') # dotfiles are never wiki assets
 
-          content = @repo.lookup(entry[:oid]).content
+          blob = @repo.lookup(entry[:oid])
+          next unless blob.is_a?(Rugged::Blob)
+
+          content = blob.content
           languages.each { |language| outputs["#{language}/#{path}"] = content }
         end
 
@@ -406,10 +411,11 @@ module Wikinder
       # (the original special pages belong to it).
       #: (page_versions, Array[translation_record]) -> Array[String]
       def active_languages(versions, translations)
-        languages = Set.new
+        languages = Set.new #: Set[String]
         versions.each_value { |by_language| by_language.each_key { |language| languages << language } }
         translations.each { |record| languages << record[:language] }
-        languages << @site_language if @site_language
+        site_language = @site_language
+        languages << site_language if site_language
         languages.to_a.sort
       end
 
@@ -423,7 +429,7 @@ module Wikinder
       # Aliases route to the redirect generated for them, which is
       # served at the root in the target's original language and
       # under the reader's language elsewhere (see redirect_outputs).
-      #: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, Hash[String, String]]
+      #: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, link_routes]
       def routes_by_language(languages, versions, meta)
         result = {} #: Hash[String, Hash[String, String]]
         languages.each do |language|
@@ -599,7 +605,10 @@ module Wikinder
         entry = tree_entry(name)
         return '' unless entry
 
-        content = @repo.lookup(entry[:oid]).content
+        blob = @repo.lookup(entry[:oid])
+        return '' unless blob.is_a?(Rugged::Blob)
+
+        content = blob.content
         # Normalise CR and CRLF line endings; the Commonmarker parser walks
         # \r\n and bare \r as distinct line separators, so CR-only files
         # would otherwise crash range_for with offsets past the end of
@@ -615,9 +624,9 @@ module Wikinder
       # The earliest and latest commits that touched a page,
       # following its renames. When META.md has no row for the page,
       # these commits are the source of its author and dates.
-      #: (String) -> Hash[Symbol, Rugged::Commit?]
+      #: (String) -> commit_bounds
       def commit_bounds_for(path)
-        @commit_bounds ||= {} #: Hash[String, Hash[Symbol, Rugged::Commit?]]
+        @commit_bounds ||= {} #: Hash[String, commit_bounds]
         return @commit_bounds[path] if @commit_bounds.key?(path)
 
         earliest = nil #: Rugged::Commit?
@@ -647,18 +656,20 @@ module Wikinder
         prev_commit = rev_parse(from_ref)
         return nil unless prev_commit
 
-        head_commit = @repo.rev_parse(@head)
+        head_commit = rev_parse(@head)
         return nil unless head_commit
 
         prev_commit.diff(head_commit)
                    .deltas
                    .flat_map { |delta| [delta.old_file[:path], delta.new_file[:path]] }
+                   .compact
                    .uniq
       end
 
       #: (String) -> Rugged::Commit?
       def rev_parse(from_ref)
-        @repo.rev_parse(from_ref)
+        commit = @repo.rev_parse(from_ref)
+        commit if commit.is_a?(Rugged::Commit)
       rescue Rugged::Error
         nil
       end
@@ -722,8 +733,12 @@ module Wikinder
                 # downstream consumers (slug/alias handling, front-matter
                 # YAML) can treat them as plain Strings without ever having
                 # to worry about ASCII-8BIT.
-                newer = delta.old_file[:path].dup.force_encoding(Encoding::UTF_8)
-                older = delta.new_file[:path].dup.force_encoding(Encoding::UTF_8)
+                newer_path = delta.old_file[:path]
+                older_path = delta.new_file[:path]
+                next unless newer_path && older_path
+
+                newer = newer_path.dup.force_encoding(Encoding::UTF_8)
+                older = older_path.dup.force_encoding(Encoding::UTF_8)
                 map[newer] ||= older
                 marked_renames.add(newer)
                 marked_renames.add(older)
@@ -792,7 +807,7 @@ module Wikinder
       # GitHub Wiki resolves them (see Tags.build_link_index). Pages are
       # all .md files here, generated or not — resolution is about what
       # exists in the wiki, not about what this build emits.
-      #: () -> Hash[Symbol, Hash[String, String]]
+      #: () -> link_index
       def link_index
         @link_index ||= begin
           page_slugs = [] #: Array[String]
@@ -825,7 +840,7 @@ module Wikinder
         path_b = path.b
         parents.any? do |parent|
           cached_diff(commit, parent).deltas.any? do |delta|
-            delta.new_file[:path].b == path_b || delta.old_file[:path].b == path_b
+            delta.new_file[:path]&.b == path_b || delta.old_file[:path]&.b == path_b
           end
         end
       end
@@ -846,7 +861,7 @@ module Wikinder
         author = if row
                    row[:author]
                  elsif last
-                   last.author[:name] || 'unknown'
+                   last.author[:name]
                  else
                    'unknown'
                  end

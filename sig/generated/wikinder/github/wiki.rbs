@@ -24,13 +24,13 @@ module Wikinder
 
       @tree: Rugged::Tree
 
-      @link_index: Hash[Symbol, Hash[String, String]]?
+      @link_index: link_index?
 
       @diffs: Hash[[ Rugged::Commit, Rugged::Commit ], Rugged::Diff]
 
       @rename_deltas: Hash[String, String]
 
-      @commit_bounds: Hash[String, Hash[Symbol, Rugged::Commit?]]
+      @commit_bounds: Hash[String, commit_bounds]
 
       @repo: Rugged::Repository
 
@@ -186,8 +186,8 @@ module Wikinder
       # Aliases route to the redirect generated for them, which is
       # served at the root in the target's original language and
       # under the reader's language elsewhere (see redirect_outputs).
-      # : (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, Hash[String, String]]
-      def routes_by_language: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, Hash[String, String]]
+      # : (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, link_routes]
+      def routes_by_language: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, link_routes]
 
       # Builds one translated article: the original's metadata, the
       # translation's own title when it supplies one, and a body whose
@@ -250,8 +250,8 @@ module Wikinder
       # The earliest and latest commits that touched a page,
       # following its renames. When META.md has no row for the page,
       # these commits are the source of its author and dates.
-      # : (String) -> Hash[Symbol, Rugged::Commit?]
-      def commit_bounds_for: (String) -> Hash[Symbol, Rugged::Commit?]
+      # : (String) -> commit_bounds
+      def commit_bounds_for: (String) -> commit_bounds
 
       # Returns the file paths changed between two refs. A full rebuild
       # returns nil (meaning "everything changed") so the sync treats every
@@ -315,8 +315,8 @@ module Wikinder
       # GitHub Wiki resolves them (see Tags.build_link_index). Pages are
       # all .md files here, generated or not — resolution is about what
       # exists in the wiki, not about what this build emits.
-      # : () -> Hash[Symbol, Hash[String, String]]
-      def link_index: () -> Hash[Symbol, Hash[String, String]]
+      # : () -> link_index
+      def link_index: () -> link_index
 
       # : (String) -> String
       def detect_language: (String) -> String

@@ -103,7 +103,7 @@ module Wikinder
           result
         end
 
-        #: (String, ?Integer, Integer?) -> meta_row?
+        #: (String, ?Integer?) -> meta_row?
         # Line numbers are only used for diagnostics. A broken row is
         # a fatal error, not a skip: the sync rewrites META.md from
         # the rows it read, so a skipped row would lose its curated
@@ -230,7 +230,7 @@ module Wikinder
             end
           end
 
-          claims = Hash.new { |hash, key| hash[key] = [] }
+          claims = Hash.new { |hash, key| hash[key] = [] } #: Hash[String, Array[[meta_row, String]]]
           rows.each_value do |row|
             row[:aliases].each do |title|
               claims[Slugs.for_title(title).downcase] << [row, title]
@@ -286,7 +286,7 @@ module Wikinder
         end
 
         # Builds a fresh row from git history and the page's own text.
-        #: (Wiki, String, ?Hash[Symbol, Rugged::Commit?], ?Array[String]) -> meta_row
+        #: (Wiki, String, ?commit_bounds, ?Array[String]) -> meta_row
         def self.build_row(wiki, page, bounds = nil, renames = nil)
           slug = File.basename(page, '.md')
           bounds ||= wiki.commit_bounds_for(page)
@@ -297,7 +297,7 @@ module Wikinder
           {
             slug: slug,
             title: Slugs.title_for(slug),
-            author: first ? first.author[:name] || 'unknown' : 'unknown',
+            author: first ? first.author[:name] : 'unknown',
             creation_date: first ? first.time.utc.iso8601 : 'unknown',
             modified_date: last ? last.time.utc.iso8601 : 'unknown',
             language: Language.call(wiki.text_for(page)),
@@ -321,7 +321,7 @@ module Wikinder
           end
           lines = [*META_TABLE_HEADER]
           sorted.each do |row|
-            title = row[:title] || Slugs.title_for(row[:slug])
+            title = row[:title]
             cells = [
               "[[#{escape_cell(title)}]]",
               escape_cell(row[:author]),

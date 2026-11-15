@@ -14,18 +14,40 @@ module Rugged
 
   type delta_file = {
     oid: String,
-    path: String,
+    path: String?,
     size: Integer,
     flags: Integer,
     mode: Integer
   }
 
+  type find_similar_options = {
+    ?renames: bool,
+    ?renames_from_rewrites: bool,
+    ?copies: bool,
+    ?copies_from_unmodified: bool,
+    ?break_rewrites: bool,
+    ?all: bool,
+    ?ignore_whitespace: bool,
+    ?dont_ignore_whitespace: bool,
+    ?rename_threshold: Integer,
+    ?rename_from_rewrite_threshold: Integer,
+    ?copy_threshold: Integer,
+    ?break_rewrite_threshold: Integer,
+    ?rename_limit: Integer
+  }
+
+  # The common base class of Blob, Tree and Commit: lookup,
+  # rev_parse and Ref#target return whichever object the oid,
+  # spec or ref names.
+  class Object
+  end
+
   class Repository
     def initialize: (String) -> void
     def head: () -> Ref
-    def lookup: (String) -> Blob
-    def walk: (String, ?Symbol) -> Enumerator[Commit, void]
-    def rev_parse: (String) -> Commit
+    def lookup: (String) -> Object
+    def walk: (String, ?Integer) -> Enumerator[Commit, void]
+    def rev_parse: (String) -> Object
   end
 
   class Error < StandardError
@@ -34,19 +56,19 @@ module Rugged
   class ReferenceError < Error
   end
 
-  class Blob
+  class Blob < Object
     def content: () -> String
     def oid: () -> String
   end
 
-  class Tree
+  class Tree < Object
     def []: (String) -> tree_entry?
     def walk: (Symbol) { (String, tree_entry) -> void } -> void
   end
 
   class Diff
     def deltas: () -> Array[Delta]
-    def find_similar!: (?Hash[Symbol, bool]) -> Diff
+    def find_similar!: (?find_similar_options) -> Diff
 
     class Delta
       def old_file: () -> delta_file
@@ -55,7 +77,7 @@ module Rugged
     end
   end
 
-  class Commit
+  class Commit < Object
     def tree: () -> Tree
     def id: () -> String
     def time: () -> Time
@@ -65,7 +87,7 @@ module Rugged
   end
 
   class Ref
-    def target: () -> Commit
+    def target: () -> Object
     def target_id: () -> String
   end
 end

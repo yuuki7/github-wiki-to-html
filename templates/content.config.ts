@@ -3,7 +3,11 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
 const base = "./md";
-const isoDate = z
+// A date as the front matter carries it: a string (which the
+// converter may leave as "unknown" when no date is known) or a
+// YAML date, normalized here to a string. The format itself is
+// not validated.
+const dateLike = z
   .union([z.string(), z.date()])
   .transform((v) => (v instanceof Date ? v.toISOString() : v));
 
@@ -23,8 +27,8 @@ const pages = defineCollection({
       title: z.string(),
       slug: z.string(),
       author: z.string(),
-      creation_date: isoDate,
-      modified_date: isoDate,
+      creation_date: dateLike,
+      modified_date: dateLike,
       language: z.string(),
       original_language: z.string().optional(),
       translation: z.boolean().default(false).optional(),
@@ -40,7 +44,9 @@ const pages = defineCollection({
       kind: z.literal("special"),
       title: z.string(),
       slug: z.string(),
-      language: z.string(),
+      // The converter omits the key when the site has no language;
+      // missingVersions in i18n.ts treats such a page the same way.
+      language: z.string().optional(),
     }),
   ]),
 });
