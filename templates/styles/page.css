@@ -104,6 +104,16 @@ body {
   margin: 0;
 }
 
+/* Code blocks. Shiki, configured in the Astro config, colours
+   the code with a light theme whose background is white like
+   the page itself, so the block needs its own border and
+   padding to stand as a block. The border colour is the one
+   GitHub pairs with that theme. */
+.astro-code {
+  padding: 1em;
+  border: 1px solid #d0d7de;
+}
+
 /* Sidebars: share the article body row */
 .left-sidebar,
 .right-sidebar {
@@ -135,6 +145,14 @@ body {
 .left-sidebar :first-child,
 .right-sidebar :first-child {
   margin-top: 0;
+}
+
+/* The lists in the left sidebar — the article list and the
+   table of contents — are navigation, not bulleted content:
+   no markers, and no marker indent either. */
+.left-sidebar ul {
+  list-style: none;
+  padding-inline-start: 0;
 }
 
 /* Footer */
@@ -235,10 +253,8 @@ body {
   inset-inline-start: anchor(--language-menu-button start);
 }
 
-/* Table of contents. The depth offset is a margin, not padding:
-   with the default outside list marker, padding would move the
-   item's text but leave its bullet in the list's marker column,
-   while a margin moves the item as a whole, bullet included. */
+/* Table of contents: each depth steps the item in with a
+   margin, so the levels line up as one stepped list. */
 .toc__item--depth-2 {
   margin-inline-start: 0;
 }
