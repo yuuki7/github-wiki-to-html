@@ -83,12 +83,12 @@ module Wikinder
 
         # The rows already in META.md, keyed by slug. Empty when
         # ignore_meta is set or the file does not exist.
-        #: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
+        #: (Pathname, ?ignore_meta: bool) -> Hash[String, MetaRow]
         def self.load(meta_path, ignore_meta: false)
           return {} if ignore_meta
           return {} unless meta_path.exist?
 
-          result = {} #: Hash[String, meta_row]
+          result = {} #: Hash[String, MetaRow]
           meta_path.each_line.with_index(1) do |line, index|
             # Strip invalid bytes up-front so the parser never raises
             # Encoding::CompatibilityError on a hand-corrupted line.
@@ -96,14 +96,14 @@ module Wikinder
             row = parse_row(line.chomp, index)
             next unless row
 
-            raise "error: META.md: duplicate row for [[#{row[:slug]}]] on line #{index}" if result.key?(row[:slug])
+            raise Error, "META.md: duplicate row for [[#{row.slug}]] on line #{index}" if result.key?(row.slug)
 
-            result[row[:slug]] = row
+            result[row.slug] = row
           end
           result
         end
 
-        #: (String, ?Integer?) -> meta_row?
+        #: (String, ?Integer?) -> MetaRow?
         # Line numbers are only used for diagnostics. A broken row is
         # a fatal error, not a skip: the sync rewrites META.md from
         # the rows it read, so a skipped row would lose its curated
@@ -120,21 +120,21 @@ module Wikinder
           # The header row is a normal part of every META.md; skip it quietly.
           return nil if cells[0] == 'Title'
 
-          raise "error: META.md: row has too few cells#{location}" if cells.length < META_HEADERS.length
+          raise Error, "META.md: row has too few cells#{location}" if cells.length < META_HEADERS.length
 
           if cells.length > META_HEADERS.length
-            raise "error: META.md: row has #{cells.length - META_HEADERS.length} extra cell(s)#{location}"
+            raise Error, "META.md: row has #{cells.length - META_HEADERS.length} extra cell(s)#{location}"
           end
 
           title_cell = cells[0]
           unless title_cell.start_with?('[[') && title_cell.end_with?(']]')
-            raise "error: META.md: row without a [[Title]] cell#{location}"
+            raise Error, "META.md: row without a [[Title]] cell#{location}"
           end
 
           title = title_cell[2...-2].to_s.strip
-          raise "error: META.md: row with an empty [[]] cell#{location}" if title.empty?
+          raise Error, "META.md: row with an empty [[]] cell#{location}" if title.empty?
 
-          {
+          MetaRow.new(
             slug: Slugs.for_title(title),
             title: title,
             author: cells[1],
@@ -142,20 +142,22 @@ module Wikinder
             modified_date: cells[3],
             language: cells[4],
             aliases: cells[5].split(ALIAS_SEPARATOR).map(&:strip).reject(&:empty?)
-          }
+          )
         end
 
-        # Syncs META.md with the given pages and returns the merged
-        # rows, keyed by slug. With prev_head available, pages
-        # untouched since prev_head keep their row verbatim
+        # Computes the synced META rows for the given pages and
+        # returns them, keyed by slug. Writing them back is
+        # Meta.write's job, kept separate so that computing a build
+        # never mutates the source tree. With prev_head available,
+        # pages untouched since prev_head keep their row verbatim
         # (incremental sync).
-        #: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
-        def self.sync!(wiki, pages, meta_path, ignore_meta: false, prev_head: nil)
+        #: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
+        def self.sync(wiki, pages, meta_path, ignore_meta: false, prev_head: nil)
           # diff_paths returns nil for "full rebuild" (ignore_meta or no valid
           # prev_head); it returns the exact list of paths touched since
           # prev_head otherwise.
           previously = load(meta_path, ignore_meta: ignore_meta)
-          rows = {} #: Hash[String, meta_row]
+          rows = {} #: Hash[String, MetaRow]
 
           changed = prev_head.nil? || ignore_meta ? nil : wiki.diff_paths(prev_head)
 
@@ -174,7 +176,6 @@ module Wikinder
             end
             rows.delete_if { |slug, _| !still_current.include?(slug) }
             prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
-            write(meta_path, rows)
             return rows
           end
 
@@ -182,10 +183,7 @@ module Wikinder
             slug = File.basename(page, '.md')
             inherited = inherited_row(wiki, previously, page, slug)
             if !changed.nil? && inherited && changed.none? { |path| path.b == page.b }
-              row = inherited.dup
-              row[:slug] = slug
-              row[:title] = Slugs.title_for(slug)
-              rows[slug] = row
+              rows[slug] = inherited.with(slug: slug, title: Slugs.title_for(slug))
               next
             end
 
@@ -193,7 +191,6 @@ module Wikinder
           end
 
           prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
-          write(meta_path, rows)
           rows
         end
 
@@ -214,26 +211,27 @@ module Wikinder
         #
         # Comparison is case-insensitive because the output target may live
         # on a case-insensitive filesystem.
-        #: (Hash[String, meta_row], Array[String], Set[String]) -> void
+        #: (Hash[String, MetaRow], Array[String], Set[String]) -> void
         def self.prune_colliding_aliases!(rows, pages, ungenerated_pages)
           occupied = Set.new(ungenerated_pages.map(&:downcase))
           pages.each { |page| occupied << File.basename(page, '.md').downcase }
 
-          rows.each_value do |row|
-            row[:aliases] = row[:aliases].reject do |title|
-              slug = Slugs.for_title(title).downcase
-              unless Slugs.safe?(slug)
+          rows.each do |slug, row|
+            kept = row.aliases.reject do |title|
+              alias_slug = Slugs.for_title(title).downcase
+              unless Slugs.safe?(alias_slug)
                 warn "META.md: ignoring unsafe alias #{title.inspect}; it would not produce a valid page"
                 next true
               end
-              slug == row[:slug].to_s.downcase || occupied.include?(slug)
+              alias_slug == row.slug.downcase || occupied.include?(alias_slug)
             end
+            rows[slug] = row.with(aliases: kept)
           end
 
-          claims = Hash.new { |hash, key| hash[key] = [] } #: Hash[String, Array[[meta_row, String]]]
-          rows.each_value do |row|
-            row[:aliases].each do |title|
-              claims[Slugs.for_title(title).downcase] << [row, title]
+          claims = Hash.new { |hash, key| hash[key] = [] } #: Hash[String, Array[[String, String]]]
+          rows.each do |slug, row|
+            row.aliases.each do |title|
+              claims[Slugs.for_title(title).downcase] << [slug, title]
             end
           end
           claims.each_value do |pairs|
@@ -242,18 +240,18 @@ module Wikinder
 
             # Use a stable owner list for the warning so the same set of
             # pages always produces the same diagnosis.
-            owners = claimants.map { |row| "[[#{row[:slug]}]]" }.sort.join(', ')
+            owners = claimants.map { |slug| "[[#{slug}]]" }.sort.join(', ')
             warn "META.md: alias #{pairs.first[1].inspect} is claimed by #{owners}; ignoring it"
-            pairs.map(&:first).uniq.each do |row|
-              titles = pairs.select { |listed, _| listed.equal?(row) }.map(&:last)
-              row[:aliases] = row[:aliases] - titles
+            pairs.group_by(&:first).each do |slug, owned|
+              row = rows.fetch(slug)
+              rows[slug] = row.with(aliases: row.aliases - owned.map(&:last))
             end
           end
         end
 
         # Finds the row to inherit for a page, trying the current slug first
         # and every predecessor slug from rename history otherwise.
-        #: (Wiki, Hash[String, meta_row], String, String) -> meta_row?
+        #: (Wiki, Hash[String, MetaRow], String, String) -> MetaRow?
         def self.inherited_row(wiki, previously, page, slug)
           return previously[slug] if previously.key?(slug)
 
@@ -265,7 +263,7 @@ module Wikinder
         end
 
         # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
-        #: (Wiki, String, meta_row?) -> meta_row
+        #: (Wiki, String, MetaRow?) -> MetaRow
         def self.refresh_row(wiki, page, previous)
           slug = File.basename(page, '.md')
           bounds = wiki.commit_bounds_for(page)
@@ -274,19 +272,19 @@ module Wikinder
           aliases = renames.map { |name| Slugs.title_for(File.basename(name, '.md')) }
 
           if previous
-            row = previous.dup
-            row[:slug] = slug
-            row[:title] = Slugs.title_for(slug)
-            row[:modified_date] = last.time.utc.iso8601 if last
-            row[:aliases] = merge_aliases(row[:aliases], aliases)
-            return row
+            return previous.with(
+              slug: slug,
+              title: Slugs.title_for(slug),
+              modified_date: last ? last.time.utc.iso8601 : previous.modified_date,
+              aliases: merge_aliases(previous.aliases, aliases)
+            )
           end
 
           build_row(wiki, page, bounds, renames)
         end
 
         # Builds a fresh row from git history and the page's own text.
-        #: (Wiki, String, ?commit_bounds, ?Array[String]) -> meta_row
+        #: (Wiki, String, ?commit_bounds, ?Array[String]) -> MetaRow
         def self.build_row(wiki, page, bounds = nil, renames = nil)
           slug = File.basename(page, '.md')
           bounds ||= wiki.commit_bounds_for(page)
@@ -294,15 +292,15 @@ module Wikinder
           last = bounds[:latest]
           first = bounds[:earliest]
 
-          {
+          MetaRow.new(
             slug: slug,
             title: Slugs.title_for(slug),
             author: first ? first.author[:name] : 'unknown',
             creation_date: first ? first.time.utc.iso8601 : 'unknown',
             modified_date: last ? last.time.utc.iso8601 : 'unknown',
-            language: Language.call(wiki.text_for(page)),
+            language: Language.call(wiki.text_for(page), supported: wiki.supported_languages),
             aliases: renames.map { |name| Slugs.title_for(File.basename(name, '.md')) }
-          }
+          )
         end
 
         #: (Array[String], Array[String]) -> Array[String]
@@ -313,22 +311,22 @@ module Wikinder
         # Writes the rows as the META.md table: newest first by
         # creation date, ties broken by slug. Does nothing when the
         # file already holds exactly this content.
-        #: (Pathname, Hash[String, meta_row]) -> void
+        #: (Pathname, Hash[String, MetaRow]) -> void
         def self.write(meta_path, rows)
           sorted = rows.values.sort do |a, b|
-            (b[:creation_date].to_s <=> a[:creation_date].to_s).nonzero? ||
-              (a[:slug].to_s <=> b[:slug].to_s)
+            (b.creation_date <=> a.creation_date).nonzero? ||
+              (a.slug <=> b.slug)
           end
           lines = [*META_TABLE_HEADER]
           sorted.each do |row|
-            title = row[:title]
+            title = row.title
             cells = [
               "[[#{escape_cell(title)}]]",
-              escape_cell(row[:author]),
-              escape_cell(row[:creation_date]),
-              escape_cell(row[:modified_date]),
-              escape_cell(row[:language]),
-              escape_cell(row[:aliases].join(ALIAS_SEPARATOR))
+              escape_cell(row.author),
+              escape_cell(row.creation_date),
+              escape_cell(row.modified_date),
+              escape_cell(row.language),
+              escape_cell(row.aliases.join(ALIAS_SEPARATOR))
             ]
             inner = cells.map { |cell| cell.empty? ? ' ' : " #{cell} " }.join('|')
             lines << "|#{inner}|"

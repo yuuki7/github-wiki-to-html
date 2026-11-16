@@ -42,23 +42,25 @@ module Wikinder
 
         # The rows already in META.md, keyed by slug. Empty when
         # ignore_meta is set or the file does not exist.
-        # : (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
-        def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, meta_row]
+        # : (Pathname, ?ignore_meta: bool) -> Hash[String, MetaRow]
+        def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, MetaRow]
 
-        # : (String, ?Integer?) -> meta_row?
+        # : (String, ?Integer?) -> MetaRow?
         #  Line numbers are only used for diagnostics. A broken row is
         #  a fatal error, not a skip: the sync rewrites META.md from
         #  the rows it read, so a skipped row would lose its curated
         #  fields (aliases, language) without a trace. A hand edit
         #  that breaks a row must be fixed, not silently absorbed.
-        def self.parse_row: (String, ?Integer?) -> meta_row?
+        def self.parse_row: (String, ?Integer?) -> MetaRow?
 
-        # Syncs META.md with the given pages and returns the merged
-        # rows, keyed by slug. With prev_head available, pages
-        # untouched since prev_head keep their row verbatim
+        # Computes the synced META rows for the given pages and
+        # returns them, keyed by slug. Writing them back is
+        # Meta.write's job, kept separate so that computing a build
+        # never mutates the source tree. With prev_head available,
+        # pages untouched since prev_head keep their row verbatim
         # (incremental sync).
-        # : (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
-        def self.sync!: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, meta_row]
+        # : (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
+        def self.sync: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
 
         # Drops aliases that slugify to a name already used by an existing
         # page (generated or ungenerated), or to the row's own slug.
@@ -77,21 +79,21 @@ module Wikinder
         #
         # Comparison is case-insensitive because the output target may live
         # on a case-insensitive filesystem.
-        # : (Hash[String, meta_row], Array[String], Set[String]) -> void
-        def self.prune_colliding_aliases!: (Hash[String, meta_row], Array[String], Set[String]) -> void
+        # : (Hash[String, MetaRow], Array[String], Set[String]) -> void
+        def self.prune_colliding_aliases!: (Hash[String, MetaRow], Array[String], Set[String]) -> void
 
         # Finds the row to inherit for a page, trying the current slug first
         # and every predecessor slug from rename history otherwise.
-        # : (Wiki, Hash[String, meta_row], String, String) -> meta_row?
-        def self.inherited_row: (Wiki, Hash[String, meta_row], String, String) -> meta_row?
+        # : (Wiki, Hash[String, MetaRow], String, String) -> MetaRow?
+        def self.inherited_row: (Wiki, Hash[String, MetaRow], String, String) -> MetaRow?
 
         # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
-        # : (Wiki, String, meta_row?) -> meta_row
-        def self.refresh_row: (Wiki, String, meta_row?) -> meta_row
+        # : (Wiki, String, MetaRow?) -> MetaRow
+        def self.refresh_row: (Wiki, String, MetaRow?) -> MetaRow
 
         # Builds a fresh row from git history and the page's own text.
-        # : (Wiki, String, ?commit_bounds, ?Array[String]) -> meta_row
-        def self.build_row: (Wiki, String, ?commit_bounds, ?Array[String]) -> meta_row
+        # : (Wiki, String, ?commit_bounds, ?Array[String]) -> MetaRow
+        def self.build_row: (Wiki, String, ?commit_bounds, ?Array[String]) -> MetaRow
 
         # : (Array[String], Array[String]) -> Array[String]
         def self.merge_aliases: (Array[String], Array[String]) -> Array[String]
@@ -99,8 +101,8 @@ module Wikinder
         # Writes the rows as the META.md table: newest first by
         # creation date, ties broken by slug. Does nothing when the
         # file already holds exactly this content.
-        # : (Pathname, Hash[String, meta_row]) -> void
-        def self.write: (Pathname, Hash[String, meta_row]) -> void
+        # : (Pathname, Hash[String, MetaRow]) -> void
+        def self.write: (Pathname, Hash[String, MetaRow]) -> void
 
         # Writes via a temporary file so a crash mid-write can never leave
         # META.md truncated or half-written for the next invocation.

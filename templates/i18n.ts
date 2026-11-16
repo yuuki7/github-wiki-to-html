@@ -1,5 +1,12 @@
 import site from "../site.json";
 
+// The languages the site is published in, as a type. This is the
+// type-level copy of site.json's language list: the name and
+// string tables below are checked against it, so a language
+// missing from a table fails type checking instead of falling
+// back silently at run time.
+export type SupportedLanguage = "ar" | "de" | "en" | "ja" | "zh" | "zh-hant";
+
 // The site's languages, from the hand-maintained site metadata. The
 // default language is the one the original special pages belong to;
 // every other language exists once pages are translated into it.
@@ -67,7 +74,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   ar: "العربية",
   ja: "日本語",
   de: "Deutsch",
-};
+} satisfies Record<SupportedLanguage, string>;
 
 // A language's own name for itself, for the language switcher.
 export function languageName(language: string): string {
@@ -126,7 +133,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
     ja: "اليابانية",
     de: "الألمانية",
   },
-};
+} satisfies Record<SupportedLanguage, Record<SupportedLanguage, string>>;
 
 // The name of the target language as written in the given
 // language, falling back to the target's own name for itself.
@@ -251,7 +258,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiUnsupported: "هذا المتصفح لا يدعم WebGPU، لذا لا يمكن للمساعد أن يعمل.",
     aiError: "حدث خطأ ما. حاول مرة أخرى.",
   },
-};
+} satisfies Record<SupportedLanguage, UiStrings>;
 
 // The interface strings in a language, falling back to the default
 // language for languages without their own set.

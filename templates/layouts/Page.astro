@@ -17,7 +17,6 @@ const {
   meta,
   language,
   className,
-  alternates,
   languageLinks,
   canonical,
   ogType,
@@ -28,7 +27,7 @@ const {
   title={title}
   language={language}
   className={className}
-  alternates={alternates}
+  alternates={languageLinks}
   canonical={canonical}
   ogType={ogType}
   meta={meta}
@@ -49,7 +48,7 @@ const {
             <span aria-hidden="true">🌐</span>
             {languageName(language)}
           </button>
-          <ul class="language-switcher" id="language-switcher" popover>
+          <ul class="language-menu__panel" id="language-switcher" popover>
             {languageLinks.map((link) => (
               <li>
                 {link.language === language ? (
@@ -82,11 +81,7 @@ const {
   </Main>
 
   <RightSidebar>
-    {Astro.slots.has("right-sidebar") ? (
-      <slot name="right-sidebar" />
-    ) : (
-      <p>aaa</p>
-    )}
+    <slot name="right-sidebar" />
   </RightSidebar>
 
   <Footer>

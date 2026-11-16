@@ -41,8 +41,9 @@ module Wikinder
         #: (String, ?link_index: link_index?, ?routes: link_routes?) -> String
         def self.render(source, link_index: nil, routes: nil)
           offsets = line_offsets(source)
-          segments = typed_ranges(source, offsets, link_index, routes)
-          rewrite(source, segments, link_index, routes)
+          resolver = LinkResolver.new(link_index, routes)
+          segments = typed_ranges(source, offsets, resolver)
+          rewrite(source, segments, resolver)
         end
 
         # Builds the lookup used to canonicalize link targets against a
@@ -85,6 +86,151 @@ module Wikinder
           index[name] || index[fold_key(name)]
         end
 
+        # Resolves the wikilinks of one page render against the
+        # wiki's link index and the routes of the language being
+        # rendered. The index and the routes are fixed for a whole
+        # page, so the rewriting pipeline carries one resolver
+        # instead of threading the pair through every step; only
+        # what varies from link to link is passed along.
+        class LinkResolver
+          # @rbs @link_index: link_index?
+          # @rbs @routes: link_routes?
+
+          #: (link_index?, link_routes?) -> void
+          def initialize(link_index, routes)
+            @link_index = link_index
+            @routes = routes
+          end
+
+          # Whether a target is an image is decided by its extension
+          # alone — in gollum the leading '!' is not an image marker at
+          # all. It is consumed when the target is an image (the usual
+          # embed spelling); before a page link it stays as literal text,
+          # so ![[Page]] renders as "!" followed by a link to Page.
+          #: (Nokogiri::XML::Document, MatchData) -> Array[Nokogiri::XML::Node]
+          def build_elements(document, match)
+            inner = match[1].to_s.strip
+            if Tags.toc_literal?(inner)
+              [Nokogiri::XML::Text.new(match[0].to_s, document)]
+            elsif Tags.image_target?(inner)
+              [build_image(document, inner)]
+            elsif match[0].to_s.start_with?('!')
+              [Nokogiri::XML::Text.new('!', document), build_anchor(document, inner)]
+            else
+              [build_anchor(document, inner)]
+            end
+          end
+
+          #: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+          def build_anchor(document, inner)
+            href, label = split_ref(inner)
+            element = document.create_element('a')
+            element['href'] = href
+            element.content = label
+            element
+          end
+
+          #: (Nokogiri::XML::Document, String) -> Nokogiri::XML::Node
+          def build_image(document, inner)
+            target, alt = Tags.image_parts(inner)
+            target = canonical_file_name(target)
+            element = document.create_element('img')
+            element['src'] = target
+            element['alt'] = alt.to_s.empty? ? File.basename(target, '.*') : alt
+            element
+          end
+
+          # --- Link rendering, Markdown mode
+
+          #: (String) -> String
+          def render_markdown_anchor(ref)
+            href, label = split_ref(ref)
+            "[#{Tags.escape_markdown_text(label)}](#{Tags.escape_markdown_url(href)})"
+          end
+
+          #: (String) -> String
+          def render_image(ref)
+            target, alt = Tags.image_parts(ref)
+            target = canonical_file_name(target)
+            alt = File.basename(target, '.*') if alt.to_s.empty?
+            "![#{Tags.escape_markdown_text(alt)}](#{Tags.escape_markdown_url(target)})"
+          end
+
+          # Only the first two pipe segments are used, as in gollum's
+          # parse_tag_parts; anything past the second is discarded, and a
+          # trailing empty segment disappears with the split, so
+          # [[Page|]] is an ordinary link to Page.
+          #: (String) -> [String, String]
+          def split_ref(ref)
+            parts = ref.split('|').map(&:strip)
+            if parts.size >= 2
+              text = parts[0].to_s
+              target = parts[1].to_s
+              [resolve_link_target(target), text]
+            else
+              single = parts[0].to_s
+              if single.start_with?('#')
+                [single, single.delete_prefix('#')]
+              else
+                [resolve_link_target(single), single]
+              end
+            end
+          end
+
+          # When the caller supplies the wiki's link index, a target
+          # that names an existing page is canonicalized to that
+          # page's own spelling. GitHub Wiki resolves internal links
+          # leniently (spaces and hyphens folded, case-insensitive),
+          # so the written form need not match the file name. A target
+          # that matches nothing is rendered as a regular link in its
+          # written form: marking missing pages (Gollum's "absent"
+          # class in HTML output) has no place in Markdown output
+          # and belongs, if anywhere, to the site layer.
+          #
+          # The piped form never special-cases a leading '#': in
+          # gollum's one fixed rule the first part is the display
+          # text, so [[#math|Math]] renders as [#math](/Math). Anchor
+          # handling applies only to the single-part form ([[#anchor]]
+          # becomes [anchor](#anchor)). In [[File.md#anchor]] only
+          # the page part loses its .md; the fragment survives intact.
+          #
+          # When the caller supplies +routes+, the link takes the
+          # prefix routes give for the target's slug (see
+          # Wiki#routes_by_language). Without routes, the historical
+          # root-relative form is kept.
+          #: (String) -> String
+          def resolve_link_target(target)
+            return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
+            return target if target.start_with?('/')
+            return target if target.start_with?('#')
+
+            link_index = @link_index
+            routes = @routes
+            fragment = target.split('#', 2)
+            path = fragment[0] || ''
+            anchor = fragment[1]
+            name = path.end_with?('.md') ? path.sub(/\.md\z/, '') : path
+            canonical = link_index && Tags.index_lookup(link_index[:pages], name)
+            slug = canonical || Slugs.for_title(name)
+            prefix = routes && (routes[slug] || (canonical && routes[canonical]))
+            resolved = prefix ? "#{prefix}/#{Tags.escape_url_path(slug)}" : "/#{Tags.escape_url_path(slug)}"
+            anchor ? "#{resolved}##{anchor}" : resolved
+          end
+
+          # Canonicalizes an image/file target against the link index, the
+          # same lenient lookup pages get; unmatched targets pass through
+          # as written.
+          #: (String) -> String
+          def canonical_file_name(target)
+            link_index = @link_index
+            return target if link_index.nil?
+            return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
+            return target if target.start_with?('/')
+
+            Tags.index_lookup(link_index[:files], target) || target
+          end
+        end
+
         #: (String) -> Array[Integer]
         def self.line_offsets(source)
           offsets = [] #: Array[Integer]
@@ -100,8 +246,8 @@ module Wikinder
         # either the verbatim source bytes (for tags/code/inline HTML that
         # stay as written) or a rewritten fragment — Nokogiri output for
         # raw HTML blocks.
-        #: (String, Array[Integer], link_index?, link_routes?) -> Array[[Range[Integer], String]]
-        def self.typed_ranges(source, offsets, link_index, routes)
+        #: (String, Array[Integer], LinkResolver) -> Array[[Range[Integer], String]]
+        def self.typed_ranges(source, offsets, resolver)
           ranges = [] #: Array[[Range[Integer], String]]
           html_blocks = [] #: Array[[Range[Integer], String]]
           Commonmarker.parse(source, options: { extension: { math_dollars: true, math_code: true } }).walk do |node|
@@ -117,7 +263,7 @@ module Wikinder
               html_blocks << [sp_range, source.byteslice(sp_range).to_s]
             end
           end
-          rewritten_blocks = rewrite_html_stream(html_blocks.map { |_range, text| text }, link_index, routes)
+          rewritten_blocks = rewrite_html_stream(html_blocks.map { |_range, text| text }, resolver)
           rewritten_blocks.each_with_index do |rewritten, index|
             range, _text = html_blocks[index]
             ranges << [range, rewritten] if range
@@ -137,8 +283,8 @@ module Wikinder
         # it as raw text, so it is no longer a comment — each block is
         # rewritten on its own instead, so the result is never worse
         # than per-block parsing.
-        #: (Array[String], link_index?, link_routes?) -> Array[String]
-        def self.rewrite_html_stream(blocks, link_index, routes)
+        #: (Array[String], LinkResolver) -> Array[String]
+        def self.rewrite_html_stream(blocks, resolver)
           return [] if blocks.empty?
 
           marker = gap_marker(blocks)
@@ -146,9 +292,9 @@ module Wikinder
           blocks.each_with_index { |text, index| stream << "<!--#{marker}:#{index}-->" << text }
           stream << "<!--#{marker}:#{blocks.size}-->"
           fragment = parse_fragment(stream)
-          rewrite_fragment_text_nodes(fragment, link_index, routes)
+          rewrite_fragment_text_nodes(fragment, resolver)
           pieces = split_stream(fragment.to_html, marker, blocks.size)
-          return blocks.map { |text| rewrite_html_block(text, link_index, routes) } if pieces.nil?
+          return blocks.map { |text| rewrite_html_block(text, resolver) } if pieces.nil?
 
           pieces
         end
@@ -185,13 +331,13 @@ module Wikinder
         # Rewrites wikilinks in the text nodes of a parsed fragment.
         # Raw-text element contents (script, style, textarea, title) are
         # left verbatim, as are attribute values.
-        #: (Nokogiri::XML::DocumentFragment, link_index?, link_routes?) -> void
-        def self.rewrite_fragment_text_nodes(fragment, link_index, routes)
+        #: (Nokogiri::XML::DocumentFragment, LinkResolver) -> void
+        def self.rewrite_fragment_text_nodes(fragment, resolver)
           fragment.traverse do |node|
             next unless node.text?
             next if inside_raw_text?(node)
 
-            split_and_replace_wikilinks(node, link_index, routes)
+            split_and_replace_wikilinks(node, resolver)
           end
         end
 
@@ -199,10 +345,10 @@ module Wikinder
         # splits each text node at wikilinks, producing anchor/image
         # elements. Used for pages whose blocks cannot be joined (see
         # rewrite_html_stream).
-        #: (String, link_index?, link_routes?) -> String
-        def self.rewrite_html_block(fragment_text, link_index, routes)
+        #: (String, LinkResolver) -> String
+        def self.rewrite_html_block(fragment_text, resolver)
           fragment = parse_fragment(fragment_text)
-          rewrite_fragment_text_nodes(fragment, link_index, routes)
+          rewrite_fragment_text_nodes(fragment, resolver)
           fragment.to_html
         end
 
@@ -213,8 +359,8 @@ module Wikinder
 
         # Splits a text node at its wikilinks, replacing it with
         # the text and element nodes the links produce.
-        #: (Nokogiri::XML::Node, link_index?, link_routes?) -> void
-        def self.split_and_replace_wikilinks(node, link_index, routes)
+        #: (Nokogiri::XML::Node, LinkResolver) -> void
+        def self.split_and_replace_wikilinks(node, resolver)
           text = node.content
           return unless text.include?('[[')
 
@@ -225,32 +371,13 @@ module Wikinder
             pre = rest[0...match.begin(0)]
             nodes << Nokogiri::XML::Text.new(pre, document) if pre.is_a?(String) && !pre.empty?
 
-            nodes.concat(build_elements(document, match, link_index, routes))
+            nodes.concat(resolver.build_elements(document, match))
             rest = rest[match.end(0)..]
           end
           nodes << Nokogiri::XML::Text.new(rest, document) if rest.is_a?(String) && !rest.empty?
           return if nodes.empty?
 
           node.replace(Nokogiri::XML::NodeSet.new(document, nodes))
-        end
-
-        # Whether a target is an image is decided by its extension
-        # alone — in gollum the leading '!' is not an image marker at
-        # all. It is consumed when the target is an image (the usual
-        # embed spelling); before a page link it stays as literal text,
-        # so ![[Page]] renders as "!" followed by a link to Page.
-        #: (Nokogiri::XML::Document, MatchData, link_index?, link_routes?) -> Array[Nokogiri::XML::Node]
-        def self.build_elements(document, match, link_index, routes)
-          inner = match[1].to_s.strip
-          if toc_literal?(inner)
-            [Nokogiri::XML::Text.new(match[0].to_s, document)]
-          elsif image_target?(inner)
-            [build_image(document, inner, link_index)]
-          elsif match[0].to_s.start_with?('!')
-            [Nokogiri::XML::Text.new('!', document), build_anchor(document, inner, link_index, routes)]
-          else
-            [build_anchor(document, inner, link_index, routes)]
-          end
         end
 
         # GitHub Wiki leaves [[_TOC_]] and [[__TOC__]] unconverted —
@@ -260,25 +387,6 @@ module Wikinder
         #: (String) -> bool
         def self.toc_literal?(inner)
           TOC_LITERALS.include?(inner)
-        end
-
-        #: (Nokogiri::XML::Document, String, link_index?, link_routes?) -> Nokogiri::XML::Node
-        def self.build_anchor(document, inner, link_index, routes)
-          href, label = split_ref(inner, link_index, routes)
-          element = document.create_element('a')
-          element['href'] = href
-          element.content = label
-          element
-        end
-
-        #: (Nokogiri::XML::Document, String, link_index?) -> Nokogiri::XML::Node
-        def self.build_image(document, inner, link_index)
-          target, alt = image_parts(inner)
-          target = canonical_file_name(link_index, target)
-          element = document.create_element('img')
-          element['src'] = target
-          element['alt'] = alt.to_s.empty? ? File.basename(target, '.*') : alt
-          element
         end
 
         #: (Array[Integer], Hash[Symbol, Integer]) -> Range[Integer]
@@ -295,22 +403,22 @@ module Wikinder
 
         # Rebuild the source from typed segments, splicing gaps through the
         # Markdown rewriter.
-        #: (String, Array[[Range[Integer], String]], link_index?, link_routes?) -> String
-        def self.rewrite(source, segments, link_index, routes)
+        #: (String, Array[[Range[Integer], String]], LinkResolver) -> String
+        def self.rewrite(source, segments, resolver)
           out = +''
           position = 0
           segments.each do |range, content|
-            out << rewrite_fragment(source.byteslice(position...range.begin) || '', link_index, routes)
+            out << rewrite_fragment(source.byteslice(position...range.begin) || '', resolver)
             out << content
             position = range.end
           end
-          out << rewrite_fragment(source.byteslice(position..) || '', link_index, routes)
+          out << rewrite_fragment(source.byteslice(position..) || '', resolver)
           out
         end
 
         # Rewrite wikilinks in a Markdown source fragment.
-        #: (String, link_index?, link_routes?) -> String
-        def self.rewrite_fragment(text, link_index, routes)
+        #: (String, LinkResolver) -> String
+        def self.rewrite_fragment(text, resolver)
           text.gsub(WIKILINK_PATTERN) do
             match = Regexp.last_match
             raise 'gsub block without match data' if match.nil?
@@ -319,32 +427,16 @@ module Wikinder
             if toc_literal?(inner)
               match[0].to_s
             elsif image_target?(inner)
-              render_image(inner, link_index)
+              resolver.render_image(inner)
             elsif match[0].to_s.start_with?('!')
               # The output is itself Markdown, so a bare '!' in front of
               # the link would be re-parsed downstream as an image. The
               # escape keeps it the literal text GitHub renders.
-              "\\!#{render_markdown_anchor(inner, link_index, routes)}"
+              "\\!#{resolver.render_markdown_anchor(inner)}"
             else
-              render_markdown_anchor(inner, link_index, routes)
+              resolver.render_markdown_anchor(inner)
             end
           end
-        end
-
-        # --- Link rendering, Markdown mode
-
-        #: (String, link_index?, link_routes?) -> String
-        def self.render_markdown_anchor(ref, link_index, routes)
-          href, label = split_ref(ref, link_index, routes)
-          "[#{escape_markdown_text(label)}](#{escape_markdown_url(href)})"
-        end
-
-        #: (String, link_index?) -> String
-        def self.render_image(ref, link_index)
-          target, alt = image_parts(ref)
-          target = canonical_file_name(link_index, target)
-          alt = File.basename(target, '.*') if alt.to_s.empty?
-          "![#{escape_markdown_text(alt)}](#{escape_markdown_url(target)})"
         end
 
         # Gollum reads the part after the pipe as image options
@@ -361,77 +453,6 @@ module Wikinder
             target = parts[0].to_s
             [target, File.basename(target, '.*')]
           end
-        end
-
-        # Only the first two pipe segments are used, as in gollum's
-        # parse_tag_parts; anything past the second is discarded, and a
-        # trailing empty segment disappears with the split, so
-        # [[Page|]] is an ordinary link to Page.
-        #: (String, link_index?, link_routes?) -> [String, String]
-        def self.split_ref(ref, link_index, routes)
-          parts = ref.split('|').map(&:strip)
-          if parts.size >= 2
-            text = parts[0].to_s
-            target = parts[1].to_s
-            [resolve_link_target(target, link_index, routes), text]
-          else
-            single = parts[0].to_s
-            if single.start_with?('#')
-              [single, single.delete_prefix('#')]
-            else
-              [resolve_link_target(single, link_index, routes), single]
-            end
-          end
-        end
-
-        # When the caller supplies the wiki's link index, a target
-        # that names an existing page is canonicalized to that
-        # page's own spelling. GitHub Wiki resolves internal links
-        # leniently (spaces and hyphens folded, case-insensitive),
-        # so the written form need not match the file name. A target
-        # that matches nothing is rendered as a regular link in its
-        # written form: marking missing pages (Gollum's "absent"
-        # class in HTML output) has no place in Markdown output
-        # and belongs, if anywhere, to the site layer.
-        #
-        # The piped form never special-cases a leading '#': in
-        # gollum's one fixed rule the first part is the display
-        # text, so [[#math|Math]] renders as [#math](/Math). Anchor
-        # handling applies only to the single-part form ([[#anchor]]
-        # becomes [anchor](#anchor)). In [[File.md#anchor]] only
-        # the page part loses its .md; the fragment survives intact.
-        #
-        # When the caller supplies +routes+, the link takes the
-        # prefix routes give for the target's slug (see
-        # Wiki#routes_by_language). Without routes, the historical
-        # root-relative form is kept.
-        #: (String, link_index?, link_routes?) -> String
-        def self.resolve_link_target(target, link_index, routes)
-          return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
-          return target if target.start_with?('/')
-          return target if target.start_with?('#')
-
-          fragment = target.split('#', 2)
-          path = fragment[0] || ''
-          anchor = fragment[1]
-          name = path.end_with?('.md') ? path.sub(/\.md\z/, '') : path
-          canonical = link_index && index_lookup(link_index[:pages], name)
-          slug = canonical || Slugs.for_title(name)
-          prefix = routes && (routes[slug] || (canonical && routes[canonical]))
-          resolved = prefix ? "#{prefix}/#{escape_url_path(slug)}" : "/#{escape_url_path(slug)}"
-          anchor ? "#{resolved}##{anchor}" : resolved
-        end
-
-        # Canonicalizes an image/file target against the link index, the
-        # same lenient lookup pages get; unmatched targets pass through
-        # as written.
-        #: (link_index?, String) -> String
-        def self.canonical_file_name(link_index, target)
-          return target if link_index.nil?
-          return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
-          return target if target.start_with?('/')
-
-          index_lookup(link_index[:files], target) || target
         end
 
         # Percent-encodes ASCII characters that are unsafe in a URL

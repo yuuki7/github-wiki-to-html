@@ -10,32 +10,6 @@ type wiki_options = {
   ?unlisted_pages: Set[String]
 }
 
-# One row of META.md, as Meta keeps it.
-type meta_row = {
-  slug: String,
-  title: String,
-  author: String,
-  creation_date: String,
-  modified_date: String,
-  language: String,
-  aliases: Array[String]
-}
-
-# An original page: its file path and its own language.
-type original_page = {
-  page: String,
-  language: String
-}
-
-# One translation file, as read from the translations directory.
-type translation_record = {
-  slug: String,
-  language: String,
-  title: String?,
-  body: String,
-  special: bool
-}
-
 # Page and file names of a wiki, for link lookup. See
 # Tags.build_link_index.
 type link_index = Hash[Symbol, Hash[String, String]]

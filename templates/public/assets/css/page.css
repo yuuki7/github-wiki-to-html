@@ -27,6 +27,11 @@
 
   /* Metadata gap */
   --article__meta-gap: 0.5rlh;
+
+  /* Colors */
+  --border-color: #d0d7de;
+  --surface-color: #fff;
+  --muted-surface-color: #f6f8fa;
 }
 
 /* Page grid */
@@ -104,6 +109,83 @@ body {
   margin: 0;
 }
 
+/* Article body elements. The article body is ordinary HTML
+   from the Markdown conversion, and the built-in styles
+   browsers give it differ in detail. This baseline states the
+   standard values explicitly, so the article renders the same
+   everywhere and the stylesheet says what the body looks like
+   instead of leaving it to defaults. Where the site has no
+   design of its own yet, the values follow the conventions of
+   GitHub's Markdown rendering. */
+.article__main h2 {
+  font-size: 1.5em;
+}
+
+.article__main h3 {
+  font-size: 1.25em;
+}
+
+.article__main h4 {
+  font-size: 1em;
+}
+
+.article__main h5 {
+  font-size: 0.875em;
+}
+
+.article__main h6 {
+  font-size: 0.85em;
+}
+
+.article__main h2,
+.article__main h3,
+.article__main h4,
+.article__main h5,
+.article__main h6 {
+  line-height: 1.25;
+}
+
+/* Inline code. Code blocks are styled by Expressive Code; its
+   code sits inside a <pre>, which this rule does not reach. */
+.article__main :not(pre) > code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 85%;
+  background-color: var(--muted-surface-color);
+  padding: 0.2em 0.4em;
+  border-radius: 0.375em;
+}
+
+.article__main blockquote {
+  margin: 0;
+  padding-inline-start: 1em;
+  border-inline-start: 0.25em solid var(--border-color);
+}
+
+.article__main table {
+  border-collapse: collapse;
+  max-width: 100%;
+}
+
+.article__main th,
+.article__main td {
+  border: 1px solid var(--border-color);
+  padding: 0.375em 0.75em;
+}
+
+.article__main img {
+  max-width: 100%;
+  height: auto;
+}
+
+.article__main hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+}
+
+.article__main summary {
+  cursor: pointer;
+}
+
 /* Sidebars: share the article body row. Only the left sidebar
    sticks; the right one scrolls away with the page. */
 .left-sidebar,
@@ -125,11 +207,6 @@ body {
 .right-sidebar {
   grid-column: 3;
   justify-self: start;
-}
-
-.left-sidebar > :first-child,
-.right-sidebar > :first-child {
-  margin-top: 0;
 }
 
 /* Nested lists (e.g. the TOC) must also not push the sidebar down. */
@@ -203,7 +280,7 @@ body {
    positioning. The inset reset comes first: a popover's
    built-in style pins all four edges to 0, and an edge left
    pinned over-constrains the panel against the opposite one. */
-.language-switcher {
+.language-menu__panel {
   inset: auto;
   margin: 0;
   margin-top: 0.25em;
@@ -217,18 +294,18 @@ body {
   list-style: none;
   padding: 0.5em 0.75em;
   border: 1px solid currentColor;
-  background-color: #fff;
+  background-color: var(--surface-color);
   box-shadow: 0 0.25em 1em rgb(0 0 0 / 0.15);
   font-size: 95%;
 }
 
-.language-switcher:popover-open {
+.language-menu__panel:popover-open {
   display: flex;
   flex-direction: column;
   gap: 0.25em;
 }
 
-.language-switcher a {
+.language-menu__panel a {
   display: block;
 }
 
@@ -238,7 +315,7 @@ body {
   justify-content: flex-start;
 }
 
-.home .language-switcher {
+.home .language-menu__panel {
   inset-inline-end: auto;
   inset-inline-start: var(--body-margin-horizontal);
   inset-inline-start: anchor(--language-menu-button start);
@@ -255,8 +332,8 @@ body {
 
 .ai-assistant__send {
   padding: 0.25em 0.75em;
-  border: 1px solid #d0d7de;
-  background-color: #fff;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-color);
   font: inherit;
   font-size: 85%;
   cursor: pointer;
@@ -284,7 +361,7 @@ body {
 .ai-assistant__message--user {
   padding: 0.5em 1em;
   border-radius: 1em;
-  background-color: #f6f8fa;
+  background-color: var(--muted-surface-color);
 }
 
 .ai-assistant__form {
@@ -297,7 +374,7 @@ body {
   flex: 1;
   min-width: 0;
   padding: 0.25em 0.5em;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--border-color);
   font: inherit;
   font-size: 90%;
 }
@@ -312,4 +389,45 @@ body {
 }
 .toc__item--depth-4 {
   margin-inline-start: 3em;
+}
+
+/* Narrow viewports: the three columns stack into one. Below
+   this width the main column — half the viewport in the
+   three-column grid — falls under about fifty characters and
+   the side columns squeeze it further, so the sidebars move
+   below the article at full width instead, in reading order:
+   header, article, left sidebar, right sidebar, footer. The
+   left sidebar stops sticking. Turning the stacked sidebars
+   into collapsible menus is a further step, not part of this
+   stacking. */
+@media (max-width: 60rem) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-rows:
+      [header] auto [article-header] auto [article-main] auto
+      [left-sidebar] auto [right-sidebar] auto [footer] auto;
+  }
+
+  .header,
+  .main,
+  .footer {
+    grid-column: 1;
+  }
+
+  .left-sidebar,
+  .right-sidebar {
+    grid-column: 1;
+    justify-self: stretch;
+    width: auto;
+    max-width: none;
+  }
+
+  .left-sidebar {
+    grid-row: left-sidebar;
+    position: static;
+  }
+
+  .right-sidebar {
+    grid-row: right-sidebar;
+  }
 }

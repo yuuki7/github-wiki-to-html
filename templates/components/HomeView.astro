@@ -1,6 +1,8 @@
 ---
 import { getCollection, render } from "astro:content";
-import HomePage from "../layouts/HomePage.astro";
+import Page from "../layouts/Page.astro";
+import AiAssistant from "./AiAssistant.astro";
+import { specialPage } from "../content";
 import type { ArticleEntry } from "../types";
 import site from "../../site.json";
 import {
@@ -23,19 +25,7 @@ const home = pages.find(
     f.data.slug === "Home" &&
     f.data.language === lang,
 );
-const footer =
-  pages.find(
-    (f) =>
-      f.data.kind === "special" &&
-      f.data.slug === "_Footer" &&
-      f.data.language === lang,
-  ) ??
-  pages.find(
-    (f) =>
-      f.data.kind === "special" &&
-      f.data.slug === "_Footer" &&
-      f.data.language === site.language,
-  );
+const footer = specialPage(pages, "_Footer", lang, defaultLanguage);
 
 const listedPages = pages
   .filter(
@@ -62,12 +52,11 @@ const { Content: FooterContent } = footer
   : { Content: null };
 ---
 
-<HomePage
+<Page
   className="home"
   title={site.name}
   language={lang}
   isHome
-  alternates={languageLinks}
   languageLinks={languageLinks}
   canonical={absoluteUrl(homeHref(lang))}
   ogType="website"
@@ -97,18 +86,7 @@ const { Content: FooterContent } = footer
   </ul>
 
   <Fragment slot="right-sidebar">
-    <section
-      class="ai-assistant"
-      data-summarize={ui.aiSummarize}
-      data-loading={ui.aiLoading}
-      data-send={ui.aiSend}
-      data-unsupported={ui.aiUnsupported}
-      data-error={ui.aiError}
-    >
-      <h2 class="ai-assistant__title">AI</h2>
-      <div class="ai-assistant__log"></div>
-      <p class="ai-assistant__status" hidden></p>
-    </section>
+    <AiAssistant ui={ui} />
   </Fragment>
 
   {HomeContent && <HomeContent />}
@@ -121,4 +99,4 @@ const { Content: FooterContent } = footer
         : ui.editPageFrom(languageNameInNominative(lang, defaultLanguage))}
     </a>
   </Fragment>
-</HomePage>
+</Page>

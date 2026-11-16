@@ -1,15 +1,16 @@
 ---
 import { getCollection, render } from "astro:content";
-import IndividualPage from "../layouts/IndividualPage.astro";
+import Page from "../layouts/Page.astro";
 import site from "../../site.json";
 import Redirect from "../layouts/Redirect.astro";
+import AiAssistant from "./AiAssistant.astro";
 import Toc from "./Toc.astro";
-import type { ArticleEntry } from "../types";
+import { articlePageData, specialPage } from "../content";
 import {
   absoluteUrl,
+  defaultLanguage,
   languageNameInNominative,
   pageHref,
-  supportedLanguages,
   uiFor,
 } from "../i18n";
 
@@ -17,70 +18,23 @@ import {
 // the page is served for: the article's own language, or, for a
 // redirect (which carries no language), its directory's language.
 const { entry, lang } = Astro.props;
-const isRedirect = entry.data.kind === "redirect";
 
 const entries = await getCollection("pages");
+const {
+  isRedirect,
+  originalLanguage,
+  articleLinks,
+  targetHref,
+  isTranslation,
+} = articlePageData(entry, entries, lang);
 
 // The footer in this page's language, falling back to the site's
 // default language when the footer has not been translated.
-const footerFragment =
-  entries.find(
-    (f) =>
-      f.data.kind === "special" &&
-      f.data.slug === "_Footer" &&
-      f.data.language === lang,
-  ) ??
-  entries.find(
-    (f) =>
-      f.data.kind === "special" &&
-      f.data.slug === "_Footer" &&
-      f.data.language === site.language,
-  );
+const footerFragment = specialPage(entries, "_Footer", lang, defaultLanguage);
 const { Content: FooterContent } = footerFragment
   ? await render(footerFragment)
   : { Content: null };
 
-// The article's original language: the page's own language for an
-// original, the recorded original language for a translation.
-// Which languages have a version of the article is never checked
-// here. Every supported language is expected to have one, and
-// seeing to that is the translation side's responsibility.
-const originalLanguage =
-  entry.data.kind === "article"
-    ? (entry.data.original_language ?? entry.data.language)
-    : undefined;
-
-// This article in every supported language, for the language
-// switcher and the hreflang links alike: the original at the
-// root, a translation under its language.
-const articleLinks = isRedirect
-  ? []
-  : supportedLanguages.map((language) => ({
-      language,
-      href: pageHref(language, entry.data.slug, language !== originalLanguage),
-    }));
-
-// For a redirect, the target in the language the redirect serves:
-// the original at the root when that is the target's original
-// language, the translation under its language otherwise.
-const targetOriginal = isRedirect
-  ? entries.find(
-      (e): e is ArticleEntry =>
-        e.data.kind === "article" &&
-        e.data.slug === entry.data.target_slug &&
-        !e.data.translation,
-    )
-  : undefined;
-const targetHref = isRedirect
-  ? pageHref(
-      lang,
-      entry.data.target_slug,
-      lang !== targetOriginal?.data.language,
-    )
-  : undefined;
-
-const isTranslation =
-  entry.data.kind === "article" && (entry.data.translation ?? false);
 const ui = uiFor(lang);
 
 const rendered = isRedirect ? null : await render(entry);
@@ -89,10 +43,9 @@ const rendered = isRedirect ? null : await render(entry);
 {isRedirect ? (
   <Redirect title={entry.data.title} targetHref={targetHref!} />
 ) : (
-  <IndividualPage
+  <Page
     title={entry.data.title}
     language={entry.data.language}
-    alternates={articleLinks}
     languageLinks={articleLinks}
     canonical={absoluteUrl(
       pageHref(lang, entry.data.slug, entry.data.translation ?? false),
@@ -128,18 +81,7 @@ const rendered = isRedirect ? null : await render(entry);
     </Fragment>
 
     <Fragment slot="right-sidebar">
-      <section
-        class="ai-assistant"
-        data-summarize={ui.aiSummarize}
-        data-loading={ui.aiLoading}
-        data-send={ui.aiSend}
-        data-unsupported={ui.aiUnsupported}
-        data-error={ui.aiError}
-      >
-        <h2 class="ai-assistant__title">AI</h2>
-        <div class="ai-assistant__log"></div>
-        <p class="ai-assistant__status" hidden></p>
-      </section>
+      <AiAssistant ui={ui} />
     </Fragment>
 
     {rendered && <rendered.Content />}
@@ -154,5 +96,5 @@ const rendered = isRedirect ? null : await render(entry);
           : ui.editPage}
       </a>
     </Fragment>
-  </IndividualPage>
+  </Page>
 )}

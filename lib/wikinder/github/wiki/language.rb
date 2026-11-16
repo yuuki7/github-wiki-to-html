@@ -40,28 +40,31 @@ module Wikinder
 
         # The language of a page body, as a normalized code. Empty
         # or unrecognized text counts as English.
-        #: (String?) -> String
-        def self.call(text)
+        #: (String?, ?supported: Array[String]) -> String
+        def self.call(text, supported: [])
           return 'en' if text.nil? || text.strip.empty?
 
           code = WhatLanguage.language_iso(text)
-          normalize(code&.to_s, text) || 'en'
+          normalize(code&.to_s, text, supported: supported) || 'en'
         end
 
         # Normalizes a language code to the form the site uses as a
         # directory name. Chinese codes resolve to 'zh' or 'zh-hant'
         # (the script detected from +text+ when available); region
         # variants of the supported languages collapse to the plain
-        # code. Unknown codes pass through unchanged.
-        #: (String?, ?String?) -> String?
-        def self.normalize(code, text = nil)
+        # code. The caller names the supported languages: this
+        # module keeps no list of its own, so the site's list in
+        # site.json stays the single source. Unknown codes pass
+        # through unchanged.
+        #: (String?, ?String?, ?supported: Array[String]) -> String?
+        def self.normalize(code, text = nil, supported: [])
           return nil if code.nil? || code.empty?
 
           downcased = code.downcase
           return chinese_variant(downcased, text) if downcased == 'zh' || downcased.start_with?('zh-')
 
           base = downcased.split('-').first.to_s
-          %w[en ja de ar].include?(base) ? base : code
+          supported.include?(base) ? base : code
         end
 
         # Which Chinese script a code names. Region codes decide

@@ -191,7 +191,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
 
         described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] }).build(out)
         rows = Wikinder::GitHub::Wiki::Meta.load(Pathname(meta_path))
-        expect(rows['page'][:author]).to eq('O-kun|Chan')
+        expect(rows['page'].author).to eq('O-kun|Chan')
       ensure
         FileUtils.remove_entry(scratch)
         FileUtils.remove_entry(out)
@@ -974,7 +974,7 @@ RSpec.describe Wikinder::GitHub::Wiki::Language do
     expect(described_class.normalize('zh')).to eq('zh')
     expect(described_class.normalize('zh-TW')).to eq('zh-hant')
     expect(described_class.normalize('zh-Hans')).to eq('zh')
-    expect(described_class.normalize('en-US')).to eq('en')
+    expect(described_class.normalize('en-US', supported: ['en'])).to eq('en')
   end
 
   it 'detects the script of Chinese text' do
@@ -988,15 +988,15 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
     line = '| [[French programmer]] | O-\|Chan | 2024-01-01T00:00:00Z | ' \
            '2024-01-01T00:00:00Z | en | ex<br>a\|b<br>z \\ |'
     row = described_class.parse_row(line)
-    expect(row[:author]).to eq('O-|Chan')
-    expect(row[:aliases]).to eq(['ex', 'a|b', 'z \\'])
+    expect(row.author).to eq('O-|Chan')
+    expect(row.aliases).to eq(['ex', 'a|b', 'z \\'])
     cells = [
-      "[[#{described_class.escape_cell(row[:title])}]]",
-      described_class.escape_cell(row[:author]),
-      described_class.escape_cell(row[:creation_date]),
-      described_class.escape_cell(row[:modified_date]),
-      described_class.escape_cell(row[:language]),
-      described_class.escape_cell(row[:aliases].join('<br>'))
+      "[[#{described_class.escape_cell(row.title)}]]",
+      described_class.escape_cell(row.author),
+      described_class.escape_cell(row.creation_date),
+      described_class.escape_cell(row.modified_date),
+      described_class.escape_cell(row.language),
+      described_class.escape_cell(row.aliases.join('<br>'))
     ]
     expect(cells).to eq([
                           '[[French programmer]]',

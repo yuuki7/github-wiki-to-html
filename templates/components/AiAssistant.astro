@@ -1,0 +1,26 @@
+---
+import type { UiStrings } from "../i18n";
+
+type Props = {
+  ui: UiStrings;
+};
+
+const { ui } = Astro.props;
+---
+
+{/* The AI assistant box in the right sidebar. The section's
+    data attributes are the hooks the ai-assistant script reads
+    its strings from; the script adds the form and runs the
+    model, so with no script the box is only its heading. */}
+<section
+  class="ai-assistant"
+  data-summarize={ui.aiSummarize}
+  data-loading={ui.aiLoading}
+  data-send={ui.aiSend}
+  data-unsupported={ui.aiUnsupported}
+  data-error={ui.aiError}
+>
+  <h2 class="ai-assistant__title">AI</h2>
+  <div class="ai-assistant__log"></div>
+  <p class="ai-assistant__status" hidden></p>
+</section>

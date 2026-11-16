@@ -22,16 +22,19 @@ module Wikinder
 
         # The language of a page body, as a normalized code. Empty
         # or unrecognized text counts as English.
-        # : (String?) -> String
-        def self.call: (String?) -> String
+        # : (String?, ?supported: Array[String]) -> String
+        def self.call: (String?, ?supported: Array[String]) -> String
 
         # Normalizes a language code to the form the site uses as a
         # directory name. Chinese codes resolve to 'zh' or 'zh-hant'
         # (the script detected from +text+ when available); region
         # variants of the supported languages collapse to the plain
-        # code. Unknown codes pass through unchanged.
-        # : (String?, ?String?) -> String?
-        def self.normalize: (String?, ?String?) -> String?
+        # code. The caller names the supported languages: this
+        # module keeps no list of its own, so the site's list in
+        # site.json stays the single source. Unknown codes pass
+        # through unchanged.
+        # : (String?, ?String?, ?supported: Array[String]) -> String?
+        def self.normalize: (String?, ?String?, ?supported: Array[String]) -> String?
 
         # Which Chinese script a code names. Region codes decide
         # it directly; any other code is decided by the text.

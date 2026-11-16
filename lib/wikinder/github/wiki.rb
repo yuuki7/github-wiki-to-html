@@ -24,6 +24,43 @@ module Wikinder
     # pages are addressed by name only. Subdirectory blobs are therefore
     # silently unsupported — they are ignored entirely.
     class Wiki
+      # The error a build fails with on purpose: bad input, an
+      # unsupported translation, an unsafe output path. Callers can
+      # rescue this class to tell such failures apart from bugs and
+      # library errors.
+      class Error < StandardError; end
+
+      # One row of META.md, as Meta keeps it. Rows are values:
+      # a refresh replaces a row with an updated copy instead of
+      # mutating it.
+      MetaRow = Data.define(
+        :slug,           #: String
+        :title,          #: String
+        :author,         #: String
+        :creation_date,  #: String
+        :modified_date,  #: String
+        :language,       #: String
+        :aliases         #: Array[String]
+      )
+
+      # An original page: its file path and its own language.
+      OriginalPage = Data.define(
+        :page,     #: String
+        :language  #: String
+      )
+
+      # One translation file, as read from the translations
+      # directory: the original page's slug, the translation's
+      # language, its optional title, its body, and whether it
+      # restates a special page (Home or _Footer).
+      TranslationRecord = Data.define(
+        :slug,      #: String
+        :language,  #: String
+        :title,     #: String?
+        :body,      #: String
+        :special    #: bool
+      )
+
       # @rbs @path: Pathname
       # @rbs @repo: Rugged::Repository
       # @rbs @commit_bounds: Hash[String, commit_bounds]
@@ -34,12 +71,14 @@ module Wikinder
       # @rbs @ignore_meta: bool
       # @rbs @prev_head: String?
       # @rbs @site_language: String?
-      # @rbs @supported_languages: Array[String]
       # @rbs @translations_dir: String?
+      # @rbs @meta_path: Pathname?
+      # @rbs @meta_rows: Hash[String, MetaRow]?
 
       attr_reader :head #: String
       attr_reader :ungenerated_pages #: Set[String]
       attr_reader :unlisted_pages #: Set[String]
+      attr_reader :supported_languages #: Array[String]
 
       # Creates a new wiki instance.
       #
@@ -87,7 +126,7 @@ module Wikinder
         @repo = Rugged::Repository.new(@path.to_s)
         @head = @repo.head.target_id
         head_commit = rev_parse(@head)
-        raise 'error: HEAD does not name a commit' unless head_commit
+        raise Error, 'HEAD does not name a commit' unless head_commit
 
         # Capture the tree once so walking / lookup during build does not
         # change mid-build (the wiki could otherwise move under a build).
@@ -99,10 +138,10 @@ module Wikinder
         @ignore_meta = options[:ignore_meta] == true
         prev_head = options[:prev_head]
         @prev_head = prev_head.is_a?(String) ? prev_head : nil
-        site_language = options[:site_language]
-        @site_language = site_language.is_a?(String) ? Language.normalize(site_language) : nil
         supported = options[:supported_languages] || []
-        supported_list = supported.filter_map { |code| Language.normalize(code) }
+        site_language = options[:site_language]
+        @site_language = site_language.is_a?(String) ? Language.normalize(site_language, supported: supported) : nil
+        supported_list = supported.filter_map { |code| Language.normalize(code, supported: supported) }
         @supported_languages = supported_list.uniq.freeze
         translations_dir = options[:translations_dir]
         @translations_dir = translations_dir ? Pathname(translations_dir.to_s).expand_path.to_s : nil
@@ -136,6 +175,9 @@ module Wikinder
         end
 
         cleanup_stale_files(target_dir, outputs)
+        meta_path = @meta_path
+        meta_rows = @meta_rows
+        Meta.write(meta_path, meta_rows) if meta_path && meta_rows
       end
 
       private
@@ -147,12 +189,12 @@ module Wikinder
       def verify_confined!(target_dir, outputs)
         base = File.expand_path(target_dir)
         outputs.each_key do |key|
-          raise 'error: empty output path in outputs' if key.empty?
+          raise Error, 'empty output path in outputs' if key.empty?
 
           expanded = File.expand_path(key, base)
           next if expanded.start_with?("#{base}#{File::SEPARATOR}")
 
-          raise "error: unsafe output path #{key.inspect} escapes the output directory"
+          raise Error, "unsafe output path #{key.inspect} escapes the output directory"
         end
       end
 
@@ -185,16 +227,19 @@ module Wikinder
       end
 
       # Computes every output the build would produce, returning them as a
-      # map of target-relative paths to content. Meta.sync! still mutates
-      # META.md in the source tree (that is its job); everything else happens
-      # purely in memory.
+      # map of target-relative paths to content. Computing is pure:
+      # nothing is written here. The synced META rows are kept for
+      # build, which writes META.md back only after every output has
+      # been computed and written.
       #: () -> Hash[String, String]
       def compute_outputs
         outputs = {} #: Hash[String, String]
 
         pages = collect_pages
         meta_path = Pathname(@path.to_s) / 'META.md'
-        meta = Meta.sync!(self, pages, meta_path, ignore_meta: @ignore_meta, prev_head: @prev_head)
+        meta = Meta.sync(self, pages, meta_path, ignore_meta: @ignore_meta, prev_head: @prev_head)
+        @meta_path = meta_path
+        @meta_rows = meta
 
         originals = original_records(pages, meta)
         translations = load_translations(originals)
@@ -203,20 +248,20 @@ module Wikinder
         routes = routes_by_language(languages, versions, meta)
 
         originals.each_value do |original|
-          page = original[:page]
+          page = original.page
           slug = File.basename(page, '.md')
           front_matter = front_matter_with_context(page, meta)
-          body = render_page_with_context(page, routes[original[:language]])
-          outputs["#{original[:language]}/#{slug}.md"] = "#{front_matter}---\n\n#{body}"
+          body = render_page_with_context(page, routes[original.language])
+          outputs["#{original.language}/#{slug}.md"] = "#{front_matter}---\n\n#{body}"
         end
 
         translations.each do |record|
-          content = if record[:special]
-                      translated_special_output(record, routes[record[:language]])
+          content = if record.special
+                      translated_special_output(record, routes[record.language])
                     else
-                      translated_output(record, originals.fetch(record[:slug]), meta, routes[record[:language]])
+                      translated_output(record, originals.fetch(record.slug), meta, routes[record.language])
                     end
-          outputs["#{record[:language]}/#{record[:slug]}.md"] = content
+          outputs["#{record.language}/#{record.slug}.md"] = content
         end
 
         special_languages = {} #: Hash[String, Set[String]]
@@ -237,9 +282,9 @@ module Wikinder
           end
         end
         translations.each do |record|
-          next unless record[:special]
+          next unless record.special
 
-          (special_languages[record[:slug]] ||= Set.new) << record[:language]
+          (special_languages[record.slug] ||= Set.new) << record.language
         end
 
         redirect_outputs(meta, languages, versions, special_languages).each do |relative, content|
@@ -270,12 +315,12 @@ module Wikinder
       # The original pages of this build, keyed by slug, each with the
       # language the page itself is written in (normalized, so a Chinese
       # page names its script variant).
-      #: (Array[String], Hash[String, meta_row]) -> Hash[String, original_page]
+      #: (Array[String], Hash[String, MetaRow]) -> Hash[String, OriginalPage]
       def original_records(pages, meta)
-        records = {} #: Hash[String, original_page]
+        records = {} #: Hash[String, OriginalPage]
         pages.each do |page|
           slug = File.basename(page, '.md')
-          records[slug] = { page: page, language: page_language(page, meta) }
+          records[slug] = OriginalPage.new(page: page, language: page_language(page, meta))
         end
         records
       end
@@ -283,15 +328,15 @@ module Wikinder
       # The effective language of an original page: the META row's
       # language when one exists, a detection result otherwise, always
       # normalized (Chinese gains its script variant from the body).
-      #: (String, Hash[String, meta_row]) -> String
+      #: (String, Hash[String, MetaRow]) -> String
       def page_language(page, meta)
         slug = File.basename(page, '.md')
         row = meta[slug]
-        raw = row ? row[:language] : detect_language(text_for(page))
+        raw = row ? row.language : detect_language(text_for(page))
         normalized = if raw&.downcase&.start_with?('zh')
-                       Language.normalize(raw, text_for(page))
+                       Language.normalize(raw, text_for(page), supported: @supported_languages)
                      else
-                       Language.normalize(raw)
+                       Language.normalize(raw, supported: @supported_languages)
                      end
         normalized || 'en'
       end
@@ -304,22 +349,22 @@ module Wikinder
       # original page bears, or that restates the original in the
       # original's own language: dropped silently, it would leave a
       # hole in a dataset the site treats as complete.
-      #: (Hash[String, original_page]) -> Array[translation_record]
+      #: (Hash[String, OriginalPage]) -> Array[TranslationRecord]
       def load_translations(originals)
         base = @translations_dir
         return [] if base.nil?
         return [] unless File.directory?(base)
 
-        records = [] #: Array[translation_record]
+        records = [] #: Array[TranslationRecord]
         Dir.children(base).sort.each do |entry|
           dir = File.join(base, entry)
           next unless File.directory?(dir)
 
-          language = Language.normalize(entry)
+          language = Language.normalize(entry, supported: @supported_languages)
           next if language.nil?
 
           unless @supported_languages.empty? || @supported_languages.include?(language)
-            raise "error: translations: #{entry}/ names a language the site does not support"
+            raise Error, "translations: #{entry}/ names a language the site does not support"
           end
 
           Dir.glob(File.join(dir, '*.md')).each do |file|
@@ -331,28 +376,28 @@ module Wikinder
 
       # One translation file as a record, checked against the
       # originals first (load_translations states the rules).
-      #: (String, String, Hash[String, original_page]) -> translation_record
+      #: (String, String, Hash[String, OriginalPage]) -> TranslationRecord
       def translation_record(file, language, originals)
         # A file name read from disk may be decomposed (NFD), as
         # macOS stores names, where the wiki's page names are
         # composed (NFC); normalize so the same page is recognized
         # under either form.
         slug = File.basename(file, '.md').unicode_normalize(:nfc)
-        raise "error: translations: #{language}/#{slug}.md is not a safe page name" unless Slugs.safe?(slug)
+        raise Error, "translations: #{language}/#{slug}.md is not a safe page name" unless Slugs.safe?(slug)
 
         special = %w[Home _Footer].include?(slug)
         if special
           if language == @site_language
-            raise "error: translations: #{language}/#{slug}.md restates a special page in its own language"
+            raise Error, "translations: #{language}/#{slug}.md restates a special page in its own language"
           end
         elsif !originals.key?(slug)
-          raise "error: translations: #{language}/#{slug}.md has no original page"
-        elsif originals.fetch(slug)[:language] == language
-          raise "error: translations: #{language}/#{slug}.md is in the same language as the original page"
+          raise Error, "translations: #{language}/#{slug}.md has no original page"
+        elsif originals.fetch(slug).language == language
+          raise Error, "translations: #{language}/#{slug}.md is in the same language as the original page"
         end
 
         title, body = split_translation_source(File.read(file))
-        { slug: slug, language: language, title: title, body: body, special: special }
+        TranslationRecord.new(slug: slug, language: language, title: title, body: body, special: special)
       end
 
       # Splits a translation file into its optional front matter title
@@ -391,17 +436,17 @@ module Wikinder
 
       # Which languages each page exists in: slug -> language -> true
       # when that version is a translation, false for the original.
-      #: (Hash[String, original_page], Array[translation_record]) -> page_versions
+      #: (Hash[String, OriginalPage], Array[TranslationRecord]) -> page_versions
       def version_map(originals, translations)
         versions = {} #: Hash[String, Hash[String, bool]]
         originals.each_value do |original|
-          slug = File.basename(original[:page], '.md')
-          (versions[slug] ||= {})[original[:language]] = false
+          slug = File.basename(original.page, '.md')
+          (versions[slug] ||= {})[original.language] = false
         end
         translations.each do |record|
-          next if record[:special]
+          next if record.special
 
-          (versions[record[:slug]] ||= {})[record[:language]] = true
+          (versions[record.slug] ||= {})[record.language] = true
         end
         versions
       end
@@ -409,11 +454,11 @@ module Wikinder
       # Every language this build emits anything in: the originals'
       # languages, the translations' languages, and the site language
       # (the original special pages belong to it).
-      #: (page_versions, Array[translation_record]) -> Array[String]
+      #: (page_versions, Array[TranslationRecord]) -> Array[String]
       def active_languages(versions, translations)
         languages = Set.new #: Set[String]
         versions.each_value { |by_language| by_language.each_key { |language| languages << language } }
-        translations.each { |record| languages << record[:language] }
+        translations.each { |record| languages << record.language }
         site_language = @site_language
         languages << site_language if site_language
         languages.to_a.sort
@@ -429,7 +474,7 @@ module Wikinder
       # Aliases route to the redirect generated for them, which is
       # served at the root in the target's original language and
       # under the reader's language elsewhere (see redirect_outputs).
-      #: (Array[String], page_versions, Hash[String, meta_row]) -> Hash[String, link_routes]
+      #: (Array[String], page_versions, Hash[String, MetaRow]) -> Hash[String, link_routes]
       def routes_by_language(languages, versions, meta)
         result = {} #: Hash[String, Hash[String, String]]
         languages.each do |language|
@@ -440,7 +485,7 @@ module Wikinder
           meta.each do |target_slug, row|
             original_language = versions[target_slug]&.key(false)
             prefix = original_language == language ? '' : "/#{language}"
-            row[:aliases].each { |title| routes[Slugs.for_title(title)] = prefix }
+            row.aliases.each { |title| routes[Slugs.for_title(title)] = prefix }
           end
           result[language] = routes
         end
@@ -450,48 +495,48 @@ module Wikinder
       # Builds one translated article: the original's metadata, the
       # translation's own title when it supplies one, and a body whose
       # wikilinks are resolved for the translation's language.
-      #: (translation_record, original_page, Hash[String, meta_row], Hash[String, String]?) -> String
+      #: (TranslationRecord, OriginalPage, Hash[String, MetaRow], Hash[String, String]?) -> String
       def translated_output(record, original, meta, routes)
-        slug = record[:slug]
+        slug = record.slug
         row = meta[slug]
         front_matter = {
           'kind' => 'article',
-          'title' => record[:title] || title_for(slug),
+          'title' => record.title || title_for(slug),
           'slug' => slug,
-          'author' => row ? row[:author] : 'unknown',
-          'creation_date' => row ? row[:creation_date] : 'unknown',
-          'modified_date' => row ? row[:modified_date] : 'unknown',
-          'language' => record[:language],
-          'original_language' => original[:language],
+          'author' => row ? row.author : 'unknown',
+          'creation_date' => row ? row.creation_date : 'unknown',
+          'modified_date' => row ? row.modified_date : 'unknown',
+          'language' => record.language,
+          'original_language' => original.language,
           'translation' => true
         } #: Hash[String, String | bool]
         front_matter = front_matter.merge('listed' => false) if @unlisted_pages.include?(slug)
-        body = Tags.render(record[:body], link_index: link_index, routes: routes)
+        body = Tags.render(record.body, link_index: link_index, routes: routes)
         "#{front_matter.to_yaml}---\n\n#{body}"
       rescue StandardError => e
-        raise "could not build translation #{record[:language]}/#{slug}: #{e.class}: #{e.message}"
+        raise Error, "could not build translation #{record.language}/#{slug}: #{e.class}: #{e.message}"
       end
 
       # Builds one translated special page (Home or _Footer).
-      #: (translation_record, Hash[String, String]?) -> String
+      #: (TranslationRecord, Hash[String, String]?) -> String
       def translated_special_output(record, routes)
         front_matter = {
           'kind' => 'special',
-          'title' => title_for(record[:slug]),
-          'slug' => record[:slug],
-          'language' => record[:language]
+          'title' => title_for(record.slug),
+          'slug' => record.slug,
+          'language' => record.language
         } #: Hash[String, String]
-        body = Tags.render(record[:body], link_index: link_index, routes: routes)
+        body = Tags.render(record.body, link_index: link_index, routes: routes)
         "#{front_matter.to_yaml}---\n\n#{body}"
       end
 
       # Builds the front matter for one page, wrapping any failure with the
       # page path so a crash mid-build identifies the file responsible.
-      #: (String, Hash[String, meta_row]) -> String
+      #: (String, Hash[String, MetaRow]) -> String
       def front_matter_with_context(page, meta)
         article_front_matter(page, meta)
       rescue StandardError => e
-        raise "could not build front matter for page #{page}: #{e.class}: #{e.message}"
+        raise Error, "could not build front matter for page #{page}: #{e.class}: #{e.message}"
       end
 
       # Renders one page, wrapping any failure with the page path so a crash
@@ -500,7 +545,7 @@ module Wikinder
       def render_page_with_context(page, routes = nil)
         render_page(page, routes)
       rescue StandardError => e
-        raise "could not render page #{page}: #{e.class}: #{e.message}"
+        raise Error, "could not render page #{page}: #{e.class}: #{e.message}"
       end
 
       # Special pages are site parts, not articles. The language
@@ -522,13 +567,13 @@ module Wikinder
       # language's directory. The redirect for a language is skipped
       # when a real page of that language already bears the alias's
       # slug: the existing page always wins over a generated redirect.
-      #: (Hash[String, meta_row], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
+      #: (Hash[String, MetaRow], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
       def redirect_outputs(meta, languages, versions, special_languages)
         outputs = {} #: Hash[String, String]
         languages.each do |language|
           occupied = occupied_slugs(language, versions, special_languages)
           meta.each do |target_slug, row|
-            row[:aliases].each do |title|
+            row.aliases.each do |title|
               alias_slug = Slugs.for_title(title)
               downcased = alias_slug.downcase
               next if occupied.include?(downcased) || downcased == target_slug.downcase
@@ -828,7 +873,7 @@ module Wikinder
       end
 
       #: (String) -> String
-      def detect_language(text) = Language.call(text)
+      def detect_language(text) = Language.call(text, supported: @supported_languages)
 
       # Whether a commit touched a path. A root commit touches
       # every path in its tree.
@@ -848,7 +893,7 @@ module Wikinder
       # One article's front matter. The values come from the
       # page's META row when it has one, and from git history
       # otherwise.
-      #: (String, ?Hash[String, meta_row]) -> String
+      #: (String, ?Hash[String, MetaRow]) -> String
       def article_front_matter(page_name, meta = {})
         slug = File.basename(page_name, '.md')
         row = meta[slug]
@@ -859,21 +904,21 @@ module Wikinder
         last = bounds && bounds[:latest]
         first = bounds && bounds[:earliest]
         author = if row
-                   row[:author]
+                   row.author
                  elsif last
                    last.author[:name]
                  else
                    'unknown'
                  end
         creation_date = if row
-                          row[:creation_date]
+                          row.creation_date
                         elsif first
                           first.time.utc.iso8601
                         else
                           'unknown'
                         end
         modified_date = if row
-                          row[:modified_date]
+                          row.modified_date
                         elsif last
                           last.time.utc.iso8601
                         else
