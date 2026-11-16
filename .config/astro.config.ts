@@ -1,8 +1,13 @@
 import { defineConfig } from 'astro/config';
 import expressiveCode from 'astro-expressive-code';
+import { satteri } from '@astrojs/markdown-satteri';
+import tableWrap from '../templates/table-wrap';
 
 export default defineConfig({
   srcDir: './templates',
+  markdown: {
+    processor: satteri({ hastPlugins: [tableWrap] }),
+  },
   // Static files served as they are, inside the templates
   // tree like the rest of the site sources.
   publicDir: './templates/public',

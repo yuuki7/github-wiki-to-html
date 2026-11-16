@@ -57,12 +57,17 @@ body {
   margin-top: var(--header-margin-top);
 }
 
-/* Main column participates in the page grid */
+/* Main column participates in the page grid. Its minimum
+   width is zero, not the automatic content-based minimum,
+   so wide article content (a long line in a code block)
+   scrolls inside itself instead of stretching the column
+   and the page with it. */
 .main {
   grid-column: 2;
   grid-row: article-header / span 2;
   display: grid;
   grid-template-rows: subgrid;
+  min-width: 0;
 }
 
 /* Article */
@@ -93,7 +98,8 @@ body {
   margin-inline-end: 0.25em;
 }
 
-/* Article main */
+/* Article main. Its minimum width is zero for the same
+   reason as .main above. */
 .article__main {
   grid-row: article-main;
   display: flex;
@@ -102,6 +108,7 @@ body {
   width: 100%;
   max-width: var(--line-length);
   margin-inline: auto;
+  min-width: 0;
 }
 
 /* Spacing via gap; children carry no margin */
@@ -163,7 +170,14 @@ body {
 
 .article__main table {
   border-collapse: collapse;
-  max-width: 100%;
+}
+
+/* The container the build wraps every table in (see
+   templates/table-wrap.ts). A table wider than the
+   column scrolls inside it, so the page as a whole never
+   scrolls sideways. */
+.article__main .table-scroll {
+  overflow-x: auto;
 }
 
 .article__main th,
