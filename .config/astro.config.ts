@@ -19,6 +19,13 @@ export default defineConfig({
     inlineStylesheets: 'never',
   },
   vite: {
+    preview: {
+      // The preview is also opened through the machine's
+      // Tailscale name, for checking the site on a phone.
+      // Vite refuses hosts it does not know, so allow that
+      // one name.
+      allowedHosts: ['yuukis-macbook-neo.tail8d2685.ts.net'],
+    },
     build: {
       minify: false,
       cssMinify: false,
