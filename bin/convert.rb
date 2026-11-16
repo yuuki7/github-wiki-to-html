@@ -7,7 +7,7 @@ require 'optparse'
 require 'json'
 
 # Path to the wiki repository.
-WIKI_PATH = '../../yuukinder.wiki'
+WIKI_PATH = '../yuukinder.wiki'
 
 # Pages not generated.
 UNGENERATED_PAGES = Set['Home', 'README', 'LICENSE', 'META', '_Footer'].freeze
