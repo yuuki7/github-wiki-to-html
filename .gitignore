@@ -14,9 +14,3 @@ md/**
 !md/**/
 !md/en/Home.md
 !md/en/Wikinder.md
-
-translations/**
-!translations/**/
-!translations/README.md
-!translations/*/Wikinder.md
-!translations/*/Home.md
