@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Wikinder::GitHub::Wiki::History
+  
+    &mdash; Documentation by YARD 0.9.45
+  
+</title>
+
+  <link rel="stylesheet" href="../../../css/style.css" type="text/css">
+
+  <link rel="stylesheet" href="../../../css/common.css" type="text/css">
+
+<script type="text/javascript">
+  pathId = "Wikinder::GitHub::Wiki::History";
+  relpath = '../../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div id="main_progress" aria-hidden="true"></div>
+
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../../_index.html">Index (H)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../../Wikinder.html" title="Wikinder (module)">Wikinder</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../GitHub.html" title="Wikinder::GitHub (module)">GitHub</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Wiki.html" title="Wikinder::GitHub::Wiki (class)">Wiki</a></span></span>
+     &raquo; 
+    <span class="title">History</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Wikinder::GitHub::Wiki::History
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Wikinder::GitHub::Wiki::History</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/wikinder/github/wiki/history.rb
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Reads the wiki's git history: the HEAD tree's contents,
+the commits that touched each page (following renames),
+the rename map across the whole history, and the paths
+changed between two refs. Everything the converter
+derives from git lives here, so Wiki itself only
+orchestrates the build. Results are cached per instance:
+a build reads the same history many times, and the
+repository does not move under it.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#head_commit-instance_method" title="#head_commit (instance method)">#<strong>head_commit</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cached_diff-instance_method" title="#cached_diff (instance method)">#<strong>cached_diff</strong>(commit, parent)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>: (Rugged::Commit, Rugged::Commit) -&gt; Rugged::Diff.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#commit_bounds_for-instance_method" title="#commit_bounds_for (instance method)">#<strong>commit_bounds_for</strong>(path)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The earliest and latest commits that touched a page, following its renames.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#diff_paths-instance_method" title="#diff_paths (instance method)">#<strong>diff_paths</strong>(from_ref)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the file paths changed between two refs.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(repo, head)  &#x21d2; History </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>: (Rugged::Repository, String) -&gt; void.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#md%3F-instance_method" title="#md? (instance method)">#<strong>md?</strong>(path)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>: (String) -&gt; bool.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#plain_delta_paths-instance_method" title="#plain_delta_paths (instance method)">#<strong>plain_delta_paths</strong>(diff)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Snapshots a diff's [status, path] pairs before rename detection rewrites them.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#rename_deltas-instance_method" title="#rename_deltas (instance method)">#<strong>rename_deltas</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Builds a map of rename deltas across the full history: every file path that was ever renamed maps to its predecessor path.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#rename_history_for-instance_method" title="#rename_history_for (instance method)">#<strong>rename_history_for</strong>(path)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the file paths this page was renamed from, most recent first, based on git rename detection across history.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#rev_parse-instance_method" title="#rev_parse (instance method)">#<strong>rev_parse</strong>(from_ref)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>: (String) -&gt; Rugged::Commit?.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#text_for-instance_method" title="#text_for (instance method)">#<strong>text_for</strong>(name)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The text of a page or file in the wiki.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#touched%3F-instance_method" title="#touched? (instance method)">#<strong>touched?</strong>(commit, path)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether a commit touched a path.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tree-instance_method" title="#tree (instance method)">#<strong>tree</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The HEAD tree, from the head commit.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tree_entry-instance_method" title="#tree_entry (instance method)">#<strong>tree_entry</strong>(path, tree: nil)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Looks up a path in the HEAD tree.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#warn_unlinked_rename-instance_method" title="#warn_unlinked_rename (instance method)">#<strong>warn_unlinked_rename</strong>(plain, marked_renames)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Emits a one-line warning when the commit deletes an .md file and adds another .md file, and the git rename detector found no link between them.</p></div></span>
+  
+</li>
+
+      
+    </ul>
+    
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(repo, head)  &#x21d2; <tt><span class='object_link'><a href="" title="Wikinder::GitHub::Wiki::History (class)">History</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>: (Rugged::Repository, String) -&gt; void</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+26
+27
+28
+29
+30</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 26</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_repo'>repo</span><span class='comma'>,</span> <span class='id identifier rubyid_head'>head</span><span class='rparen'>)</span>
+  <span class='ivar'>@repo</span> <span class='op'>=</span> <span class='id identifier rubyid_repo'>repo</span>
+  <span class='ivar'>@head</span> <span class='op'>=</span> <span class='id identifier rubyid_head'>head</span>
+  <span class='ivar'>@head_commit</span> <span class='op'>=</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_head'>head</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="head_commit-instance_method">
+  
+    #<strong>head_commit</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Rbs:</p>
+<ul class="rbs">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@repo: Rugged::Repository</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@head: String</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@tree: Rugged::Tree?</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@commit_bounds: Hash[String, commit_bounds]</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@rename_deltas: Hash[String, String]</p></div>
+      
+    </li>
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>@diffs: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+23
+24
+25</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 23</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_head_commit'>head_commit</span>
+  <span class='ivar'>@head_commit</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="cached_diff-instance_method">
+  
+    #<strong>cached_diff</strong>(commit, parent)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>: (Rugged::Commit, Rugged::Commit) -&gt; Rugged::Diff</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+128
+129
+130
+131</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 128</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
+  <span class='ivar'>@diffs</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
+</span>  <span class='ivar'>@diffs</span><span class='lbracket'>[</span><span class='lbracket'>[</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rbracket'>]</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="commit_bounds_for-instance_method">
+  
+    #<strong>commit_bounds_for</strong>(path)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The earliest and latest commits that touched a page,
+following its renames. When META.md has no row for the page,
+these commits are the source of its author and dates.
+: (String) -&gt; commit_bounds</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 78</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_commit_bounds_for'>commit_bounds_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='ivar'>@commit_bounds</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, commit_bounds]
+</span>  <span class='kw'>return</span> <span class='ivar'>@commit_bounds</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='ivar'>@commit_bounds</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_earliest'>earliest</span> <span class='op'>=</span> <span class='kw'>nil</span> <span class='comment'>#: Rugged::Commit?
+</span>  <span class='id identifier rubyid_latest'>latest</span> <span class='op'>=</span> <span class='kw'>nil</span> <span class='comment'>#: Rugged::Commit?
+</span>  <span class='comment'># Include commits that touched any of the paths this page was
+</span>  <span class='comment'># renamed from, so tree/time bounds reflect the history of the
+</span>  <span class='comment'># logical page across renames.
+</span>  <span class='id identifier rubyid_paths'>paths</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HEAD</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_commit'>commit</span><span class='op'>|</span>
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_candidate'>candidate</span><span class='op'>|</span> <span class='id identifier rubyid_touched?'>touched?</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_candidate'>candidate</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+
+    <span class='id identifier rubyid_time'>time</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_time'>time</span>
+    <span class='id identifier rubyid_earliest'>earliest</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span> <span class='kw'>if</span> <span class='id identifier rubyid_earliest'>earliest</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_time'>time</span> <span class='op'>&lt;</span> <span class='id identifier rubyid_earliest'>earliest</span><span class='period'>.</span><span class='id identifier rubyid_time'>time</span>
+    <span class='id identifier rubyid_latest'>latest</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span> <span class='kw'>if</span> <span class='id identifier rubyid_latest'>latest</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_time'>time</span> <span class='op'>&gt;</span> <span class='id identifier rubyid_latest'>latest</span><span class='period'>.</span><span class='id identifier rubyid_time'>time</span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@commit_bounds</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='label'>earliest:</span> <span class='id identifier rubyid_earliest'>earliest</span><span class='comma'>,</span> <span class='label'>latest:</span> <span class='id identifier rubyid_latest'>latest</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="diff_paths-instance_method">
+  
+    #<strong>diff_paths</strong>(from_ref)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the file paths changed between two refs. A full rebuild
+returns nil (meaning &quot;everything changed&quot;) so the sync treats every
+page as changed and rewrites every row.
+: (String?) -&gt; <a href="String">Array</a>?</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 102</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_diff_paths'>diff_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_from_ref'>from_ref</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_from_ref'>from_ref</span> <span class='op'>==</span> <span class='ivar'>@head</span>
+
+  <span class='id identifier rubyid_prev_commit'>prev_commit</span> <span class='op'>=</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_prev_commit'>prev_commit</span>
+
+  <span class='id identifier rubyid_head_commit'>head_commit</span> <span class='op'>=</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='ivar'>@head</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_head_commit'>head_commit</span>
+
+  <span class='id identifier rubyid_prev_commit'>prev_commit</span><span class='period'>.</span><span class='id identifier rubyid_diff'>diff</span><span class='lparen'>(</span><span class='id identifier rubyid_head_commit'>head_commit</span><span class='rparen'>)</span>
+             <span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span>
+             <span class='period'>.</span><span class='id identifier rubyid_flat_map'>flat_map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span> <span class='lbracket'>[</span><span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+             <span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span>
+             <span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="md?-instance_method">
+  
+    #<strong>md?</strong>(path)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>: (String) -&gt; bool</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+244
+245
+246</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 244</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="plain_delta_paths-instance_method">
+  
+    #<strong>plain_delta_paths</strong>(diff)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Snapshots a diff's [status, path] pairs before rename detection
+rewrites them. Paths are normalised to UTF-8 like the rename
+map's, so they can be compared against it directly.
+: (Rugged::Diff) -&gt; Array[[Symbol, String]]</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+207
+208
+209
+210
+211</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 207</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_plain_delta_paths'>plain_delta_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_diff'>diff</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
+    <span class='lbracket'>[</span><span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="rename_deltas-instance_method">
+  
+    #<strong>rename_deltas</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Builds a map of rename deltas across the full history: every file path
+that was ever renamed maps to its predecessor path.
+Additionally, surface a warning when a single commit deletes one
+.md file and adds another .md file with no detectable rename —
+that is the most likely shape of a rename+rewrite that git cannot
+link statistically. The wiki schema can only pick one answer when
+similarity is low, so the author should curate the alias by hand.</p>
+<p>One diff is computed per (commit, parent) pair and shared with
+touched? through cached_diff. The plain delta list is snapshotted
+before find_similar! runs, because similarity detection consumes
+exactly the added/deleted pairs warn_unlinked_rename looks for.
+: () -&gt; Hash[String, String]</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 164</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_rename_deltas'>rename_deltas</span>
+  <span class='ivar'>@rename_deltas</span> <span class='op'>||=</span> <span class='kw'>begin</span>
+    <span class='id identifier rubyid_map'>map</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, String]
+</span>    <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HEAD</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_commit'>commit</span><span class='op'>|</span>
+      <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_parent'>parent</span><span class='op'>|</span>
+        <span class='id identifier rubyid_diff'>diff</span> <span class='op'>=</span> <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_plain'>plain</span> <span class='op'>=</span> <span class='id identifier rubyid_plain_delta_paths'>plain_delta_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_diff'>diff</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_find_similar!'>find_similar!</span><span class='lparen'>(</span><span class='label'>renames:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_marked_renames'>marked_renames</span> <span class='op'>=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+        <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
+          <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:renamed</span>
+
+          <span class='comment'># Rugged&#39;s +commit.diff(parent)+ reports the commit side as
+</span>          <span class='comment'># old_file and the parent side as new_file (chronologically
+</span>          <span class='comment'># reversed). The rename map therefore reads &quot;current name -&gt;
+</span>          <span class='comment'># name it was renamed from&quot;. First seen wins; walked from
+</span>          <span class='comment'># HEAD so the most recent rename is recorded first.
+</span>          <span class='comment'>#
+</span>          <span class='comment'># The paths are normalised to valid UTF-8 here so all
+</span>          <span class='comment'># downstream consumers (slug/alias handling, front-matter
+</span>          <span class='comment'># YAML) can treat them as plain Strings without ever having
+</span>          <span class='comment'># to worry about ASCII-8BIT.
+</span>          <span class='id identifier rubyid_newer_path'>newer_path</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span>
+          <span class='id identifier rubyid_older_path'>older_path</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span>
+          <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_newer_path'>newer_path</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_older_path'>older_path</span>
+
+          <span class='id identifier rubyid_newer'>newer</span> <span class='op'>=</span> <span class='id identifier rubyid_newer_path'>newer_path</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_older'>older</span> <span class='op'>=</span> <span class='id identifier rubyid_older_path'>older_path</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_map'>map</span><span class='lbracket'>[</span><span class='id identifier rubyid_newer'>newer</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_older'>older</span>
+          <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_newer'>newer</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_older'>older</span><span class='rparen'>)</span>
+        <span class='kw'>end</span>
+        <span class='id identifier rubyid_warn_unlinked_rename'>warn_unlinked_rename</span><span class='lparen'>(</span><span class='id identifier rubyid_plain'>plain</span><span class='comma'>,</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='rparen'>)</span>
+      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_map'>map</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="rename_history_for-instance_method">
+  
+    #<strong>rename_history_for</strong>(path)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the file paths this page was renamed from, most recent first,
+based on git rename detection across history.
+: (String) -&gt; <a href="String">Array</a></p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 136</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_renames'>renames</span> <span class='op'>=</span> <span class='id identifier rubyid_rename_deltas'>rename_deltas</span> <span class='comment'>#: Hash[String, String]
+</span>  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='id identifier rubyid_current'>current</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span> <span class='comment'>#: String
+</span>  <span class='id identifier rubyid_visited'>visited</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_current'>current</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='kw'>until</span> <span class='lparen'>(</span><span class='id identifier rubyid_predecessor'>predecessor</span> <span class='op'>=</span> <span class='id identifier rubyid_renames'>renames</span><span class='lbracket'>[</span><span class='id identifier rubyid_current'>current</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_visited'>visited</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_predecessor'>predecessor</span><span class='rparen'>)</span> <span class='comment'># guard against rename cycles
+</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_predecessor'>predecessor</span>
+    <span class='id identifier rubyid_current'>current</span> <span class='op'>=</span> <span class='id identifier rubyid_predecessor'>predecessor</span>
+    <span class='id identifier rubyid_visited'>visited</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_current'>current</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_result'>result</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="rev_parse-instance_method">
+  
+    #<strong>rev_parse</strong>(from_ref)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>: (String) -&gt; Rugged::Commit?</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+120
+121
+122
+123
+124
+125</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 120</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_commit'>commit</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_commit'>commit</span> <span class='kw'>if</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Rugged</span><span class='op'>::</span><span class='const'>Commit</span><span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>Rugged</span><span class='op'>::</span><span class='const'>Error</span>
+  <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="text_for-instance_method">
+  
+    #<strong>text_for</strong>(name)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The text of a page or file in the wiki. Line endings and
+encoding are normalized for the parser; see the notes
+inline.
+: (String) -&gt; String</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 54</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_entry'>entry</span> <span class='op'>=</span> <span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_entry'>entry</span>
+
+  <span class='id identifier rubyid_blob'>blob</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_entry'>entry</span><span class='lbracket'>[</span><span class='symbol'>:oid</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_blob'>blob</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Rugged</span><span class='op'>::</span><span class='const'>Blob</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_blob'>blob</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span>
+  <span class='comment'># Normalise CR and CRLF line endings; the Commonmarker parser walks
+</span>  <span class='comment'># \r\n and bare \r as distinct line separators, so CR-only files
+</span>  <span class='comment'># would otherwise crash range_for with offsets past the end of
+</span>  <span class='comment'># line_offsets. This mirrors Gollum&#39;s Wiki#normalize.
+</span>  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\r\n?</span><span class='regexp_end'>/</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_content'>content</span> <span class='kw'>if</span> <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_valid_encoding?'>valid_encoding?</span>
+
+  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>text_for: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> contains invalid UTF-8; invalid bytes were replaced with U+FFFD</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_content'>content</span><span class='period'>.</span><span class='id identifier rubyid_scrub'>scrub</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="touched?-instance_method">
+  
+    #<strong>touched?</strong>(commit, path)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether a commit touched a path. A root commit touches
+every path in its tree.
+: (Rugged::Commit, String) -&gt; bool</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 251</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_touched?'>touched?</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_parents'>parents</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span>
+  <span class='kw'>return</span> <span class='op'>!</span><span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>tree:</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='kw'>if</span> <span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='id identifier rubyid_path_b'>path_b</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span>
+  <span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_parent'>parent</span><span class='op'>|</span>
+    <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
+      <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='op'>&amp;.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>==</span> <span class='id identifier rubyid_path_b'>path_b</span> <span class='op'>||</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span><span class='op'>&amp;.</span><span class='id identifier rubyid_b'>b</span> <span class='op'>==</span> <span class='id identifier rubyid_path_b'>path_b</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="tree-instance_method">
+  
+    #<strong>tree</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The HEAD tree, from the head commit. Nil when HEAD
+does not name a commit; Wiki refuses that case before
+any lookup happens.
+: -&gt; Rugged::Tree?</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 36</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_tree'>tree</span>
+  <span class='ivar'>@tree</span> <span class='op'>||=</span> <span class='ivar'>@head_commit</span><span class='op'>&amp;.</span><span class='id identifier rubyid_tree'>tree</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="tree_entry-instance_method">
+  
+    #<strong>tree_entry</strong>(path, tree: nil)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Looks up a path in the HEAD tree. GitHub Wiki is flat, so a plain
+tree lookup always suffices.
+: (String, ?tree: Rugged::Tree?) -&gt; Rugged::tree_entry?</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+43
+44
+45
+46
+47
+48</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 43</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>tree:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_resolved'>resolved</span> <span class='op'>=</span> <span class='id identifier rubyid_tree'>tree</span> <span class='op'>||</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resolved'>resolved</span>
+
+  <span class='id identifier rubyid_resolved'>resolved</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="warn_unlinked_rename-instance_method">
+  
+    #<strong>warn_unlinked_rename</strong>(plain, marked_renames)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Emits a one-line warning when the commit deletes an .md file and adds
+another .md file, and the git rename detector found no link between
+them. This is the usual telltale shape of &quot;rename and fully rewrite&quot;.
+Has no effect on the returned rows; only diagnostics.</p>
+<p><code>plain</code> is the pre-similarity snapshot of the reversed diff
+(commit side as old), so a forward deletion appears as :added
+and a forward addition as :deleted.
+: (Array[[Symbol, String]], <a href="String">Set</a>) -&gt; void</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 222</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_warn_unlinked_rename'>warn_unlinked_rename</span><span class='lparen'>(</span><span class='id identifier rubyid_plain'>plain</span><span class='comma'>,</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
+</span>  <span class='id identifier rubyid_plain'>plain</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='op'>|</span>
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:added</span>
+    <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:deleted</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span> <span class='op'>=</span> <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+  <span class='id identifier rubyid_unmatched_added'>unmatched_added</span> <span class='op'>=</span> <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+  <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>||</span> <span class='id identifier rubyid_unmatched_added'>unmatched_added</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='id identifier rubyid_deleted_list'>deleted_list</span> <span class='op'>=</span> <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_added_list'>added_list</span> <span class='op'>=</span> <span class='id identifier rubyid_unmatched_added'>unmatched_added</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>git could not link this rename: </span><span class='tstring_end'>&#39;</span></span> \
+       <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_added_list'>added_list</span><span class='embexpr_end'>}</span><span class='tstring_content'> seems to succeed </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_deleted_list'>deleted_list</span><span class='embexpr_end'>}</span><span class='tstring_content'> after a heavy rewrite; </span><span class='tstring_end'>&quot;</span></span> \
+       <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>alias must be set in META.md manually</span><span class='tstring_end'>&#39;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.45 (ruby-4.0.9).
+</div>
+
+    </div>
+  </body>
+</html>
