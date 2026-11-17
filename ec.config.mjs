@@ -55,5 +55,13 @@ export default defineEcConfig({
       editorBackground: '#f6f8fa',
     },
   },
+  // LilyPond has no Shiki grammar. Aliasing it to plain text
+  // highlights its blocks with no warning, while the blocks
+  // keep naming LilyPond as their language.
+  shiki: {
+    langAlias: {
+      lilypond: 'txt',
+    },
+  },
   plugins: [languageTitle],
 });

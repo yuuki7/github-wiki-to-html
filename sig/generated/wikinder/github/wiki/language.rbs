@@ -5,13 +5,12 @@ module Wikinder
     class Wiki
       # Detects and normalizes the language code of a page.
       #
-      # Chinese is normalized to one of two codes, 'zh' for
-      # Simplified and 'zh-hant' for Traditional, because the site
-      # treats the two scripts as separate languages and plain 'zh'
-      # names the default script, Simplified. The script is decided
-      # by counting characters that exist in only one of the two
-      # scripts; text without any such character defaults to
-      # Simplified, the larger of the two readerships.
+      # Chinese is normalized to 'zh' (Simplified) or 'zh-hant'
+      # (Traditional): the site treats the two scripts as separate
+      # languages, and plain 'zh' names the default, Simplified.
+      # The script is decided by counting characters that exist in
+      # only one of the two scripts; no such character means
+      # Simplified, the larger readership.
       module Language
         # High-frequency characters written differently in the two
         # scripts. Only characters whose simplified and traditional
@@ -29,10 +28,10 @@ module Wikinder
         # directory name. Chinese codes resolve to 'zh' or 'zh-hant'
         # (the script detected from +text+ when available); region
         # variants of the supported languages collapse to the plain
-        # code. The caller names the supported languages: this
-        # module keeps no list of its own, so the site's list in
-        # site.json stays the single source. Unknown codes pass
-        # through unchanged.
+        # code. The caller names the supported languages — this
+        # module keeps no list of its own, so site.json stays the
+        # single source. Unknown codes pass through in lower case,
+        # the form URLs compare and carry language tags in.
         # : (String?, ?String?, ?supported: Array[String]) -> String?
         def self.normalize: (String?, ?String?, ?supported: Array[String]) -> String?
 

@@ -3,7 +3,7 @@
 ## Build and Test Commands
 
 - `bundle exec rake` — Install the dependencies. First setup only, or when dependency files change.
-- `bundle exec rake check` — Run the linter and type checks. Also regenerates `sig/generated/` from the inline annotations in `lib/`; commit the regeneration together with the `lib/` change. Ignore RuboCop Metrics offenses; do not ignore any other offenses.
+- `bundle exec rake check` — Run the linter and type checks. Also regenerates `sig/generated/` from the inline annotations in `lib/`; commit the regeneration together with the `lib/` change. Temporarily ignore RuboCop Metrics offenses; do not ignore any other offenses.
 - `bundle exec rake test` — Run the tests.
 - `bundle exec rake build` — Build the site. Side effect: `bin/convert.rb` rewrites `META.md` in the real wiki repository.
 - Do not run `bundle exec rake docs` — it would regenerate `docs/` and bloat the diff. Keep diffs concise.

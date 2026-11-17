@@ -4,14 +4,13 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Reads the wiki's git history: the HEAD tree's contents,
-      # the commits that touched each page (following renames),
-      # the rename map across the whole history, and the paths
-      # changed between two refs. Everything the converter
-      # derives from git lives here, so Wiki itself only
-      # orchestrates the build. Results are cached per instance:
-      # a build reads the same history many times, and the
-      # repository does not move under it.
+      # Reads the wiki's git history: the HEAD tree, the commits
+      # that touched each page (following renames), the rename map
+      # across the whole history, and the paths changed between
+      # two refs. Everything the converter derives from git lives
+      # here, so Wiki itself only orchestrates the build. Results
+      # are cached per instance: a build reads the same history
+      # many times, and the repository does not move under it.
       class History
         # @rbs @repo: Rugged::Repository
         # @rbs @head: String
@@ -86,13 +85,13 @@ module Wikinder
           # logical page across renames.
           paths = [path] + rename_history_for(path)
           @repo.walk('HEAD').each do |commit|
-            next unless paths.any? { |candidate| touched?(commit, candidate) }
+            next unless paths.any? { touched?(commit, it) }
 
             time = commit.time
             earliest = commit if earliest.nil? || time < earliest.time
             latest = commit if latest.nil? || time > latest.time
           end
-          @commit_bounds[path] = { earliest: earliest, latest: latest }
+          @commit_bounds[path] = { earliest:, latest: }
         end
 
         # Returns the file paths changed between two refs. A full rebuild
@@ -148,18 +147,20 @@ module Wikinder
           result
         end
 
-        # Builds a map of rename deltas across the full history: every file path
-        # that was ever renamed maps to its predecessor path.
-        # Additionally, surface a warning when a single commit deletes one
-        # .md file and adds another .md file with no detectable rename —
-        # that is the most likely shape of a rename+rewrite that git cannot
-        # link statistically. The wiki schema can only pick one answer when
-        # similarity is low, so the author should curate the alias by hand.
+        # Builds the rename map across the full history: every file
+        # path that was ever renamed maps to its predecessor path.
         #
-        # One diff is computed per (commit, parent) pair and shared with
-        # touched? through cached_diff. The plain delta list is snapshotted
-        # before find_similar! runs, because similarity detection consumes
-        # exactly the added/deleted pairs warn_unlinked_rename looks for.
+        # A commit that deletes one .md file and adds another with
+        # no detectable rename also draws a warning: that is the
+        # likely shape of a rename+rewrite git cannot link
+        # statistically, and the author should then curate the
+        # alias by hand.
+        #
+        # One diff is computed per (commit, parent) pair and shared
+        # with touched? through cached_diff. The plain delta list
+        # is snapshotted before find_similar! runs, because
+        # similarity detection consumes exactly the added/deleted
+        # pairs warn_unlinked_rename looks for.
         #: () -> Hash[String, String]
         def rename_deltas
           @rename_deltas ||= begin
@@ -173,16 +174,16 @@ module Wikinder
                 diff.deltas.each do |delta|
                   next unless delta.status == :renamed
 
-                  # Rugged's +commit.diff(parent)+ reports the commit side as
-                  # old_file and the parent side as new_file (chronologically
-                  # reversed). The rename map therefore reads "current name ->
-                  # name it was renamed from". First seen wins; walked from
-                  # HEAD so the most recent rename is recorded first.
+                  # Rugged's +commit.diff(parent)+ reports the commit
+                  # side as old_file and the parent side as new_file
+                  # (chronologically reversed), so the map reads
+                  # "current name -> name it was renamed from". First
+                  # seen wins; the walk starts at HEAD, so the most
+                  # recent rename is recorded first.
                   #
-                  # The paths are normalised to valid UTF-8 here so all
-                  # downstream consumers (slug/alias handling, front-matter
-                  # YAML) can treat them as plain Strings without ever having
-                  # to worry about ASCII-8BIT.
+                  # Paths are normalised to valid UTF-8 here, so
+                  # downstream consumers can treat them as plain
+                  # Strings, never ASCII-8BIT.
                   newer_path = delta.old_file[:path]
                   older_path = delta.new_file[:path]
                   next unless newer_path && older_path
@@ -210,27 +211,22 @@ module Wikinder
           end
         end
 
-        # Emits a one-line warning when the commit deletes an .md file and adds
-        # another .md file, and the git rename detector found no link between
-        # them. This is the usual telltale shape of "rename and fully rewrite".
-        # Has no effect on the returned rows; only diagnostics.
+        # Warns when a commit deletes one .md file and adds another
+        # and the rename detector found no link between them — the
+        # telltale shape of "rename and fully rewrite". Diagnostics
+        # only; no effect on the returned rows.
         #
-        # +plain+ is the pre-similarity snapshot of the reversed diff
-        # (commit side as old), so a forward deletion appears as :added
-        # and a forward addition as :deleted.
+        # +plain+ is the pre-similarity snapshot of the reversed
+        # diff (commit side as old), so a forward deletion appears
+        # as :added and a forward addition as :deleted.
         #: (Array[[Symbol, String]], Set[String]) -> void
         def warn_unlinked_rename(plain, marked_renames)
-          deleted_md = [] #: Array[String]
-          added_md = [] #: Array[String]
-          plain.each do |status, path|
-            next unless md?(path)
+          deleted_md = plain.filter_map { |status, path| path if status == :added && md?(path) }
+          added_md = plain.filter_map { |status, path| path if status == :deleted && md?(path) }
 
-            deleted_md << path if status == :added
-            added_md << path if status == :deleted
-          end
-
-          unmatched_deleted = deleted_md - marked_renames.to_a
-          unmatched_added = added_md - marked_renames.to_a
+          marked = marked_renames.to_a
+          unmatched_deleted = deleted_md - marked
+          unmatched_added = added_md - marked
           return if unmatched_deleted.empty? || unmatched_added.empty?
 
           deleted_list = unmatched_deleted.uniq.join(', ')
@@ -241,9 +237,7 @@ module Wikinder
         end
 
         #: (String) -> bool
-        def md?(path)
-          path.end_with?('.md')
-        end
+        def md?(path) = path.end_with?('.md')
 
         # Whether a commit touched a path. A root commit touches
         # every path in its tree.

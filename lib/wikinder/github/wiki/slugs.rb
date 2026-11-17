@@ -7,11 +7,11 @@ module Wikinder
       # Converts between page titles and slugs.
       #
       # The conversion mirrors gollum's handling of page files:
-      # spaces become hyphens, and everything else passes through
+      # spaces become hyphens, everything else passes through
       # unchanged. The transform is lossy by design — a literal
-      # hyphen in a title is indistinguishable from the space→hyphen
-      # mapping, so title_for collapses both to spaces and no
-      # round-trip is assumed.
+      # hyphen in a title is indistinguishable from the
+      # space→hyphen mapping — so title_for collapses both to
+      # spaces and no round-trip is assumed.
       module Slugs
         #: (String) -> String
         def self.for_title(title)
@@ -21,12 +21,12 @@ module Wikinder
         #: (String) -> String
         def self.title_for(slug) = slug.tr('-', ' ')
 
-        # Returns true when +slug+ is usable as the natural path segment of
-        # a generated page or redirect: no directory separators, no parent
-        # references, never hidden or empty, and reasonable size to write
-        # to a filesystem without hitting name length limits. Such names
-        # can still appear as titles, but may not emit path segments that
-        # escape the output directory or collapse onto site routes.
+        # Returns true when +slug+ is usable as the path segment of
+        # a generated page or redirect: no separators, no parent
+        # references, never hidden or empty, and short enough for a
+        # filesystem's name length limit. Such names can still
+        # appear as titles; they just may not escape the output
+        # directory or collapse onto site routes.
         #: (String) -> bool
         def self.safe?(slug)
           return false if slug.empty?

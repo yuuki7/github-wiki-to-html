@@ -5,24 +5,24 @@ module Wikinder
     class Wiki
       # Reads and writes META.md, syncing article rows with git history.
       #
-      # Existing rows are kept (author, creation date, aliases are curated
-      # by hand), but modified_date is refreshed from git and rows for
-      # missing or deleted pages are rebuilt from history. Language is
-      # detected once, when a row is created, and never refreshed — the
-      # detection is heuristic and flipping it after the fact would silently
-      # rewrite a value a human may already have reviewed.
+      # Existing rows are kept — author, creation date and aliases
+      # are curated by hand — but modified_date is refreshed from
+      # git, and rows for missing or deleted pages are rebuilt from
+      # history. Language is detected once, when a row is created,
+      # and never refreshed: detection is heuristic, and flipping
+      # it would silently rewrite a value a human may already have
+      # reviewed.
       #
       # Aliases that would shadow an existing page are dropped; see
-      # prune_colliding_aliases!.
+      # prune_colliding_aliases!. With ignore_meta set, every row
+      # is rebuilt from history and the committed META.md is
+      # disregarded.
       #
-      # With ignore_meta set, every row is rebuilt from history and the
-      # previously committed META.md is disregarded.
-      #
-      # Cells are written with backslash escapes — '\|' for a literal pipe
-      # and '\\' for a literal backslash — so any author or title can be
-      # represented losslessly. Newlines inside a value are flattened to
-      # spaces. Hand-written rows without escapes are read leniently, and
-      # those tolerances are intentional rather than optional.
+      # Cells are written with backslash escapes ('\|' for a pipe,
+      # '\\' for a backslash) so any value is represented
+      # losslessly; newlines flatten to spaces. Hand-written rows
+      # without escapes are read leniently — an intentional
+      # tolerance, not an option.
       module Meta
         META_HEADERS: Array[String]
 
@@ -46,39 +46,37 @@ module Wikinder
         def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, MetaRow]
 
         # : (String, ?Integer?) -> MetaRow?
-        #  Line numbers are only used for diagnostics. A broken row is
-        #  a fatal error, not a skip: the sync rewrites META.md from
-        #  the rows it read, so a skipped row would lose its curated
-        #  fields (aliases, language) without a trace. A hand edit
-        #  that breaks a row must be fixed, not silently absorbed.
+        #  Line numbers are only used for diagnostics. A broken row
+        #  is a fatal error, not a skip: the sync rewrites META.md
+        #  from the rows it read, so skipping one would silently
+        #  lose its curated fields. A hand edit that breaks a row
+        #  must be fixed, not silently absorbed.
         def self.parse_row: (String, ?Integer?) -> MetaRow?
 
-        # Computes the synced META rows for the given pages and
-        # returns them, keyed by slug. Writing them back is
-        # Meta.write's job, kept separate so that computing a build
-        # never mutates the source tree. With prev_head available,
-        # pages untouched since prev_head keep their row verbatim
-        # (incremental sync).
+        # Computes the synced META rows for the given pages, keyed
+        # by slug. Writing them back is Meta.write's job, kept
+        # separate so that computing a build never mutates the
+        # source tree. With prev_head available, pages untouched
+        # since prev_head keep their row verbatim (incremental sync).
         # : (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
         def self.sync: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
 
-        # Drops aliases that slugify to a name already used by an existing
-        # page (generated or ungenerated), or to the row's own slug.
+        # Drops aliases that slugify to a name already used by an
+        # existing page (generated or ungenerated), or to the row's
+        # own slug. Such an alias would produce a redirect that
+        # shadows the page — the existing page always wins — so the
+        # alias is removed from META.md itself: a renamed-away name
+        # cannot be re-added by an automated pass, and a curated
+        # alias since claimed by another page is dropped instead of
+        # shadowing it.
         #
-        # An alias that resolves to the same slug as an existing page would
-        # produce a redirect file that shadows it — the existing page always
-        # wins. This also removes the stale alias from META.md itself, so a
-        # renamed-away name cannot be re-added by an automated pass, and a
-        # hand-curated alias whose name has since been claimed by another
-        # page is removed instead of shadowing it.
+        # An alias claimed by more than one page is dropped from
+        # every claimant and reported: a redirect can have only one
+        # healthy target, and letting the last page win would hide
+        # the ambiguity.
         #
-        # Additionally, an alias claimed by more than one page's row is
-        # dropped from *every* claimant and reported: a redirect file can
-        # only have one healthy target, and silently letting the last page
-        # win would hide the ambiguity regardless of write order.
-        #
-        # Comparison is case-insensitive because the output target may live
-        # on a case-insensitive filesystem.
+        # Comparison is case-insensitive: the output may live on a
+        # case-insensitive filesystem.
         # : (Hash[String, MetaRow], Array[String], Set[String]) -> void
         def self.prune_colliding_aliases!: (Hash[String, MetaRow], Array[String], Set[String]) -> void
 

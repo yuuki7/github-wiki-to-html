@@ -20,3 +20,8 @@ Style/RbsInline/RequireRbsInlineComment:
     - '../Gemfile'
     - '../Rakefile'
     - 'Steepfile'
+
+# XXX: Metrics offenses are ignored for now, as a temporary
+# measure. Every other offense counts.
+Metrics:
+  Enabled: false

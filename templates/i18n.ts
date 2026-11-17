@@ -10,14 +10,28 @@ export type SupportedLanguage = "ar" | "de" | "en" | "ja" | "zh" | "zh-hant";
 // The site's languages, from the hand-maintained site metadata. The
 // default language is the one the original special pages belong to;
 // every other language exists once pages are translated into it.
-export const defaultLanguage: string = site.language ?? "en";
+// The metadata is required: a missing or empty value fails the
+// build here instead of letting the site fall back to an invented
+// language list.
+if (typeof site.language !== "string" || site.language === "") {
+  throw new Error("site.json: 'language' must be a non-empty string");
+}
+export const defaultLanguage: string = site.language;
 // In ASCII order of their codes, the order languages are listed
 // in everywhere on the site.
-export const supportedLanguages: string[] = (
-  Array.isArray(site.languages) && site.languages.length > 0
-    ? [...site.languages]
-    : [defaultLanguage]
-).sort();
+if (
+  !Array.isArray(site.languages) ||
+  site.languages.length === 0 ||
+  site.languages.some((code) => typeof code !== "string" || code === "")
+) {
+  throw new Error(
+    "site.json: 'languages' must be a non-empty array of non-empty strings",
+  );
+}
+if (!site.languages.includes(defaultLanguage)) {
+  throw new Error("site.json: 'languages' does not include the site language");
+}
+export const supportedLanguages: string[] = [...site.languages].sort();
 
 // A page version, as the content entries carry it. Redirects
 // carry no language and are not versions of a page.
@@ -279,8 +293,13 @@ export function pageHref(
 }
 
 // The site's canonical base URL, without a trailing slash, from
-// the site metadata.
-export const siteUrl: string = site.url ?? "";
+// the site metadata. The value is required: canonical links and
+// the sitemap are built from it, and an empty base would produce
+// wrong URLs silently.
+if (typeof site.url !== "string" || site.url === "") {
+  throw new Error("site.json: 'url' must be a non-empty string");
+}
+export const siteUrl: string = site.url;
 
 // A root-relative href as the absolute URL it is served at, for
 // the places that require absolute URLs: canonical links,

@@ -2,30 +2,31 @@
 # rbs_inline: enabled
 
 require 'fileutils'
+require 'strscan'
 
 module Wikinder
   module GitHub
     class Wiki
       # Reads and writes META.md, syncing article rows with git history.
       #
-      # Existing rows are kept (author, creation date, aliases are curated
-      # by hand), but modified_date is refreshed from git and rows for
-      # missing or deleted pages are rebuilt from history. Language is
-      # detected once, when a row is created, and never refreshed — the
-      # detection is heuristic and flipping it after the fact would silently
-      # rewrite a value a human may already have reviewed.
+      # Existing rows are kept — author, creation date and aliases
+      # are curated by hand — but modified_date is refreshed from
+      # git, and rows for missing or deleted pages are rebuilt from
+      # history. Language is detected once, when a row is created,
+      # and never refreshed: detection is heuristic, and flipping
+      # it would silently rewrite a value a human may already have
+      # reviewed.
       #
       # Aliases that would shadow an existing page are dropped; see
-      # prune_colliding_aliases!.
+      # prune_colliding_aliases!. With ignore_meta set, every row
+      # is rebuilt from history and the committed META.md is
+      # disregarded.
       #
-      # With ignore_meta set, every row is rebuilt from history and the
-      # previously committed META.md is disregarded.
-      #
-      # Cells are written with backslash escapes — '\|' for a literal pipe
-      # and '\\' for a literal backslash — so any author or title can be
-      # represented losslessly. Newlines inside a value are flattened to
-      # spaces. Hand-written rows without escapes are read leniently, and
-      # those tolerances are intentional rather than optional.
+      # Cells are written with backslash escapes ('\|' for a pipe,
+      # '\\' for a backslash) so any value is represented
+      # losslessly; newlines flatten to spaces. Hand-written rows
+      # without escapes are read leniently — an intentional
+      # tolerance, not an option.
       module Meta
         META_HEADERS = ['Title', 'Author', 'Creation date',
                         'Modified date', 'Language', 'Aliases'].freeze #: Array[String]
@@ -37,9 +38,7 @@ module Wikinder
 
         # Escapes a value for one META.md table cell.
         #: (String?) -> String
-        def self.escape_cell(text)
-          text.to_s.gsub('\\', '\\\\\\\\').gsub('|', '\\|').gsub(/[\r\n]+/, ' ').strip
-        end
+        def self.escape_cell(text) = text.to_s.gsub('\\', '\\\\\\\\').gsub('|', '\\|').gsub(/[\r\n]+/, ' ').strip
 
         # Splits a table line into cells, undressing the backslash escapes.
         # Handles '\\' and '\|' as two-character sequences; a backslash
@@ -52,30 +51,18 @@ module Wikinder
           inner = body[1..-2] || ''
           cells = [] #: Array[String]
           current = +''
-          i = 0
-          while i < inner.length
-            ch = inner[i]
-            break if ch.nil? # cannot happen, satisfies the type checker
-
-            if ch == '\\'
-              nxt = inner[i + 1]
-              if nxt && ['\\', '|'].include?(nxt)
-                current << nxt
-                i += 2
-                next
-              end
-              current << ch
-              i += 1
-              next
-            end
-            if ch == '|'
+          scanner = StringScanner.new(inner)
+          until scanner.eos?
+            if (escaped = scanner.scan(/\\[\\|]/))
+              current << escaped[1].to_s
+            elsif scanner.scan('\\')
+              current << '\\'
+            elsif scanner.scan('|')
               cells << current
               current = +''
-              i += 1
-              next
+            else
+              current << scanner.getch.to_s
             end
-            current << ch
-            i += 1
           end
           cells << current
           cells.map(&:strip)
@@ -104,11 +91,11 @@ module Wikinder
         end
 
         #: (String, ?Integer?) -> MetaRow?
-        # Line numbers are only used for diagnostics. A broken row is
-        # a fatal error, not a skip: the sync rewrites META.md from
-        # the rows it read, so a skipped row would lose its curated
-        # fields (aliases, language) without a trace. A hand edit
-        # that breaks a row must be fixed, not silently absorbed.
+        # Line numbers are only used for diagnostics. A broken row
+        # is a fatal error, not a skip: the sync rewrites META.md
+        # from the rows it read, so skipping one would silently
+        # lose its curated fields. A hand edit that breaks a row
+        # must be fixed, not silently absorbed.
         def self.parse_row(line, line_number = nil)
           location = line_number ? " (line #{line_number})" : ''
           cells = split_cells(line)
@@ -136,7 +123,7 @@ module Wikinder
 
           MetaRow.new(
             slug: Slugs.for_title(title),
-            title: title,
+            title:,
             author: cells[1],
             creation_date: cells[2],
             modified_date: cells[3],
@@ -145,36 +132,35 @@ module Wikinder
           )
         end
 
-        # Computes the synced META rows for the given pages and
-        # returns them, keyed by slug. Writing them back is
-        # Meta.write's job, kept separate so that computing a build
-        # never mutates the source tree. With prev_head available,
-        # pages untouched since prev_head keep their row verbatim
-        # (incremental sync).
+        # Computes the synced META rows for the given pages, keyed
+        # by slug. Writing them back is Meta.write's job, kept
+        # separate so that computing a build never mutates the
+        # source tree. With prev_head available, pages untouched
+        # since prev_head keep their row verbatim (incremental sync).
         #: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
         def self.sync(wiki, pages, meta_path, ignore_meta: false, prev_head: nil)
           # diff_paths returns nil for "full rebuild" (ignore_meta or no valid
           # prev_head); it returns the exact list of paths touched since
           # prev_head otherwise.
-          previously = load(meta_path, ignore_meta: ignore_meta)
+          previously = load(meta_path, ignore_meta:)
           rows = {} #: Hash[String, MetaRow]
 
           changed = prev_head.nil? || ignore_meta ? nil : wiki.diff_paths(prev_head)
 
           if changed && changed.empty?
-            # No page changed since prev_head, but META.md itself may
-            # have drifted (reverted or hand-edited). Keep the rows we
-            # already have, but rebuild rows for pages they no longer
-            # cover — via refresh_row, so rename inheritance and
-            # curated fields are honoured exactly as in a full rebuild,
-            # not dropped to git-derived defaults.
-            still_current = Set.new(pages.map { |page| File.basename(page, '.md') })
+            # No page changed since prev_head, but META.md itself
+            # may have drifted (reverted or hand-edited). Keep the
+            # rows already read, but rebuild rows for pages they no
+            # longer cover — via refresh_row, so rename inheritance
+            # and curated fields are honoured exactly as in a full
+            # rebuild, not dropped to git-derived defaults.
+            still_current = Set.new(pages.map { File.basename(it, '.md') })
             previously.each { |slug, row| rows[slug] = row }
             pages.each do |page|
               slug = File.basename(page, '.md')
               rows[slug] ||= refresh_row(wiki, page, inherited_row(wiki, previously, page, slug))
             end
-            rows.delete_if { |slug, _| !still_current.include?(slug) }
+            rows.keep_if { |slug, _| still_current.include?(slug) }
             prune_colliding_aliases!(rows, pages, wiki.ungenerated_pages)
             return rows
           end
@@ -183,7 +169,7 @@ module Wikinder
             slug = File.basename(page, '.md')
             inherited = inherited_row(wiki, previously, page, slug)
             if !changed.nil? && inherited && changed.none? { |path| path.b == page.b }
-              rows[slug] = inherited.with(slug: slug, title: Slugs.title_for(slug))
+              rows[slug] = inherited.with(slug:, title: Slugs.title_for(slug))
               next
             end
 
@@ -194,27 +180,26 @@ module Wikinder
           rows
         end
 
-        # Drops aliases that slugify to a name already used by an existing
-        # page (generated or ungenerated), or to the row's own slug.
+        # Drops aliases that slugify to a name already used by an
+        # existing page (generated or ungenerated), or to the row's
+        # own slug. Such an alias would produce a redirect that
+        # shadows the page — the existing page always wins — so the
+        # alias is removed from META.md itself: a renamed-away name
+        # cannot be re-added by an automated pass, and a curated
+        # alias since claimed by another page is dropped instead of
+        # shadowing it.
         #
-        # An alias that resolves to the same slug as an existing page would
-        # produce a redirect file that shadows it — the existing page always
-        # wins. This also removes the stale alias from META.md itself, so a
-        # renamed-away name cannot be re-added by an automated pass, and a
-        # hand-curated alias whose name has since been claimed by another
-        # page is removed instead of shadowing it.
+        # An alias claimed by more than one page is dropped from
+        # every claimant and reported: a redirect can have only one
+        # healthy target, and letting the last page win would hide
+        # the ambiguity.
         #
-        # Additionally, an alias claimed by more than one page's row is
-        # dropped from *every* claimant and reported: a redirect file can
-        # only have one healthy target, and silently letting the last page
-        # win would hide the ambiguity regardless of write order.
-        #
-        # Comparison is case-insensitive because the output target may live
-        # on a case-insensitive filesystem.
+        # Comparison is case-insensitive: the output may live on a
+        # case-insensitive filesystem.
         #: (Hash[String, MetaRow], Array[String], Set[String]) -> void
         def self.prune_colliding_aliases!(rows, pages, ungenerated_pages)
           occupied = Set.new(ungenerated_pages.map(&:downcase))
-          pages.each { |page| occupied << File.basename(page, '.md').downcase }
+          pages.each { occupied << File.basename(it, '.md').downcase }
 
           rows.each do |slug, row|
             kept = row.aliases.reject do |title|
@@ -273,7 +258,7 @@ module Wikinder
 
           if previous
             return previous.with(
-              slug: slug,
+              slug:,
               title: Slugs.title_for(slug),
               modified_date: last ? last.time.utc.iso8601 : previous.modified_date,
               aliases: merge_aliases(previous.aliases, aliases)
@@ -293,7 +278,7 @@ module Wikinder
           first = bounds[:earliest]
 
           MetaRow.new(
-            slug: slug,
+            slug:,
             title: Slugs.title_for(slug),
             author: first ? first.author[:name] : 'unknown',
             creation_date: first ? first.time.utc.iso8601 : 'unknown',
@@ -304,9 +289,7 @@ module Wikinder
         end
 
         #: (Array[String], Array[String]) -> Array[String]
-        def self.merge_aliases(existing, absorbed)
-          (existing + absorbed).uniq.reject(&:empty?)
-        end
+        def self.merge_aliases(existing, absorbed) = (existing + absorbed).uniq.reject(&:empty?)
 
         # Writes the rows as the META.md table: newest first by
         # creation date, ties broken by slug. Does nothing when the

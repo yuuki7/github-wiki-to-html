@@ -3,14 +3,13 @@
 module Wikinder
   module GitHub
     class Wiki
-      # Reads the wiki's git history: the HEAD tree's contents,
-      # the commits that touched each page (following renames),
-      # the rename map across the whole history, and the paths
-      # changed between two refs. Everything the converter
-      # derives from git lives here, so Wiki itself only
-      # orchestrates the build. Results are cached per instance:
-      # a build reads the same history many times, and the
-      # repository does not move under it.
+      # Reads the wiki's git history: the HEAD tree, the commits
+      # that touched each page (following renames), the rename map
+      # across the whole history, and the paths changed between
+      # two refs. Everything the converter derives from git lives
+      # here, so Wiki itself only orchestrates the build. Results
+      # are cached per instance: a build reads the same history
+      # many times, and the repository does not move under it.
       class History
         @diffs: Hash[[ Rugged::Commit, Rugged::Commit ], Rugged::Diff]
 
@@ -69,18 +68,20 @@ module Wikinder
         # : (String) -> Array[String]
         def rename_history_for: (String) -> Array[String]
 
-        # Builds a map of rename deltas across the full history: every file path
-        # that was ever renamed maps to its predecessor path.
-        # Additionally, surface a warning when a single commit deletes one
-        # .md file and adds another .md file with no detectable rename —
-        # that is the most likely shape of a rename+rewrite that git cannot
-        # link statistically. The wiki schema can only pick one answer when
-        # similarity is low, so the author should curate the alias by hand.
+        # Builds the rename map across the full history: every file
+        # path that was ever renamed maps to its predecessor path.
         #
-        # One diff is computed per (commit, parent) pair and shared with
-        # touched? through cached_diff. The plain delta list is snapshotted
-        # before find_similar! runs, because similarity detection consumes
-        # exactly the added/deleted pairs warn_unlinked_rename looks for.
+        # A commit that deletes one .md file and adds another with
+        # no detectable rename also draws a warning: that is the
+        # likely shape of a rename+rewrite git cannot link
+        # statistically, and the author should then curate the
+        # alias by hand.
+        #
+        # One diff is computed per (commit, parent) pair and shared
+        # with touched? through cached_diff. The plain delta list
+        # is snapshotted before find_similar! runs, because
+        # similarity detection consumes exactly the added/deleted
+        # pairs warn_unlinked_rename looks for.
         # : () -> Hash[String, String]
         def rename_deltas: () -> Hash[String, String]
 
@@ -90,14 +91,14 @@ module Wikinder
         # : (Rugged::Diff) -> Array[[Symbol, String]]
         def plain_delta_paths: (Rugged::Diff) -> Array[[ Symbol, String ]]
 
-        # Emits a one-line warning when the commit deletes an .md file and adds
-        # another .md file, and the git rename detector found no link between
-        # them. This is the usual telltale shape of "rename and fully rewrite".
-        # Has no effect on the returned rows; only diagnostics.
+        # Warns when a commit deletes one .md file and adds another
+        # and the rename detector found no link between them — the
+        # telltale shape of "rename and fully rewrite". Diagnostics
+        # only; no effect on the returned rows.
         #
-        # +plain+ is the pre-similarity snapshot of the reversed diff
-        # (commit side as old), so a forward deletion appears as :added
-        # and a forward addition as :deleted.
+        # +plain+ is the pre-similarity snapshot of the reversed
+        # diff (commit side as old), so a forward deletion appears
+        # as :added and a forward addition as :deleted.
         # : (Array[[Symbol, String]], Set[String]) -> void
         def warn_unlinked_rename: (Array[[ Symbol, String ]], Set[String]) -> void
 

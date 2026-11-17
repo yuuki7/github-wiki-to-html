@@ -8,13 +8,12 @@ module Wikinder
     class Wiki
       # Detects and normalizes the language code of a page.
       #
-      # Chinese is normalized to one of two codes, 'zh' for
-      # Simplified and 'zh-hant' for Traditional, because the site
-      # treats the two scripts as separate languages and plain 'zh'
-      # names the default script, Simplified. The script is decided
-      # by counting characters that exist in only one of the two
-      # scripts; text without any such character defaults to
-      # Simplified, the larger of the two readerships.
+      # Chinese is normalized to 'zh' (Simplified) or 'zh-hant'
+      # (Traditional): the site treats the two scripts as separate
+      # languages, and plain 'zh' names the default, Simplified.
+      # The script is decided by counting characters that exist in
+      # only one of the two scripts; no such character means
+      # Simplified, the larger readership.
       module Language
         # High-frequency characters written differently in the two
         # scripts. Only characters whose simplified and traditional
@@ -45,17 +44,17 @@ module Wikinder
           return 'en' if text.nil? || text.strip.empty?
 
           code = WhatLanguage.language_iso(text)
-          normalize(code&.to_s, text, supported: supported) || 'en'
+          normalize(code&.to_s, text, supported:) || 'en'
         end
 
         # Normalizes a language code to the form the site uses as a
         # directory name. Chinese codes resolve to 'zh' or 'zh-hant'
         # (the script detected from +text+ when available); region
         # variants of the supported languages collapse to the plain
-        # code. The caller names the supported languages: this
-        # module keeps no list of its own, so the site's list in
-        # site.json stays the single source. Unknown codes pass
-        # through unchanged.
+        # code. The caller names the supported languages — this
+        # module keeps no list of its own, so site.json stays the
+        # single source. Unknown codes pass through in lower case,
+        # the form URLs compare and carry language tags in.
         #: (String?, ?String?, ?supported: Array[String]) -> String?
         def self.normalize(code, text = nil, supported: [])
           return nil if code.nil? || code.empty?
@@ -64,7 +63,7 @@ module Wikinder
           return chinese_variant(downcased, text) if downcased == 'zh' || downcased.start_with?('zh-')
 
           base = downcased.split('-').first.to_s
-          supported.include?(base) ? base : code
+          supported.include?(base) ? base : downcased
         end
 
         # Which Chinese script a code names. Region codes decide
@@ -75,8 +74,8 @@ module Wikinder
           return 'zh' if %w[zh-cn zh-sg zh-my zh-hans].include?(code)
           return 'zh' if text.nil? || text.empty?
 
-          simplified = text.each_char.count { |char| SIMPLIFIED_ONLY.include?(char) }
-          traditional = text.each_char.count { |char| TRADITIONAL_ONLY.include?(char) }
+          simplified = text.count(SIMPLIFIED_ONLY)
+          traditional = text.count(TRADITIONAL_ONLY)
           traditional > simplified ? 'zh-hant' : 'zh'
         end
       end

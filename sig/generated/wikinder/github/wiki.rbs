@@ -4,13 +4,12 @@ module Wikinder
   module GitHub
     # Represents the Wikinder GitHub Wiki.
     #
-    # The wiki repository contains .md files; this class enumerates them,
-    # rewrites wiki-specific syntax, and produces YAML front matter
-    # with metadata for downstream consumers.
+    # The wiki repository contains .md files; this class enumerates
+    # them, rewrites wiki-specific syntax, and produces YAML front
+    # matter with metadata for downstream consumers.
     #
-    # GitHub Wiki is flat: it has no notion of nested page directories, and
-    # pages are addressed by name only. Subdirectory blobs are therefore
-    # silently unsupported — they are ignored entirely.
+    # GitHub Wiki is flat — pages are addressed by name only — so
+    # subdirectory blobs are unsupported and ignored entirely.
     class Wiki
       # The error a build fails with on purpose: bad input, an
       # unsupported translation, an unsafe output path. Callers can
@@ -18,6 +17,9 @@ module Wikinder
       # library errors.
       class Error < StandardError
       end
+
+      # The file extensions of the image assets a page can embed.
+      IMAGE_EXTENSIONS: Array[String]
 
       # One row of META.md, as Meta keeps it. Rows are values:
       # a refresh replaces a row with an updated copy instead of
@@ -130,12 +132,11 @@ module Wikinder
       # @param options [Hash] Options for the build. Each key is
       #   documented below.
       # @option options [Set[String]] :ungenerated_pages Pages the
-      #   build never generates as articles. The default is the
-      #   same set the conversion CLI passes — the site parts and
-      #   repository files that are not articles — so Home and
-      #   _Footer are not emitted as ordinary articles by default.
-      #   Pass Set['META'] (or any subset) explicitly to opt out of
-      #   each.
+      #   build never generates as articles. The default is the set
+      #   the conversion CLI passes — the site parts and repository
+      #   files that are not articles — so Home and _Footer are not
+      #   emitted as ordinary articles. Pass a subset (such as
+      #   Set['META']) to opt out of each.
       # @option options [Set[String]] :unlisted_pages Pages kept out
       #   of the home page's list of articles.
       # @option options [Boolean] :ignore_meta Ignore committed
@@ -145,37 +146,40 @@ module Wikinder
       #   this repo was last read at. Used for incremental META.md
       #   sync.
       # @option options [String, nil] :site_language The site's
-      #   language, stamped onto special pages. Site metadata belongs
-      #   to the caller (the conversion CLI maintains it); the
-      #   module never reads a site file itself and never detects a
-      #   language for site parts. It is also the language the
-      #   original special pages belong to: every output is written
-      #   under a language directory named by the page's own
-      #   language.
+      #   language, stamped onto special pages, whose originals
+      #   belong to it. Site metadata belongs to the caller (the
+      #   conversion CLI maintains it); the module never reads a
+      #   site file and never detects a language for site parts.
       # @option options [Array[String]] :supported_languages The
-      #   languages the site offers translations in. A translation
-      #   directory naming any other language fails the build. When
-      #   empty, every language found under the translations
-      #   directory is accepted.
+      #   languages the site offers. Non-empty, the list declares
+      #   the site's language set: the site language must belong to
+      #   it, every page must exist in every language in it, and a
+      #   translation directory naming any other language fails the
+      #   build. Original pages may be written in any language: a
+      #   page's language comes from its META row or from
+      #   detection, and detection is a heuristic taken as it comes,
+      #   never a ground truth to fail a build on. Empty, no set is
+      #   declared: every language found is accepted, and a link to
+      #   a page with no version in the reader's language points at
+      #   the original.
       # @option options [String, Pathname, nil] :translations_dir
       #   Directory holding translated pages as data, one
       #   subdirectory per language
-      #   (translations/<language>/<Slug>.md). Translation itself is
-      #   not this module's business; the files are inputs, produced
-      #   elsewhere, and may carry a YAML front matter whose only key
-      #   the converter reads is +title+ (the translated title).
+      #   (translations/<language>/<Slug>.md). The files are inputs
+      #   produced elsewhere — translation is not this module's
+      #   business — and their front matter's only key read is
+      #   +title+ (the translated title).
       # : (String | Pathname, ?wiki_options) -> void
       def initialize: (String | Pathname, ?wiki_options) -> void
 
       # Builds the entire output tree, writing Markdown files with YAML front matter.
       #
-      # All outputs are computed in memory first; only when computation of
-      # every page (or asset) succeeded are files written, each via a
-      # same-directory temporary file atomically renamed into place. A crash
-      # can therefore leave previous-generation and new files mixed, but
-      # never a torn individual file. After the write, files the new build
-      # no longer produces are removed (keeping anything unrelated to the
-      # build untouched).
+      # Outputs are computed in memory first and written only when
+      # every one succeeded, each via a same-directory temporary
+      # file renamed into place: a crash can mix old and new files,
+      # but never tear an individual file. Files the new build no
+      # longer produces are then removed; unrelated files stay
+      # untouched.
       # : (String) -> void
       def build: (String) -> void
 
@@ -187,16 +191,35 @@ module Wikinder
       # : (String, Hash[String, String]) -> void
       def verify_confined!: (String, Hash[String, String]) -> void
 
+      # Refuses to build when a page slug or an alias slug names a
+      # language this build emits. Originals live at the root and
+      # translations under their language code, so such a slug
+      # makes the first path segment ambiguous — that page at the
+      # root, or that language's home. The build fails instead of
+      # routing one of them to the wrong place.
+      # : (Hash[String, OriginalPage], Hash[String, MetaRow], Array[String]) -> void
+      def verify_no_language_collisions!: (Hash[String, OriginalPage], Hash[String, MetaRow], Array[String]) -> void
+
+      # Refuses to build when a page lacks a version in a declared
+      # language. The declared set is a complete matrix: every
+      # article — and every special page that exists — exists in
+      # every language in it, and an original written outside the
+      # set is a row like any other, all its declared versions
+      # translations. A missing version is not a gap to route
+      # around; the build fails, naming every missing version at
+      # once. No set declared, nothing is required.
+      # : (page_versions, Array[TranslationRecord]) -> void
+      def verify_translation_completeness!: (page_versions, Array[TranslationRecord]) -> void
+
       # Removes stale generated files no longer produced by this build.
       #
-      # The output directory is assumed to be exclusively this tool's
-      # destination — anything matching the generated extensions (Markdown
-      # or common image types) that the current build did not produce is
-      # removed, at any depth (outputs live in per-language directories),
-      # along with `.tmp.<pid>` files left by a crash during a write.
-      # Files with other extensions (e.g. site assets shared with the SSG)
-      # are left untouched. Directories left empty by a removal (a
-      # language with no pages left) are removed as well.
+      # The output directory is this tool's alone: anything with a
+      # generated extension (Markdown or a common image type) that
+      # the current build did not produce is removed, at any depth,
+      # along with `.tmp.<pid>` files left by a crashed write.
+      # Other files (such as site assets shared with the SSG) stay
+      # untouched, and directories left empty by a removal are
+      # removed as well.
       # : (String, Hash[String, String]) -> void
       def cleanup_stale_files: (String, Hash[String, String]) -> void
 
@@ -222,12 +245,12 @@ module Wikinder
 
       # Reads the translation files supplied as data under the
       # translations directory: one subdirectory per language, one
-      # Markdown file per page, named by the original page's slug.
-      # Home and _Footer name the special pages. The build refuses
-      # a file whose language is not supported, whose slug no
-      # original page bears, or that restates the original in the
-      # original's own language: dropped silently, it would leave a
-      # hole in a dataset the site treats as complete.
+      # Markdown file per page, named by the original page's slug;
+      # Home and _Footer name the special pages. A file whose
+      # language is not supported, whose slug no original page
+      # bears, or that restates the original in its own language is
+      # refused: dropped silently, it would hole a dataset the site
+      # treats as complete.
       # : (Hash[String, OriginalPage]) -> Array[TranslationRecord]
       def load_translations: (Hash[String, OriginalPage]) -> Array[TranslationRecord]
 
@@ -261,16 +284,25 @@ module Wikinder
 
       # For every emitted language, the routes its pages link with:
       # slug -> the URL prefix a link to that slug must use from a
-      # page in this language. An original page lives at the site
-      # root, so its prefix is empty; a translation lives under its
-      # language, so its prefix is that language. A target that
-      # exists as a translation in the reader's language wins;
-      # anything else falls back to the original at the root.
-      # Aliases route to the redirect generated for them, which is
-      # served at the root in the target's original language and
-      # under the reader's language elsewhere (see redirect_outputs).
+      # page in this language. Originals live at the root (empty
+      # prefix); translations under their language (that prefix).
+      # A target with no version in a declared reader's language
+      # cannot occur — the completeness check has refused such a
+      # build — so reaching it here means the build's own checks
+      # disagree, and it fails. In an undeclared language the
+      # matrix promises nothing, and the link points at the
+      # original at the root instead. Aliases route to their
+      # redirect: at the root in the target's original language,
+      # under the reader's language elsewhere (see
+      # redirect_outputs).
       # : (Array[String], page_versions, Hash[String, MetaRow]) -> Hash[String, link_routes]
       def routes_by_language: (Array[String], page_versions, Hash[String, MetaRow]) -> Hash[String, link_routes]
+
+      # The URL prefix of one page as linked from a page in the
+      # given language (see routes_by_language for the two cases a
+      # missing version can mean).
+      # : (String, Hash[String, bool], String) -> String
+      def route_prefix: (String, Hash[String, bool], String) -> String
 
       # Builds one translated article: the original's metadata, the
       # translation's own title when it supplies one, and a body whose
@@ -281,6 +313,12 @@ module Wikinder
       # Builds one translated special page (Home or _Footer).
       # : (TranslationRecord, Hash[String, String]?) -> String
       def translated_special_output: (TranslationRecord, Hash[String, String]?) -> String
+
+      # Runs the block, wrapping any failure with a context that
+      # identifies the page or file responsible, so a crash
+      # mid-build names what it was building.
+      # : (String) { () -> String } -> String
+      def with_error_context: (String) { () -> String } -> String
 
       # Builds the front matter for one page, wrapping any failure with the
       # page path so a crash mid-build identifies the file responsible.
@@ -311,6 +349,16 @@ module Wikinder
       # : (String, page_versions, Hash[String, Set[String]]) -> Set[String]
       def occupied_slugs: (String, page_versions, Hash[String, Set[String]]) -> Set[String]
 
+      # Yields each file at the repository root, the only place
+      # GitHub Wiki keeps files: subdirectory files are unsupported
+      # and ignored, and dotfiles are never wiki pages or assets.
+      # : () { (Rugged::tree_entry) -> void } -> void
+      def each_root_entry: () { (Rugged::tree_entry) -> void } -> void
+
+      # Whether a root file is an image asset, by its extension.
+      # : (String) -> bool
+      def image_asset?: (String) -> bool
+
       # The pages this build generates, in order: the safe
       # Markdown pages at the repository root that are not
       # ungenerated.
@@ -322,9 +370,9 @@ module Wikinder
 
       # The wiki's link index: every page and image asset at the
       # repository root, for canonicalizing wikilink targets the way
-      # GitHub Wiki resolves them (see Tags.build_link_index). Pages are
-      # all .md files here, generated or not — resolution is about what
-      # exists in the wiki, not about what this build emits.
+      # GitHub Wiki resolves them (see Tags.build_link_index). All
+      # .md files count, generated or not — resolution is about
+      # what exists in the wiki, not what this build emits.
       # : () -> link_index
       def link_index: () -> link_index
 

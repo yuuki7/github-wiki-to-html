@@ -255,18 +255,30 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
-    # Translations arrive as data: the translated article inherits the
-    # original's metadata, is marked as a translation of it, and links
-    # fall back to a target's original language when no version in the
-    # translation's language exists.
+    # Translations arrive as data: the translated article inherits
+    # the original's metadata, is marked as a translation of it,
+    # and its links use the version in the translation's own
+    # language. The supported set is a complete matrix, so this
+    # fixture supplies every page in every supported language.
+    # Image-page has no META row, so its language comes from
+    # detection and lands outside the set; all three of its
+    # supported versions are translations.
     it 'builds translated articles and special pages from the translations directory' do
       path = Dir.mktmpdir('i18n-wiki')
       begin
         FixtureWiki.build(path)
         with_translations(
           'de/About.md' => "---\ntitle: Über uns\n---\n\nDeutscher Text. Siehe [[Japanese-page]].\n",
+          'ja/About.md' => "私たちについて。[[Japanese-page]]へのリンク。\n",
+          'en/Japanese-page.md' => "English text. See [[About]].\n",
           'de/Japanese-page.md' => "Deutscher Text. Siehe [[About]].\n",
-          'ja/Home.md' => "翻訳されたホーム。[[About]]へのリンク。\n"
+          'en/Image-page.md' => "An image page.\n",
+          'de/Image-page.md' => "Deutscher Text.\n",
+          'ja/Image-page.md' => "日本語のテキスト。\n",
+          'ja/Home.md' => "翻訳されたホーム。[[About]]へのリンク。\n",
+          'de/Home.md' => "Übersetzte Startseite.\n",
+          'ja/_Footer.md' => "翻訳されたフッター。\n",
+          'de/_Footer.md' => "Übersetzter Footer.\n"
         ) do |translations|
           described_class.new(path, multilingual_options(translations)).build(target)
 
@@ -288,16 +300,20 @@ RSpec.describe Wikinder::GitHub::Wiki do
           german_page = File.read(File.join(target, 'de', 'Japanese-page.md'))
           expect(german_page).to include('[About](/de/About)')
 
+          # Every supported version of the image page exists, even
+          # though its original is in none of them.
+          expect(File.exist?(File.join(target, 'en', 'Image-page.md'))).to be(true)
+
           home = File.read(File.join(target, 'ja', 'Home.md'))
           home_meta = YAML.safe_load(home.split("---\n")[1])
           expect(home_meta['kind']).to eq('special')
           expect(home_meta['language']).to eq('ja')
-          expect(home).to include('[About](/About)')
+          expect(home).to include('[About](/ja/About)')
 
-          # The original Home belongs to the site's default language,
-          # and no German Home exists until one is translated.
+          # The original Home belongs to the site's default language;
+          # the German Home is its translation.
           expect(File.exist?(File.join(target, 'en', 'Home.md'))).to be(true)
-          expect(File.exist?(File.join(target, 'de', 'Home.md'))).to be(false)
+          expect(File.exist?(File.join(target, 'de', 'Home.md'))).to be(true)
         end
       ensure
         FileUtils.remove_entry(path)
@@ -356,17 +372,51 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
+    it 'refuses a site language outside the supported languages' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        options = fixture_options(unlisted_pages: Set[]).merge(
+          site_language: 'fr',
+          supported_languages: %w[en ja de]
+        )
+        expect { described_class.new(path, options) }
+          .to raise_error(/site_language "fr" is not a supported language/)
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
+    it 'refuses a build with a missing translation' do
+      path = Dir.mktmpdir('i18n-wiki')
+      begin
+        FixtureWiki.build(path)
+        with_translations({}) do |translations|
+          expect { described_class.new(path, multilingual_options(translations)).build(target) }
+            .to raise_error(/missing translations: About \(de\)/)
+        end
+      ensure
+        FileUtils.remove_entry(path)
+      end
+    end
+
     # macOS stores file names decomposed (NFD) where the wiki's
     # page names are composed (NFC); a translation file named in
     # the decomposed form still belongs to the same page.
     it 'reads a translation whose file name is decomposed (NFD)' do
       path = Dir.mktmpdir('i18n-wiki')
       begin
-        FixtureWiki.build(path)
+        system('git', 'init', '-q', '--initial-branch=main', chdir: path)
+        system('git', 'config', 'user.email', 'fixture@example.com', chdir: path)
+        system('git', 'config', 'user.name', 'Fixture Bot', chdir: path)
         File.write(File.join(path, 'がくせい.md'), "学生についてのページ。\n")
-        FixtureWiki.commit_all(path, message: 'add a page with a decomposable slug')
+        system('git', 'add', '-A', chdir: path)
+        system('git', 'commit', '-qm', 'add a page with a decomposable slug', chdir: path)
         nfd_name = 'en/がくせい.md'.unicode_normalize(:nfd)
-        with_translations(nfd_name => "A page about students.\n") do |translations|
+        with_translations(
+          nfd_name => "A page about students.\n",
+          'de/がくせい.md' => "Eine Seite über Studenten.\n"
+        ) do |translations|
           described_class.new(path, multilingual_options(translations)).build(target)
           expect(File.exist?(File.join(target, 'en', 'がくせい.md'))).to be(true)
         end
@@ -376,13 +426,19 @@ RSpec.describe Wikinder::GitHub::Wiki do
     end
 
     # A translation that disappears takes its page with it; the now
-    # empty language directory is removed as well.
+    # empty language directory is removed as well. The subject here
+    # is stale-file cleanup, so no language set is declared: with a
+    # declared set, losing a whole language is refused by the
+    # completeness check instead of being cleaned up.
     it 'removes a translated page when its translation file disappears' do
       path = Dir.mktmpdir('i18n-wiki')
       begin
         FixtureWiki.build(path)
         with_translations('de/About.md' => "Deutscher Text.\n") do |translations|
-          options = multilingual_options(translations)
+          options = fixture_options(unlisted_pages: Set[]).merge(
+            site_language: 'en',
+            translations_dir: translations
+          )
           described_class.new(path, options).build(target)
           expect(File.exist?(File.join(target, 'de', 'About.md'))).to be(true)
 

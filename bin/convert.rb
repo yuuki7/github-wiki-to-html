@@ -36,9 +36,38 @@ OptionParser.new do |opts|
 end.parse!
 
 Dir.chdir(__dir__) do
-  # Site metadata is read here. The converter receives the values,
-  # never the file.
-  site = File.exist?(SITE_PATH) ? JSON.parse(File.read(SITE_PATH)) : {}
+  # Site metadata is read here; the converter receives the
+  # values, never the file. The file is required, and the keys
+  # passed on are checked: inventing defaults would produce a
+  # wrong site silently, so a missing or malformed value fails
+  # the build at once.
+  raise "site metadata not found: #{SITE_PATH}" unless File.exist?(SITE_PATH)
+
+  site = begin
+    JSON.parse(File.read(SITE_PATH))
+  rescue JSON::ParserError => e
+    raise "site metadata is not valid JSON: #{e.message}"
+  end
+  raise 'site metadata must be a JSON object' unless site.is_a?(Hash)
+
+  site_language = site['language']
+  unless site_language.is_a?(String) && !site_language.empty?
+    raise "site metadata: 'language' must be a non-empty string"
+  end
+
+  supported_languages = site['languages']
+  unless supported_languages.is_a?(Array) && !supported_languages.empty? &&
+         supported_languages.all? { it.is_a?(String) && !it.empty? }
+    raise "site metadata: 'languages' must be a non-empty array of non-empty strings"
+  end
+
+  if supported_languages.uniq.size != supported_languages.size
+    raise "site metadata: 'languages' contains a duplicate language"
+  end
+
+  unless supported_languages.include?(site_language)
+    raise "site metadata: 'languages' does not include the site language #{site_language.inspect}"
+  end
 
   # Read the previous HEAD for incremental META.md sync.
   prev_head = nil
@@ -53,9 +82,9 @@ Dir.chdir(__dir__) do
       ungenerated_pages: UNGENERATED_PAGES,
       unlisted_pages: UNLISTED_PAGES,
       ignore_meta: options[:ignore_meta],
-      prev_head: prev_head,
-      site_language: site['language'],
-      supported_languages: site['languages'],
+      prev_head:,
+      site_language:,
+      supported_languages:,
       translations_dir: TRANSLATIONS_DIR
     }
   )

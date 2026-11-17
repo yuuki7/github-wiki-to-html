@@ -11,20 +11,22 @@ module Wikinder
     class Wiki
       # Converts the GitHub Wiki Markdown dialect to standard GFM Markdown.
       #
-      # Wikilinks use the double-bracket syntax: [[Page]], [[Page|Display]],
-      # images either use ![[image.png]] or reference a file by its image
-      # extension: [[image.png]] is taken to be an image.
+      # Wikilinks use the double-bracket syntax: [[Page]],
+      # [[Page|Display]]; images use ![[image.png]] or are
+      # recognized by extension: [[image.png]] is taken to be an
+      # image.
       #
-      # Wiki links become standard Markdown links, except when they appear
-      # in raw HTML blocks, where the Markdown pipeline would not process
-      # them. All raw HTML blocks of a page are parsed together as a single
-      # HTML5 stream (Nokogiri), because constructs such as <details>
-      # routinely span several blocks separated by blank lines — parsing
-      # each block in isolation would auto-close elements that a later
-      # block closes and drop their closing tags. Wikilinks in text nodes
-      # are rewritten as raw HTML anchors; everything else is reserialized
-      # by the parser, which normalizes the markup (supplying an implied
-      # <tbody>, for example) rather than preserving the source bytes.
+      # Wiki links become standard Markdown links — except in raw
+      # HTML blocks, which the Markdown pipeline would not process.
+      # All raw HTML blocks of a page are parsed together as a
+      # single HTML5 stream (Nokogiri), because constructs such as
+      # <details> routinely span several blocks: parsed in
+      # isolation, an element a later block closes would be
+      # auto-closed and its closing tag dropped. Wikilinks in text
+      # nodes become raw HTML anchors; everything else is
+      # reserialized by the parser, which normalizes the markup
+      # (supplying an implied <tbody>, for example) rather than
+      # preserving the source bytes.
       module Tags
         # Elements treated as raw text by HTML5 — their contents are not
         # recursively parsed, so wikilinks there must not be rewritten.
@@ -46,14 +48,14 @@ module Wikinder
           rewrite(source, segments, resolver)
         end
 
-        # Builds the lookup used to canonicalize link targets against a
-        # wiki's actual pages and files. Each map holds every name under
-        # its exact spelling first and then under a folded key (spaces
-        # become hyphens, compared case-insensitively), mirroring how
-        # GitHub Wiki resolves internal links: [[my page]] and [[MY-PAGE]]
-        # both find the page whose file is "My-Page.md", and the link is
-        # emitted with the found page's own spelling. Names that collide
-        # only after folding keep the first page in the order given.
+        # Builds the lookup used to canonicalize link targets
+        # against a wiki's actual pages and files. Each map holds
+        # every name under its exact spelling first, then under a
+        # folded key (spaces become hyphens, case folded), mirroring
+        # how GitHub Wiki resolves internal links: [[my page]] and
+        # [[MY-PAGE]] both find "My-Page.md", and the link is emitted
+        # with the found page's own spelling. Names colliding only
+        # after folding keep the first page in the order given.
         #: (Array[String], Array[String]) -> Hash[Symbol, Hash[String, String]]
         def self.build_link_index(page_slugs, asset_names)
           {
@@ -72,12 +74,16 @@ module Wikinder
           index
         end
 
-        # The folded comparison key: spaces become hyphens and case is
-        # folded, as in gollum's path_compare with its hyphened and
-        # case-insensitive tag lookups enabled.
+        # The folded comparison key: spaces become hyphens and case
+        # is folded, as in gollum's path_compare with its hyphened
+        # and case-insensitive lookups enabled. The name is composed
+        # (NFC) first — a name read from a macOS filesystem can be
+        # decomposed (NFD), and both forms must fold to the same
+        # key. Gollum does not normalize; this step exists because
+        # the converter also runs on macOS.
         #: (String) -> String
         def self.fold_key(name)
-          name.gsub(' ', '-').downcase
+          name.unicode_normalize(:nfc).gsub(' ', '-').downcase
         end
 
         # Exact spelling wins; the folded key is the fallback.
@@ -88,10 +94,10 @@ module Wikinder
 
         # Resolves the wikilinks of one page render against the
         # wiki's link index and the routes of the language being
-        # rendered. The index and the routes are fixed for a whole
-        # page, so the rewriting pipeline carries one resolver
-        # instead of threading the pair through every step; only
-        # what varies from link to link is passed along.
+        # rendered. Both are fixed for a whole page, so the pipeline
+        # carries one resolver instead of threading the pair through
+        # every step; only what varies from link to link is passed
+        # along.
         class LinkResolver
           # @rbs @link_index: link_index?
           # @rbs @routes: link_routes?
@@ -162,7 +168,7 @@ module Wikinder
           # [[Page|]] is an ordinary link to Page.
           #: (String) -> [String, String]
           def split_ref(ref)
-            parts = ref.split('|').map(&:strip)
+            parts = Tags.pipe_parts(ref)
             if parts.size >= 2
               text = parts[0].to_s
               target = parts[1].to_s
@@ -177,27 +183,25 @@ module Wikinder
             end
           end
 
-          # When the caller supplies the wiki's link index, a target
-          # that names an existing page is canonicalized to that
-          # page's own spelling. GitHub Wiki resolves internal links
-          # leniently (spaces and hyphens folded, case-insensitive),
-          # so the written form need not match the file name. A target
-          # that matches nothing is rendered as a regular link in its
-          # written form: marking missing pages (Gollum's "absent"
-          # class in HTML output) has no place in Markdown output
-          # and belongs, if anywhere, to the site layer.
+          # Canonicalizes a target that names an existing page to
+          # that page's own spelling, when the caller supplies the
+          # link index: GitHub Wiki resolves internal links leniently
+          # (spaces and hyphens folded, case-insensitive), so the
+          # written form need not match the file name. A target
+          # matching nothing is rendered as a regular link as
+          # written: marking missing pages (Gollum's "absent" class)
+          # has no place in Markdown output and belongs, if
+          # anywhere, to the site layer.
           #
-          # The piped form never special-cases a leading '#': in
-          # gollum's one fixed rule the first part is the display
-          # text, so [[#math|Math]] renders as [#math](/Math). Anchor
-          # handling applies only to the single-part form ([[#anchor]]
-          # becomes [anchor](#anchor)). In [[File.md#anchor]] only
-          # the page part loses its .md; the fragment survives intact.
+          # The piped form never special-cases a leading '#': the
+          # first part is the display text, so [[#math|Math]] renders
+          # as [#math](/Math). Anchor handling applies only to the
+          # single-part form ([[#anchor]] becomes [anchor](#anchor));
+          # in [[File.md#anchor]] only the page part loses its .md.
           #
-          # When the caller supplies +routes+, the link takes the
-          # prefix routes give for the target's slug (see
-          # Wiki#routes_by_language). Without routes, the historical
-          # root-relative form is kept.
+          # With +routes+, the link takes the prefix routes give for
+          # the target's slug (see Wiki#routes_by_language); without
+          # routes, the historical root-relative form is kept.
           #: (String) -> String
           def resolve_link_target(target)
             return target if target =~ %r{\A[a-z][a-z0-9+.-]*://}i
@@ -206,9 +210,8 @@ module Wikinder
 
             link_index = @link_index
             routes = @routes
-            fragment = target.split('#', 2)
-            path = fragment[0] || ''
-            anchor = fragment[1]
+            path, anchor = target.split('#', 2)
+            path ||= ''
             name = path.end_with?('.md') ? path.sub(/\.md\z/, '') : path
             canonical = link_index && Tags.index_lookup(link_index[:pages], name)
             slug = canonical || Slugs.for_title(name)
@@ -272,16 +275,16 @@ module Wikinder
           ranges
         end
 
-        # Rewrites wikilinks in a page's raw HTML blocks. The blocks are
-        # joined with unique comment markers and parsed as one HTML5
-        # stream, so an element opened in one block can be closed in a
-        # later one; after rewriting, the stream is split at the markers
-        # again. Content the parser moved across a marker (an unclosed
-        # element before the first block, auto-closures after the last)
-        # is added to the nearest block. If a marker does not survive
-        # the round trip — a <script> spanning several blocks can hold
-        # it as raw text, so it is no longer a comment — each block is
-        # rewritten on its own instead, so the result is never worse
+        # Rewrites wikilinks in a page's raw HTML blocks. The blocks
+        # are joined with unique comment markers and parsed as one
+        # HTML5 stream, so an element opened in one block can be
+        # closed in a later one; after rewriting, the stream is
+        # split at the markers again. Content the parser moved
+        # across a marker (an unclosed element before the first
+        # block, auto-closures after the last) goes to the nearest
+        # block. If a marker does not survive the round trip — a
+        # <script> spanning several blocks can hold it as raw text —
+        # each block is rewritten on its own instead, never worse
         # than per-block parsing.
         #: (Array[String], LinkResolver) -> Array[String]
         def self.rewrite_html_stream(blocks, resolver)
@@ -319,7 +322,7 @@ module Wikinder
         #: (Array[String]) -> String
         def self.gap_marker(blocks)
           marker = 'wikinder-gap'
-          marker = "#{marker}-#{SecureRandom.hex(4)}" while blocks.any? { |text| text.include?(marker) }
+          marker = "#{marker}-#{SecureRandom.hex(4)}" while blocks.any? { it.include?(marker) }
           marker
         end
 
@@ -439,6 +442,12 @@ module Wikinder
           end
         end
 
+        # The pipe-separated parts of a wikilink's inner text,
+        # each stripped: the target first, then the display text
+        # or the image options.
+        #: (String) -> Array[String]
+        def self.pipe_parts(ref) = ref.split('|').map(&:strip)
+
         # Gollum reads the part after the pipe as image options
         # (width=100, frame, and so on). Standard Markdown cannot
         # express them, so the converter uses that part as the
@@ -446,7 +455,7 @@ module Wikinder
         # second are ignored, as in gollum's parse_tag_parts.
         #: (String) -> [String, String]
         def self.image_parts(ref)
-          parts = ref.split('|').map(&:strip)
+          parts = pipe_parts(ref)
           if parts.size >= 2
             [parts[0].to_s, parts[1].to_s]
           else

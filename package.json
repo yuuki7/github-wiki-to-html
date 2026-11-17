@@ -3,10 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.scripts.json && astro build --config .config/astro.config.ts",
-    "preview": "astro preview --config .config/astro.config.ts --host 127.0.0.1",
-    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --write \"templates/**/*.{astro,css,js,ts}\" \"dist/**/*.{html,js}\"",
-    "check": "astro check --config .config/astro.config.ts"
+    "build": "tsc --project tsconfig.scripts.json && astro build --config .config/astro.config.ts --silent",
+    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"templates/**/*.{astro,css,js,ts}\" \"dist/**/*.{html,js}\"",
+    "check": "astro check --config .config/astro.config.ts",
+    "preview": "astro preview --config .config/astro.config.ts --host 127.0.0.1"
+  },
+  "dependencies": {
+    "hastscript": "^9.0.3",
+    "unist-util-visit": "^5.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
@@ -19,9 +23,5 @@
     "satteri": "^0.11.6",
     "shiki": "^4.6.0",
     "typescript": "^6.0.3"
-  },
-  "dependencies": {
-    "hastscript": "^9.0.3",
-    "unist-util-visit": "^5.2.0"
   }
 }
