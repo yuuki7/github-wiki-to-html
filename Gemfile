@@ -2,6 +2,8 @@
 
 source 'https://rubygems.org'
 
+ruby '~> 4.0'
+
 gem 'base64', '~> 0.3.0'
 gem 'commonmarker', '~> 2.10.1'
 gem 'nokogiri', '~> 1.19'

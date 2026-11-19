@@ -621,13 +621,14 @@ module Wikinder
         slug = record.slug
         with_error_context("could not build translation #{record.language}/#{slug}") do
           row = meta[slug]
+          author, creation_date, modified_date = author_and_dates(original.page, slug, row)
           front_matter = {
             'kind' => 'article',
             'title' => record.title || title_for(slug),
             'slug' => slug,
-            'author' => row ? row.author : 'unknown',
-            'creation_date' => row ? row.creation_date : 'unknown',
-            'modified_date' => row ? row.modified_date : 'unknown',
+            'author' => author,
+            'creation_date' => creation_date,
+            'modified_date' => modified_date,
             'language' => record.language,
             'original_language' => original.language,
             'translation' => true
@@ -802,22 +803,36 @@ module Wikinder
       #: (String) -> String
       def detect_language(text) = Language.call(text, supported: @supported_languages)
 
+      # The author and dates a page is published with: its META
+      # row when it has one, its git history otherwise. Git
+      # history is only inspected when the META row does not
+      # answer the questions — incremental builds rely on
+      # previous rows to skip the history walk entirely. A page
+      # with neither cannot be published: there is no author or
+      # date to show. That is a fatal error, never a placeholder.
+      #: (String, String, MetaRow?) -> [String, String, String]
+      def author_and_dates(page_name, slug, row)
+        return [row.author, row.creation_date, row.modified_date] if row
+
+        bounds = commit_bounds_for(page_name)
+        first = bounds[:earliest]
+        last = bounds[:latest]
+        unless first && last
+          raise Error,
+                "page #{slug} has no META row and no git history; its author and dates cannot be determined"
+        end
+
+        [last.author[:name], first.time.utc.iso8601, last.time.utc.iso8601]
+      end
+
       # One article's front matter. The values come from the
       # page's META row when it has one, and from git history
-      # otherwise.
+      # otherwise (see author_and_dates).
       #: (String, ?Hash[String, MetaRow]) -> String
       def article_front_matter(page_name, meta = {})
         slug = File.basename(page_name, '.md')
         row = meta[slug]
-        # Only inspect git history when the META row does not answer the
-        # questions — incremental builds rely on previous rows to skip the
-        # history walk entirely.
-        bounds = row.nil? ? commit_bounds_for(page_name) : nil
-        last = bounds && bounds[:latest]
-        first = bounds && bounds[:earliest]
-        author = row&.author || (last ? last.author[:name] : 'unknown')
-        creation_date = row&.creation_date || (first ? first.time.utc.iso8601 : 'unknown')
-        modified_date = row&.modified_date || (last ? last.time.utc.iso8601 : 'unknown')
+        author, creation_date, modified_date = author_and_dates(page_name, slug, row)
         language = page_language(page_name, meta)
         front_matter = {
           'kind' => 'article',

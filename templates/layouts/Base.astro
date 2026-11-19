@@ -15,6 +15,7 @@ const {
   alternates,
   canonical,
   ogType,
+  scripts = true,
   meta,
   isHome,
 } = Astro.props;
@@ -34,15 +35,21 @@ const {
     />
     <link rel="stylesheet" href="/assets/css/page.css" />
     <slot name="head" />
-    <script is:inline defer src="/assets/js/ai-assistant.js"></script>
-    <script is:inline defer src="/assets/js/mathjax-config.js"></script>
-    <script
-      is:inline
-      defer
-      src="https://cdn.jsdelivr.net/npm/mathjax@4.1.2/startup.js"
-      integrity="sha512-hWGDmsdTVDhEQ++tRfdduyZoXByJaAEMAGK3i/5dphjQrNplBhzLYHQIwR3ZqXH74uE1y5DNFpGNXQqWYhiUOQ=="
-      crossorigin="anonymous"
-    ></script>
+    {scripts && (
+      <script is:inline defer src="/assets/js/ai-assistant.js"></script>
+    )}
+    {scripts && (
+      <script is:inline defer src="/assets/js/mathjax-config.js"></script>
+    )}
+    {scripts && (
+      <script
+        is:inline
+        defer
+        src="https://cdn.jsdelivr.net/npm/mathjax@4.1.2/startup.js"
+        integrity="sha512-hWGDmsdTVDhEQ++tRfdduyZoXByJaAEMAGK3i/5dphjQrNplBhzLYHQIwR3ZqXH74uE1y5DNFpGNXQqWYhiUOQ=="
+        crossorigin="anonymous"
+      ></script>
+    )}
   </head>
   <body class={className}>
     <slot />

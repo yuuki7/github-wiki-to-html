@@ -3,12 +3,13 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
 const base = "./md";
-// A date as the front matter carries it: a string (which the
-// converter may leave as "unknown" when no date is known) or a
-// YAML date, normalized here to a string. The format itself is
-// not validated.
+// A date as the front matter carries it: an ISO 8601 string
+// or a YAML date, normalized here to a string. A string that
+// is not a date — the converter's "unknown", for a page with
+// no known date, is the one case — fails the build here,
+// naming the file, instead of crashing a presenter later.
 const dateLike = z
-  .union([z.string(), z.date()])
+  .union([z.iso.datetime({ offset: true }), z.date()])
   .transform((v) => (v instanceof Date ? v.toISOString() : v));
 
 const pages = defineCollection({

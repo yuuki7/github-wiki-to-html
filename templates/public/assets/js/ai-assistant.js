@@ -16,7 +16,9 @@ const modelId = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
 // current one.
 const modelStorageKey = "ai-assistant-model";
 // WebLLM itself, loaded on first use from the same CDN the site
-// already uses for MathJax.
+// already uses for MathJax. The version is pinned exactly, and
+// package.json pins its @mlc-ai/web-llm devDependency to the
+// same version, so the types describe the code that runs.
 const libraryUrl = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.88/+esm";
 // The model reads at most this much of the article: its context
 // window must also hold the conversation and the answer.
@@ -24,6 +26,11 @@ const articleTextLimit = 6000;
 // How much of the conversation is kept, in messages. Older
 // exchanges are dropped, so a long chat still fits the window.
 const historyLimit = 12;
+// The failure that means this browser cannot run the
+// assistant at all, as a class of its own: the submit handler
+// tells it apart from other failures by type, not by comparing
+// the localized message text.
+class UnsupportedError extends Error {}
 // Only article pages have the box. Other pages have nothing
 // to do.
 const box = document.querySelector(".ai-assistant");
@@ -182,7 +189,7 @@ if (box) {
     setBusy(true);
     try {
       if (!engine) {
-        if (!navigator.gpu) throw new Error(texts.unsupported);
+        if (!navigator.gpu) throw new UnsupportedError(texts.unsupported);
         const found = await checkCache();
         if (!found) throw new Error(texts.error);
         await dropPreviousModel(found.webllm);
@@ -193,9 +200,7 @@ if (box) {
     } catch (error) {
       history.pop();
       showStatus(
-        error instanceof Error && error.message === texts.unsupported
-          ? texts.unsupported
-          : texts.error,
+        error instanceof UnsupportedError ? texts.unsupported : texts.error,
       );
     }
     setBusy(false);

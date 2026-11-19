@@ -18,6 +18,8 @@ task :check do
   sh 'rbs-inline --output sig lib'
   sh 'rbs --collection .config/rbs_collection.yaml -I sig validate'
   sh 'steep check --steepfile .config/Steepfile'
+  # astro check, for the TypeScript side.
+  sh 'npm run check'
 end
 
 RSpec::Core::RakeTask.new(:test) do |t|

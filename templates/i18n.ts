@@ -189,6 +189,7 @@ export interface UiStrings {
   byline: string;
   translationNotice: (originalLanguageName: string) => string;
   originalArticle: string;
+  redirect: string;
   aiSummarize: string;
   aiLoading: string;
   aiSend: string;
@@ -203,6 +204,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "by",
     translationNotice: (name) => `Translated from ${name}`,
     originalArticle: "Show original",
+    redirect: "Redirect",
     aiSummarize: "Summarize this article",
     aiLoading: "Loading the model…",
     aiSend: "Send",
@@ -216,6 +218,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "著者",
     translationNotice: (name) => `${name}からの翻訳`,
     originalArticle: "原文を表示",
+    redirect: "リダイレクト",
     aiSummarize: "この記事を要約",
     aiLoading: "モデルを読み込んでいます…",
     aiSend: "送信",
@@ -229,6 +232,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "von",
     translationNotice: (name) => `Aus dem ${name} übersetzt`,
     originalArticle: "Original anzeigen",
+    redirect: "Weiterleitung",
     aiSummarize: "Diesen Artikel zusammenfassen",
     aiLoading: "Das Modell wird geladen…",
     aiSend: "Senden",
@@ -242,6 +246,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "作者",
     translationNotice: (name) => `译自${name}`,
     originalArticle: "查看原文",
+    redirect: "重定向",
     aiSummarize: "总结这篇文章",
     aiLoading: "正在加载模型…",
     aiSend: "发送",
@@ -254,6 +259,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "作者",
     translationNotice: (name) => `譯自${name}`,
     originalArticle: "查看原文",
+    redirect: "重新導向",
     aiSummarize: "總結這篇文章",
     aiLoading: "正在載入模型…",
     aiSend: "傳送",
@@ -266,6 +272,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     byline: "بقلم",
     translationNotice: (name) => `مترجم من ${name}`,
     originalArticle: "عرض الأصل",
+    redirect: "إعادة التوجيه",
     aiSummarize: "لخّص هذه المقالة",
     aiLoading: "جارٍ تحميل النموذج…",
     aiSend: "إرسال",
@@ -282,14 +289,33 @@ export function uiFor(language: string): UiStrings {
 
 // The URL of one page in one language. An original page lives at
 // the site root; a translation lives under its language.
+// Escapes a slug for use in a URL path, in the same way the
+// converter escapes the links it writes into page bodies
+// (Tags.escape_url_path): ASCII characters outside the
+// unreserved set become %XX, and non-ASCII characters stay as
+// they are. The two sides must agree: encodeURIComponent, for
+// example, escapes the comma that the converter leaves in
+// place, and one page would end up with two different URLs.
+function escapeUrlPath(path: string): string {
+  let escaped = "";
+  for (const char of path) {
+    const code = char.codePointAt(0) ?? 0;
+    escaped +=
+      code >= 0x80 || /^[A-Za-z0-9\-._~,]$/.test(char)
+        ? char
+        : `%${code.toString(16).toUpperCase().padStart(2, "0")}`;
+  }
+  return escaped;
+}
+
 export function pageHref(
   language: string,
   slug: string,
   translation = false,
 ): string {
   return translation
-    ? `/${language}/${encodeURIComponent(slug)}`
-    : `/${encodeURIComponent(slug)}`;
+    ? `/${language}/${escapeUrlPath(slug)}`
+    : `/${escapeUrlPath(slug)}`;
 }
 
 // The site's canonical base URL, without a trailing slash, from

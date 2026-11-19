@@ -58,6 +58,12 @@ const articleData =
         publisher: organization,
       }
     : undefined;
+
+// JSON for a script block: a literal "<" in a string (a page
+// title, an author name) could close the block early, so it
+// is escaped; JSON parsers read the escape as the same string.
+const jsonLd = (data: unknown): string =>
+  JSON.stringify(data, null, 2).replaceAll("<", "\\u003c");
 ---
 
 <meta charset="utf-8" />
@@ -82,13 +88,9 @@ const articleData =
     <meta property="og:title" content={title} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={iconUrl} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content={site.name} />
     <meta property="og:site_name" content={site.name} />
-    <meta property="og:locale" content={language} />
-    {alternates
-      ?.filter((alternate) => alternate.language !== language)
-      .map((alternate) => (
-        <meta property="og:locale:alternate" content={alternate.language} />
-      ))}
     {ogType === "article" && meta && (
       <Fragment>
         <meta property="article:published_time" content={meta.creationDate} />
@@ -99,17 +101,10 @@ const articleData =
       </Fragment>
     )}
     <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content={iconUrl} />
   </Fragment>
 )}
-{isHome && (
-  <script
-    type="application/ld+json"
-    set:html={JSON.stringify(websiteData, null, 2)}
-  />
-)}
+{isHome && <script type="application/ld+json" set:html={jsonLd(websiteData)} />}
 {articleData && (
-  <script
-    type="application/ld+json"
-    set:html={JSON.stringify(articleData, null, 2)}
-  />
+  <script type="application/ld+json" set:html={jsonLd(articleData)} />
 )}

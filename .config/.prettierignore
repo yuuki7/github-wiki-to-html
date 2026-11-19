@@ -1,1 +1,5 @@
-!dist/
+# The format script names this file through --ignore-path.
+# Giving an ignore file replaces Prettier's default of
+# reading .gitignore as its ignore list. This file lists
+# no patterns, so nothing is ignored: formatting never
+# depends on what .gitignore happens to contain.

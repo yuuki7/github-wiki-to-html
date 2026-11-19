@@ -74,7 +74,7 @@ export async function GET() {
         ),
       );
     const updated = (version: ArticleEntry): string =>
-      version.data.modified_date ?? version.data.creation_date;
+      version.data.modified_date;
     const original = versions.find((version) => !version.data.translation);
     const base = original ?? versions[0];
     // The versions in the site's language order, the same order

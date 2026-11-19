@@ -379,9 +379,19 @@ module Wikinder
       # : (String) -> String
       def detect_language: (String) -> String
 
+      # The author and dates a page is published with: its META
+      # row when it has one, its git history otherwise. Git
+      # history is only inspected when the META row does not
+      # answer the questions — incremental builds rely on
+      # previous rows to skip the history walk entirely. A page
+      # with neither cannot be published: there is no author or
+      # date to show. That is a fatal error, never a placeholder.
+      # : (String, String, MetaRow?) -> [String, String, String]
+      def author_and_dates: (String, String, MetaRow?) -> [ String, String, String ]
+
       # One article's front matter. The values come from the
       # page's META row when it has one, and from git history
-      # otherwise.
+      # otherwise (see author_and_dates).
       # : (String, ?Hash[String, MetaRow]) -> String
       def article_front_matter: (String, ?Hash[String, MetaRow]) -> String
 

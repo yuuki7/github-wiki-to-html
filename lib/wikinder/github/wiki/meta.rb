@@ -277,12 +277,14 @@ module Wikinder
           last = bounds[:latest]
           first = bounds[:earliest]
 
+          raise Error, "page #{slug} has no git history; its author and dates cannot be determined" unless first && last
+
           MetaRow.new(
             slug:,
             title: Slugs.title_for(slug),
-            author: first ? first.author[:name] : 'unknown',
-            creation_date: first ? first.time.utc.iso8601 : 'unknown',
-            modified_date: last ? last.time.utc.iso8601 : 'unknown',
+            author: first.author[:name],
+            creation_date: first.time.utc.iso8601,
+            modified_date: last.time.utc.iso8601,
             language: Language.call(wiki.text_for(page), supported: wiki.supported_languages),
             aliases: renames.map { |name| Slugs.title_for(File.basename(name, '.md')) }
           )

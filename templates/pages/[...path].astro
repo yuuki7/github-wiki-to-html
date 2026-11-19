@@ -10,7 +10,10 @@ import site from "../../site.json";
 // render or a stub that redirects to it.
 type StaticPath =
   | { params: { path: string }; props: { entry: PageEntry; lang: string } }
-  | { params: { path: string }; props: { title: string; redirectTo: string } };
+  | {
+      params: { path: string };
+      props: { title: string; lang: string; redirectTo: string };
+    };
 
 export async function getStaticPaths() {
   const entries = await getCollection("pages");
@@ -61,6 +64,7 @@ export async function getStaticPaths() {
           params: { path: `${entry.data.language}/${entry.data.slug}` },
           props: {
             title: entry.data.title,
+            lang: entry.data.language,
             redirectTo: pageHref(entry.data.language, entry.data.slug),
           },
         });
@@ -79,7 +83,11 @@ export async function getStaticPaths() {
         // to the code-less alias.
         paths.push({
           params: { path: `${lang}/${entry.data.slug}` },
-          props: { title: entry.data.title, redirectTo: `/${entry.data.slug}` },
+          props: {
+            title: entry.data.title,
+            lang,
+            redirectTo: pageHref(lang, entry.data.slug),
+          },
         });
       } else {
         paths.push({
@@ -94,7 +102,7 @@ export async function getStaticPaths() {
   // its code, it redirects there.
   paths.push({
     params: { path: defaultLanguage },
-    props: { title: site.name, redirectTo: "/" },
+    props: { title: site.name, lang: defaultLanguage, redirectTo: "/" },
   });
 
   return paths;
@@ -104,7 +112,7 @@ const { entry, lang, title, redirectTo } = Astro.props;
 ---
 
 {redirectTo ? (
-  <Redirect title={title} targetHref={redirectTo} />
+  <Redirect title={title} language={lang} targetHref={redirectTo} />
 ) : (
   <ArticleView entry={entry} lang={lang} />
 )}

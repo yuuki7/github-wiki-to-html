@@ -1,12 +1,13 @@
 ---
 import Base from "./Base.astro";
-import { absoluteUrl } from "../i18n";
+import { absoluteUrl, uiFor } from "../i18n";
 import type { RedirectProps } from "../types";
 
 type Props = RedirectProps;
 
 const { title, language = "en", className, targetHref } = Astro.props;
 const target = targetHref;
+const ui = uiFor(language);
 ---
 
 <Base
@@ -14,12 +15,14 @@ const target = targetHref;
   language={language}
   className={className}
   canonical={absoluteUrl(targetHref)}
+  scripts={false}
 >
   <Fragment slot="head">
+    <meta name="robots" content="noindex" />
     <meta http-equiv="refresh" content={`0; url=${target}`} />
   </Fragment>
 
   <p>
-    <a href={target}>Redirect</a>
+    <a href={target}>{ui.redirect}</a>
   </p>
 </Base>

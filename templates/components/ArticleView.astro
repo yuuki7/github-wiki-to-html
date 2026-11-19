@@ -41,7 +41,7 @@ const rendered = isRedirect ? null : await render(entry);
 ---
 
 {isRedirect ? (
-  <Redirect title={entry.data.title} targetHref={targetHref!} />
+  <Redirect title={entry.data.title} language={lang} targetHref={targetHref!} />
 ) : (
   <Page
     title={entry.data.title}
