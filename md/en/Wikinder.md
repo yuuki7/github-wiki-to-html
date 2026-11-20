@@ -26,7 +26,7 @@ listed: false
   </tr>
 </tbody></table>
 
-- [Japan](/en/Wikinder-Japan)
+- [Japan](</en/Wikinder-Japan>)
 
 ## Wiki hosts
 

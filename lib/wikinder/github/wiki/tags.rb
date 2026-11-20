@@ -151,7 +151,7 @@ module Wikinder
           #: (String) -> String
           def render_markdown_anchor(ref)
             href, label = split_ref(ref)
-            "[#{Tags.escape_markdown_text(label)}](#{Tags.escape_markdown_url(href)})"
+            "[#{Tags.escape_markdown_text(label)}](#{Tags.link_destination(href)})"
           end
 
           #: (String) -> String
@@ -159,7 +159,7 @@ module Wikinder
             target, alt = Tags.image_parts(ref)
             target = canonical_file_name(target)
             alt = File.basename(target, '.*') if alt.to_s.empty?
-            "![#{Tags.escape_markdown_text(alt)}](#{Tags.escape_markdown_url(target)})"
+            "![#{Tags.escape_markdown_text(alt)}](#{Tags.link_destination(target)})"
           end
 
           # Only the first two pipe segments are used, as in gollum's
@@ -464,12 +464,23 @@ module Wikinder
           end
         end
 
-        # Percent-encodes ASCII characters that are unsafe in a URL
-        # path segment. Non-ASCII (UTF-8 IRI) characters are left
-        # alone, so Japanese slugs remain readable.
+        # The one spelling of a page path, used everywhere a page
+        # is linked — bodies, templates, canonical URLs and the
+        # sitemap alike: percent-encode the path's UTF-8 bytes,
+        # exactly as JavaScript's encodeURIComponent does, leaving
+        # A-Z a-z 0-9 and - _ . ! ~ * ' ( ) as they are. The
+        # templates' escapeUrlPath is that function itself; the
+        # two must agree, or one page ends up with two different
+        # URLs.
+        #
+        # Parentheses stay raw under this rule, so Markdown link
+        # destinations are always written in the angle-bracket
+        # form (see link_destination): the spelling of a URL never
+        # depends on Markdown's destination syntax, and no
+        # character a slug can contain can break a destination.
         #: (String) -> String
         def self.escape_url_path(path)
-          path.gsub(/[^\u{80}-\u{10FFFF}A-Za-z0-9\-._~,]/) { |c| format('%%%02X', c.ord) }
+          path.b.gsub(/[^A-Za-z0-9\-._!~*'()]/) { |byte| format('%%%02X', byte.ord) }
         end
 
         #: (String) -> bool
@@ -485,11 +496,15 @@ module Wikinder
         #: (String) -> String
         def self.escape_markdown_text(text) = text.gsub('\\', '\\\\').gsub('[', '\\[').gsub(']', '\\]')
 
-        # Markdown link URLs are terminated by a closing parenthesis;
-        # angle brackets allow spaces and parens in the destination.
+        # A URL written as a Markdown link destination, always in
+        # the angle-bracket form. Inside the brackets a destination
+        # ends only at '>', so the characters the URL rule leaves
+        # raw — parentheses, and spaces in a target passed through
+        # as written — can never terminate the destination early
+        # or break its parsing downstream.
         #: (String) -> String
-        def self.escape_markdown_url(url)
-          url.include?(')') || url.include?(' ') || url.include?('(') ? "<#{url}>" : url
+        def self.link_destination(url)
+          "<#{url}>"
         end
       end
     end

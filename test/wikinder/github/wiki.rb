@@ -251,7 +251,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
         expect(File.exist?(File.join(target, 'en', 'About.md'))).to be(true)
         expect(File.exist?(File.join(target, 'ja', 'Japanese-page.md'))).to be(true)
         about = File.read(File.join(target, 'en', 'About.md'))
-        expect(about).to include('[Japanese-page](/Japanese-page)')
+        expect(about).to include('[Japanese-page](</Japanese-page>)')
       end
     end
 
@@ -292,13 +292,13 @@ RSpec.describe Wikinder::GitHub::Wiki do
           expect(meta['author']).to eq('fixture-bot')
           # Japanese-page has a German translation in this fixture,
           # so the German About links to it under the /de prefix.
-          expect(translated).to include('[Japanese-page](/de/Japanese-page)')
+          expect(translated).to include('[Japanese-page](</de/Japanese-page>)')
 
           # A link from a translation to a page that also has a
           # translation in the same language keeps the language
           # prefix; only originals live at the root.
           german_page = File.read(File.join(target, 'de', 'Japanese-page.md'))
-          expect(german_page).to include('[About](/de/About)')
+          expect(german_page).to include('[About](</de/About>)')
 
           # Every supported version of the image page exists, even
           # though its original is in none of them.
@@ -308,7 +308,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
           home_meta = YAML.safe_load(home.split("---\n")[1])
           expect(home_meta['kind']).to eq('special')
           expect(home_meta['language']).to eq('ja')
-          expect(home).to include('[About](/ja/About)')
+          expect(home).to include('[About](</ja/About>)')
 
           # The original Home belongs to the site's default language;
           # the German Home is its translation.
@@ -457,7 +457,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     # Wiki link format should be a standard Markdown link when outside raw HTML.
     it 'emits Markdown links outside raw HTML blocks' do
       output = Wikinder::GitHub::Wiki::Tags.render('body [[Bear-arithmetic]] end')
-      expect(output).to include('[Bear-arithmetic](/Bear-arithmetic)')
+      expect(output).to include('[Bear-arithmetic](</Bear-arithmetic>)')
     end
 
     # Raw HTML blocks keep anchors because Markdown does not run inside them.
@@ -469,7 +469,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     # Wiki links ending in image extensions render as images, not links.
     it 'renders bare image references as Markdown images' do
       output = Wikinder::GitHub::Wiki::Tags.render('![[kuma.png]]')
-      expect(output).to include('![kuma](kuma.png)')
+      expect(output).to include('![kuma](<kuma.png>)')
     end
 
     # Regression: a wikilink used to lose its final byte when it sat at the
@@ -489,31 +489,31 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'does not rewrite wikilinks inside HTML comments' do
       output = Wikinder::GitHub::Wiki::Tags.render("<!-- keep [[keep]] -->\n[[Link]]\n")
       expect(output).to include('<!-- keep [[keep]] -->')
-      expect(output).to include('[Link](/Link)')
+      expect(output).to include('[Link](</Link>)')
     end
 
     it 'does not rewrite wikilinks inside script bodies' do
       output = Wikinder::GitHub::Wiki::Tags.render("<script>\nvar x = '[[keep]]';\n</script>\n[[Link]]\n")
       expect(output).to include("var x = '[[keep]]';")
-      expect(output).to include('[Link](/Link)')
+      expect(output).to include('[Link](</Link>)')
     end
 
     it 'does not rewrite wikilinks inside tag attributes' do
       output = Wikinder::GitHub::Wiki::Tags.render("<a href=\"[[keep]]\">text [[Link]]</a>\n")
       expect(output).to include('href="[[keep]]"')
-      expect(output).to include('[Link](/Link)')
+      expect(output).to include('[Link](</Link>)')
     end
 
     # The .md extension must not leak into the link target when an anchor is present.
     it 'strips the .md suffix before keeping the anchor' do
       output = Wikinder::GitHub::Wiki::Tags.render('[[Foo.md#anchor]]')
-      expect(output).to include('[Foo.md#anchor](/Foo#anchor)')
+      expect(output).to include('[Foo.md#anchor](</Foo#anchor>)')
     end
 
     # Pipe form: image path on the left (Gollum convention), caption on the right.
     it 'treats pipe images as path-plus-caption' do
       output = Wikinder::GitHub::Wiki::Tags.render('[[kuma.png|caption here]]')
-      expect(output).to include('![caption here](kuma.png)')
+      expect(output).to include('![caption here](<kuma.png>)')
     end
 
     # Wiki image extension detection in HTML blocks renders raw HTML images.
@@ -535,7 +535,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'keeps <details> elements spanning multiple HTML blocks intact' do
       source = "<details>\n<summary>[show]</summary>\n\nBody [[Bear]] text\n\n</details>\n"
       output = Wikinder::GitHub::Wiki::Tags.render(source)
-      expect(output).to eq("<details>\n<summary>[show]</summary>\n\nBody [Bear](/Bear) text\n\n</details>\n")
+      expect(output).to eq("<details>\n<summary>[show]</summary>\n\nBody [Bear](</Bear>) text\n\n</details>\n")
     end
 
     # Wikilinks in the text of an HTML block that a later block closes are
@@ -563,21 +563,21 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'canonicalizes page targets against the link index' do
       tags = Wikinder::GitHub::Wiki::Tags
       index = tags.build_link_index(%w[My-Page Bear-Arithmetic], ['kuma.png'])
-      expect(tags.render('[[my page]]', link_index: index)).to include('[my page](/My-Page)')
-      expect(tags.render('[[BEAR-ARITHMETIC]]', link_index: index)).to include('(/Bear-Arithmetic)')
-      expect(tags.render('[[label|my-page]]', link_index: index)).to include('[label](/My-Page)')
+      expect(tags.render('[[my page]]', link_index: index)).to include('[my page](</My-Page>)')
+      expect(tags.render('[[BEAR-ARITHMETIC]]', link_index: index)).to include('(</Bear-Arithmetic>)')
+      expect(tags.render('[[label|my-page]]', link_index: index)).to include('[label](</My-Page>)')
     end
 
     it 'leaves targets that match no page in their written form' do
       index = Wikinder::GitHub::Wiki::Tags.build_link_index(['My-Page'], [])
       output = Wikinder::GitHub::Wiki::Tags.render('[[Missing Page]]', link_index: index)
-      expect(output).to include('[Missing Page](/Missing-Page)')
+      expect(output).to include('[Missing Page](</Missing-Page>)')
     end
 
     it 'canonicalizes image targets against the link index' do
       index = Wikinder::GitHub::Wiki::Tags.build_link_index([], ['Kuma.png'])
       output = Wikinder::GitHub::Wiki::Tags.render('![[kuma.png]]', link_index: index)
-      expect(output).to include('(Kuma.png)')
+      expect(output).to include('(<Kuma.png>)')
     end
 
     it 'canonicalizes anchors inside HTML blocks against the link index' do
@@ -595,7 +595,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
       tags = Wikinder::GitHub::Wiki::Tags
       index = tags.build_link_index(['Yuuki'], [])
       output = tags.render('![[yuuki]]', link_index: index)
-      expect(output).to eq('\\![yuuki](/Yuuki)')
+      expect(output).to eq('\\![yuuki](</Yuuki>)')
       html = Commonmarker.to_html(output)
       expect(html).to include('<a href="/Yuuki">yuuki</a>')
       expect(html).not_to include('<img')
@@ -610,14 +610,14 @@ RSpec.describe Wikinder::GitHub::Wiki do
     # parse_tag_parts); the rest are discarded, never part of the URL.
     it 'ignores pipe segments past the second' do
       tags = Wikinder::GitHub::Wiki::Tags
-      expect(tags.render('[[a|b|c]]')).to eq('[a](/b)')
-      expect(tags.render('[[kuma.png|cap|extra]]')).to include('![cap](kuma.png)')
+      expect(tags.render('[[a|b|c]]')).to eq('[a](</b>)')
+      expect(tags.render('[[kuma.png|cap|extra]]')).to include('![cap](<kuma.png>)')
     end
 
     # A trailing empty segment disappears with the split, leaving an
     # ordinary link — not a link to the site root.
     it 'treats a trailing empty pipe segment as an ordinary link' do
-      expect(Wikinder::GitHub::Wiki::Tags.render('[[Other|]]')).to include('[Other](/Other)')
+      expect(Wikinder::GitHub::Wiki::Tags.render('[[Other|]]')).to include('[Other](</Other>)')
     end
 
     # GitHub Wiki leaves [[_TOC_]] and [[__TOC__]] unconverted (literal
@@ -633,7 +633,7 @@ RSpec.describe Wikinder::GitHub::Wiki do
     it 'converts wikilinks whose label runs past 400 characters' do
       label = 'x' * 450
       output = Wikinder::GitHub::Wiki::Tags.render("[[#{label}|Page]]")
-      expect(output).to include('](/Page)')
+      expect(output).to include('](</Page>)')
     end
 
     # The unlinked-rename warning names only the delete+add pair git
@@ -677,8 +677,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
         begin
           described_class.new(scratch, { ungenerated_pages: Set['META'], unlisted_pages: Set[] }).build(out)
           built = File.read(File.join(out, 'en', 'Index.md'))
-          expect(built).to include('[my page](/My-Page)')
-          expect(built).to include('[MY-PAGE](/My-Page)')
+          expect(built).to include('[my page](</My-Page>)')
+          expect(built).to include('[MY-PAGE](</My-Page>)')
         ensure
           FileUtils.remove_entry(out)
         end

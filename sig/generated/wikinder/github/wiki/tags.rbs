@@ -230,9 +230,20 @@ module Wikinder
         # : (String) -> [String, String]
         def self.image_parts: (String) -> [ String, String ]
 
-        # Percent-encodes ASCII characters that are unsafe in a URL
-        # path segment. Non-ASCII (UTF-8 IRI) characters are left
-        # alone, so Japanese slugs remain readable.
+        # The one spelling of a page path, used everywhere a page
+        # is linked — bodies, templates, canonical URLs and the
+        # sitemap alike: percent-encode the path's UTF-8 bytes,
+        # exactly as JavaScript's encodeURIComponent does, leaving
+        # A-Z a-z 0-9 and - _ . ! ~ * ' ( ) as they are. The
+        # templates' escapeUrlPath is that function itself; the
+        # two must agree, or one page ends up with two different
+        # URLs.
+        #
+        # Parentheses stay raw under this rule, so Markdown link
+        # destinations are always written in the angle-bracket
+        # form (see link_destination): the spelling of a URL never
+        # depends on Markdown's destination syntax, and no
+        # character a slug can contain can break a destination.
         # : (String) -> String
         def self.escape_url_path: (String) -> String
 
@@ -242,10 +253,14 @@ module Wikinder
         # : (String) -> String
         def self.escape_markdown_text: (String) -> String
 
-        # Markdown link URLs are terminated by a closing parenthesis;
-        # angle brackets allow spaces and parens in the destination.
+        # A URL written as a Markdown link destination, always in
+        # the angle-bracket form. Inside the brackets a destination
+        # ends only at '>', so the characters the URL rule leaves
+        # raw — parentheses, and spaces in a target passed through
+        # as written — can never terminate the destination early
+        # or break its parsing downstream.
         # : (String) -> String
-        def self.escape_markdown_url: (String) -> String
+        def self.link_destination: (String) -> String
       end
     end
   end

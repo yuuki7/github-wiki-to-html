@@ -289,23 +289,17 @@ export function uiFor(language: string): UiStrings {
 
 // The URL of one page in one language. An original page lives at
 // the site root; a translation lives under its language.
-// Escapes a slug for use in a URL path, in the same way the
-// converter escapes the links it writes into page bodies
-// (Tags.escape_url_path): ASCII characters outside the
-// unreserved set become %XX, and non-ASCII characters stay as
-// they are. The two sides must agree: encodeURIComponent, for
-// example, escapes the comma that the converter leaves in
-// place, and one page would end up with two different URLs.
-function escapeUrlPath(path: string): string {
-  let escaped = "";
-  for (const char of path) {
-    const code = char.codePointAt(0) ?? 0;
-    escaped +=
-      code >= 0x80 || /^[A-Za-z0-9\-._~,]$/.test(char)
-        ? char
-        : `%${code.toString(16).toUpperCase().padStart(2, "0")}`;
-  }
-  return escaped;
+// Escapes a slug for use in a URL path. This is the one
+// spelling of a page path, used everywhere a page is
+// linked — bodies, templates, canonical URLs and the
+// sitemap alike: exactly encodeURIComponent, which
+// percent-encodes the path's UTF-8 bytes, leaving
+// A-Z a-z 0-9 and - _ . ! ~ * ' ( ) as they are. The
+// converter's Tags.escape_url_path implements the same
+// rule; the two must agree, or one page ends up with two
+// different URLs.
+export function escapeUrlPath(path: string): string {
+  return encodeURIComponent(path);
 }
 
 export function pageHref(

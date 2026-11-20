@@ -8,6 +8,7 @@ import site from "../../site.json";
 import {
   absoluteUrl,
   defaultLanguage,
+  escapeUrlPath,
   homeHref,
   languageNameInNominative,
   pageHref,
@@ -93,7 +94,7 @@ const { Content: FooterContent } = footer
 
   <Fragment slot="footer">
     {FooterContent && <FooterContent />}
-    <a href={`${site.wiki_url}/${encodeURIComponent("Home")}`}>
+    <a href={`${site.wiki_url}/${escapeUrlPath("Home")}`}>
       {lang === defaultLanguage
         ? ui.editPage
         : ui.editPageFrom(languageNameInNominative(lang, defaultLanguage))}
