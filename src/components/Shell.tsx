@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
 import site from "../../site.json";
 import { homeHref, languageName } from "../lib/i18n";
-import type { ArticleProps } from "../lib/types";
-import ArticleMeta from "./ArticleMeta";
-import BaseHead from "./BaseHead";
+import type { AlternateLink } from "../lib/types";
+import AiAssistant, { type AiStrings } from "./AiAssistant";
 import CodeCopy from "./CodeCopy";
 import LinkInterceptor from "./LinkInterceptor";
 
-// One page of the site: the head, the header with the
-// language switcher, the two sidebars, the article, and the
-// footer, in the page grid the stylesheet lays out. The
-// regions are props — the views fill them — and the article
-// body and the footer arrive as HTML, rendered from the
-// content at build time.
+// The shell of the app: everything around the article — the
+// scripts, the header with the language switcher, the two
+// sidebars, and the footer, in the page grid the stylesheet
+// lays out. The layouts render it, not the pages, so it is
+// rendered once and stays in place while the reader moves
+// between pages: in-app navigation replaces only the article
+// the shell frames, and what the reader has in the shell —
+// a half-typed question to the AI assistant above all — is
+// not thrown away by moving.
 //
 // The regions sit in a wrapper that takes the body's grid
 // over unchanged (display: contents in the stylesheet): the
@@ -21,54 +23,36 @@ import LinkInterceptor from "./LinkInterceptor";
 // page's class, which the document's <body> cannot be given
 // per page in this framework.
 
-type Props = ArticleProps & {
-  headExtra?: ReactNode;
+type Props = {
+  language: string;
+  languageLinks?: AlternateLink[];
+  isHome?: boolean;
+  className?: string;
+  aiStrings: AiStrings;
   leftSidebar?: ReactNode;
-  rightSidebar?: ReactNode;
-  bodyHtml: string;
   footerHtml: string;
+  children: ReactNode;
 };
 
-export default function Page({
-  title,
-  isHome,
-  meta,
+export default function Shell({
   language,
-  className,
   languageLinks,
-  canonical,
-  ogType,
-  scripts = true,
-  headExtra,
+  isHome,
+  className,
+  aiStrings,
   leftSidebar,
-  rightSidebar,
-  bodyHtml,
   footerHtml,
+  children,
 }: Props) {
   return (
     <>
-      <BaseHead
-        title={title}
-        language={language}
-        alternates={languageLinks}
-        canonical={canonical}
-        ogType={ogType}
-        meta={meta}
-        isHome={isHome}
-      >
-        {headExtra}
-      </BaseHead>
-      {scripts && (
-        <>
-          <script defer src="/assets/js/mathjax-config.js" />
-          <script
-            defer
-            src="https://cdn.jsdelivr.net/npm/mathjax@4.1.2/startup.js"
-            integrity="sha512-hWGDmsdTVDhEQ++tRfdduyZoXByJaAEMAGK3i/5dphjQrNplBhzLYHQIwR3ZqXH74uE1y5DNFpGNXQqWYhiUOQ=="
-            crossOrigin="anonymous"
-          />
-        </>
-      )}
+      <script defer src="/assets/js/mathjax-config.js" />
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/mathjax@4.1.2/startup.js"
+        integrity="sha512-hWGDmsdTVDhEQ++tRfdduyZoXByJaAEMAGK3i/5dphjQrNplBhzLYHQIwR3ZqXH74uE1y5DNFpGNXQqWYhiUOQ=="
+        crossOrigin="anonymous"
+      />
 
       <div className={className ? `page-root ${className}` : "page-root"}>
         <header className="header">
@@ -113,21 +97,11 @@ export default function Page({
 
         <aside className="left-sidebar">{leftSidebar}</aside>
 
-        <main className="main">
-          <article className="article">
-            <header className="article__header">
-              <h1 className="article__title">{title}</h1>
-              {!isHome && meta && <ArticleMeta {...meta} />}
-            </header>
+        <main className="main">{children}</main>
 
-            <div
-              className="article__main"
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
-            />
-          </article>
-        </main>
-
-        <aside className="right-sidebar">{rightSidebar}</aside>
+        <aside className="right-sidebar">
+          <AiAssistant strings={aiStrings} />
+        </aside>
 
         <footer
           className="footer"

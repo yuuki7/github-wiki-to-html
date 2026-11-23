@@ -15,7 +15,9 @@ import { useEffect, useRef, useState } from "react";
 // across in-app navigation, and the conversation is mirrored
 // to session storage, so that even a full page load — a
 // language switch reloads the document, whose <html> language
-// differs — keeps it.
+// differs — keeps it. The question being typed is kept the
+// same way: it is the reader's, not the page's, and moving
+// to another page must not throw it away.
 
 // The library's own types, for the copy loaded from the CDN
 // below: the two are the same version.
@@ -52,6 +54,10 @@ const modelStorageKey = "ai-assistant-model";
 
 // Where the conversation is mirrored, against full page loads.
 const historyStorageKey = "ai-assistant-history";
+
+// Where the question being typed is mirrored, against full
+// page loads, like the conversation.
+const draftStorageKey = "ai-assistant-draft";
 
 // WebLLM itself, loaded on first use from the same CDN the site
 // already uses for MathJax. The version is pinned exactly, and
@@ -107,6 +113,33 @@ const saveHistory = (): void => {
   } catch {
     // The mirror is not kept; the conversation still lives in
     // the module for this session.
+  }
+};
+
+// The question being typed, in the module and mirrored to
+// session storage like the conversation: the box is remounted
+// when the document is reloaded or the layout over it changes,
+// and what the reader has typed must not be thrown away with
+// the old box.
+let draft: string | null = null;
+
+const loadDraft = (): string => {
+  if (draft !== null) return draft;
+  try {
+    draft = sessionStorage.getItem(draftStorageKey) ?? "";
+  } catch {
+    draft = "";
+  }
+  return draft;
+};
+
+const saveDraft = (value: string): void => {
+  draft = value;
+  try {
+    sessionStorage.setItem(draftStorageKey, value);
+  } catch {
+    // The mirror is not kept; the draft still lives in the
+    // module for this session.
   }
 };
 
@@ -166,12 +199,13 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const [log, setLog] = useState<Message[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [draftText, setDraftText] = useState("");
   const busyRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
     setLog([...loadHistory()]);
+    setDraftText(loadDraft());
   }, []);
 
   // The article's text, as the reader sees it, cut to the
@@ -237,8 +271,9 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busyRef.current) return;
-    const question = inputRef.current?.value.trim() || strings.summarize;
-    if (inputRef.current) inputRef.current.value = "";
+    const question = draftText.trim() || strings.summarize;
+    setDraftText("");
+    saveDraft("");
     setLog((previous) => [...previous, { role: "user", content: question }]);
     loadHistory().push({ role: "user", content: question });
     busyRef.current = true;
@@ -293,7 +328,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             className="ai-assistant__input"
             type="text"
             placeholder={strings.summarize}
-            ref={inputRef}
+            value={draftText}
+            onChange={(event) => {
+              setDraftText(event.target.value);
+              saveDraft(event.target.value);
+            }}
             disabled={busy}
           />
           <button className="ai-assistant__send" type="submit" disabled={busy}>
