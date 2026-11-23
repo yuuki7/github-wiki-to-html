@@ -1,10 +1,5 @@
 import site from "../../site.json";
-import {
-  articlePageData,
-  getEntries,
-  renderEntry,
-  specialPage,
-} from "./content";
+import { getEntries, renderEntry, specialPage } from "./content";
 import { escapeHtml } from "./html";
 import {
   absoluteUrl,
@@ -121,6 +116,71 @@ export interface ArticlePageDataFull {
   footerHtml: string;
   bodyHtml: string;
   headings: Heading[];
+}
+
+// The language relationships one article entry carries, derived
+// from itself and the whole collection: the original language,
+// this page in every supported language, and — for a redirect —
+// the target in the language the stub serves. Pure data, so the
+// layout and the page can both use it without rendering first.
+function articlePageData(
+  entry: PageEntry,
+  entries: PageEntry[],
+  lang: string,
+): {
+  isRedirect: boolean;
+  originalLanguage: string | undefined;
+  articleLinks: AlternateLink[];
+  targetHref: string | undefined;
+  isTranslation: boolean;
+} {
+  const isRedirect = entry.data.kind === "redirect";
+
+  // An original's own language is the one it is written in; a
+  // translation names the language it was written from.
+  const originalLanguage =
+    entry.data.kind === "article"
+      ? (entry.data.original_language ?? entry.data.language)
+      : undefined;
+
+  // The original lives at the root, every translation under its
+  // language code. The same list serves the switcher and
+  // hreflang, so the two cannot disagree.
+  const articleLinks = isRedirect
+    ? []
+    : supportedLanguages.map((language) => ({
+        language,
+        href: pageHref(
+          language,
+          entry.data.slug,
+          language !== originalLanguage,
+        ),
+      }));
+
+  const targetSlug =
+    entry.data.kind === "redirect" ? entry.data.target_slug : undefined;
+  const targetOriginal =
+    targetSlug === undefined
+      ? undefined
+      : entries.find(
+          (e): e is ArticleEntry =>
+            e.data.kind === "article" &&
+            e.data.slug === targetSlug &&
+            !e.data.translation,
+        );
+  const targetHref =
+    targetSlug === undefined
+      ? undefined
+      : pageHref(lang, targetSlug, lang !== targetOriginal?.data.language);
+
+  return {
+    isRedirect,
+    originalLanguage,
+    articleLinks,
+    targetHref,
+    isTranslation:
+      entry.data.kind === "article" && (entry.data.translation ?? false),
+  };
 }
 
 // One article page. A redirect entry carries no page of its

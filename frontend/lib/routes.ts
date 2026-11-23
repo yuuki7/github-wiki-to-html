@@ -31,7 +31,9 @@ export function routeTable(): Map<string, Route> {
   // serves is the directory its file lives in.
   const directoryLanguage = (entry: PageEntry): string => {
     const parts = entry.filePath.split("/");
-    return parts[parts.length - 2];
+    return parts.length > 1
+      ? (parts[parts.length - 2] ?? defaultLanguage)
+      : defaultLanguage;
   };
   const originalOf = (slug: string) =>
     entries.find(
