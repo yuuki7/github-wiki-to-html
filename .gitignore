@@ -4,11 +4,13 @@
 .next/
 .yardoc/
 node_modules/
+*.tsbuildinfo
+next-env.d.ts
 
-out/**
-!out/**/
-!out/index.html
-!out/Wikinder.html
+site/out/**
+!site/out/**/
+!site/out/index.html
+!site/out/Wikinder.html
 
 md/**
 !md/**/

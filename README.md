@@ -25,14 +25,12 @@ Starts preview server.
 - `.config/` — Tool configuration files
 - `bin/`
   - `convert.rb` — Ruby script to convert GitHub Wiki to GFM
-- `out/` — The built static site
 - `docs/` — YARD documentation
 - `lib/` — Ruby modules
 - `md/` — GFM converted from GitHub Wiki
 - `sig/` — RBS signatures
-- `public/` — Static assets, served as they are
 - `scripts/` — Build scripts
-- `src/` — Next.js (React) source of the site
+- `site/` — Next.js (React) site: source, configuration and static assets, with the built static site in `site/out/`
 - `test/` — RSpec tests
 - `translations/` — Translated GFM by coding agent
 - `AGENTS.md` — Guidance for coding agents
@@ -41,7 +39,6 @@ Starts preview server.
 - `LICENSE` — License file
 - `README.md` — This file
 - `Rakefile` — Rake tasks
-- `next.config.mjs` — Next.js configuration
 - `package-lock.json` — Locked NPM dependency versions
 - `package.json` — NPM dependencies
 - `site.json` — Site metadata

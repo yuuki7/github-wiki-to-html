@@ -1,0 +1,1 @@
+{"compilerOptions":{"allowImportingTsExtensions":false,"lib":["ES2022","DOM","DOM.Iterable"],"noEmit":false,"outDir":"public/assets/js","rootDir":"scripts","target":"ES2022","tsBuildInfoFile":"./../.cache/tsconfig.scripts.tsbuildinfo","verbatimModuleSyntax":false},"extends":"./tsconfig.json","include":["scripts"]}
