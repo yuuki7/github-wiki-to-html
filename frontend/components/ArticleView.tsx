@@ -1,4 +1,3 @@
-import { articlePageData, getEntries } from "../lib/content";
 import { articlePageDataFull } from "../lib/page-data";
 import type { PageEntry } from "../lib/types";
 import ArticleMeta from "./ArticleMeta";
@@ -21,22 +20,21 @@ export default async function ArticleView({
   entry: PageEntry;
   lang: string;
 }) {
-  const { isRedirect, targetHref } = articlePageData(entry, getEntries(), lang);
-
-  if (isRedirect) {
-    return (
-      <RedirectStub
-        title={entry.data.title}
-        language={lang}
-        targetHref={targetHref!}
-      />
-    );
-  }
-  if (entry.data.kind !== "article") {
+  if (entry.data.kind !== "article" && entry.data.kind !== "redirect") {
     throw new Error(`${entry.id}: not an article or a redirect`);
   }
 
   const data = await articlePageDataFull(entry, lang);
+
+  if (data.isRedirect) {
+    return (
+      <RedirectStub
+        title={entry.data.title}
+        language={lang}
+        targetHref={data.targetHref!}
+      />
+    );
+  }
 
   return (
     <article className="article">

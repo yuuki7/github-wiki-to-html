@@ -15,13 +15,28 @@ import type { AlternateLink, ArticleEntry, PageEntry } from "./types";
 
 const mdDir = path.join(process.cwd(), "md");
 
-// A date as the front matter carries it: an ISO 8601 string
-// or a YAML date, normalized here to a string. A string that
-// is not a date fails the build here, naming the file,
-// instead of crashing a presenter later.
-const dateLike = z
-  .union([z.iso.datetime({ offset: true }), z.date()])
-  .transform((v) => (v instanceof Date ? v.toISOString() : v));
+// A date as the front matter carries it. Dates take one form
+// in this project — ISO 8601, UTC, second precision — and the
+// schema accepts nothing else: a string in any other form, and
+// a YAML date with fractional seconds, fail the build here,
+// naming the file, instead of being rewritten into form or
+// crashing a presenter later. A YAML date arrives as a Date
+// and is written in the same form, as a Temporal Instant at
+// second precision. The fractional-second check comes first:
+// the Instant's string form would silently truncate them.
+const dateLike = z.union([
+  z.iso.datetime({ offset: false, precision: 0 }),
+  z.date().transform((v, ctx) => {
+    if (v.getUTCMilliseconds() !== 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "a date with fractional seconds has no canonical form",
+      });
+      return z.NEVER;
+    }
+    return v.toTemporalInstant().toString({ smallestUnit: "second" });
+  }),
+]);
 
 const pageSchema = z.discriminatedUnion("kind", [
   z.object({
