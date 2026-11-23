@@ -1,27 +1,3 @@
-"use client";
-
-import { useEffect } from "react";
-
-// In-app navigation for the site's internal links. The site
-// is a set of static documents, one per page, and the frame
-// around the article — the header, the sidebars, the footer —
-// is the app the reader is using: moving to another page
-// must no more rebuild the frame than moving between views
-// rebuilds an app's chrome. So following an internal link
-// fetches the target document and replaces only what the
-// page itself changes: the head's page-specific elements,
-// the language switcher's links, the left sidebar's
-// contents, the article, and the footer's edit link. Every
-// other element in the document is left exactly as it is,
-// so what the reader has in the frame — a half-typed
-// question to the AI assistant, a selection in the sidebar,
-// the assistant's loaded model — is untouched by moving.
-//
-// A page without the frame — a redirect stub above all — is
-// navigated to in full, as is a page that cannot be fetched
-// or read: the swap is an enhancement of plain navigation,
-// never a prerequisite for it.
-
 // The head elements that are one page's own: its title, its
 // canonical and alternate URLs, its author and social
 // metadata, and its structured data. The rest of the head —
@@ -32,24 +8,6 @@ const pageHeadSelector =
   "meta[name='author'], meta[property^='og:'], " +
   "meta[property^='article:'], meta[name^='twitter:'], " +
   "script[type='application/ld+json']";
-
-// One navigation in flight at a time: a newer one supersedes
-// an older fetch still outstanding.
-let navigationSerial = 0;
-
-// The scroll position of the page being left, kept in its
-// history entry so going back returns to it. The entry's
-// other state — the framework's own keys — is preserved.
-function rememberScroll(): void {
-  try {
-    history.replaceState(
-      { ...(history.state ?? {}), frameScroll: window.scrollY },
-      "",
-    );
-  } catch {
-    // History state is an enhancement; navigation goes on.
-  }
-}
 
 // Set an element's text only when the text actually
 // changes, and change it in its existing text node where it
@@ -242,7 +200,7 @@ function swapRightAside(newDocument: Document): void {
 
 // Replace the page's own regions with the new document's,
 // leaving the rest of the document — the frame — untouched.
-function swapPage(newDocument: Document): void {
+export function swapPage(newDocument: Document): void {
   const newRoot = newDocument.querySelector(".page-root");
   if (!newRoot) return;
 
@@ -269,122 +227,4 @@ function swapPage(newDocument: Document): void {
 
   swapRightAside(newDocument);
   swapFooter(newDocument);
-}
-
-// The mathematics in the new article, typeset as it would
-// have been had the page loaded in full. MathJax may not
-// have loaded, or may have failed to: the article reads
-// without it, as an untypeset page does.
-async function typesetArticle(): Promise<void> {
-  try {
-    const mathJax = (
-      window as unknown as {
-        MathJax?: { typesetPromise?: (elements: Element[]) => Promise<void> };
-      }
-    ).MathJax;
-    const main = document.querySelector(".main");
-    if (mathJax?.typesetPromise && main) {
-      await mathJax.typesetPromise([main]);
-    }
-  } catch {
-    // Typesetting is left undone.
-  }
-}
-
-// Go to one internal URL by swapping the page's regions. A
-// document that cannot be fetched, or that carries no frame
-// — a redirect stub, an error page — is gone to in full
-// instead. With `pop`, the move answers a history traversal
-// and pushes no entry of its own.
-async function navigate(url: URL, pop: boolean): Promise<void> {
-  const serial = ++navigationSerial;
-  let newDocument: Document | null = null;
-  try {
-    const response = await fetch(url.href, { credentials: "same-origin" });
-    if (!response.ok) throw new Error(response.statusText);
-    const text = await response.text();
-    newDocument = new DOMParser().parseFromString(text, "text/html");
-  } catch {
-    newDocument = null;
-  }
-  if (serial !== navigationSerial) return;
-  if (
-    !newDocument ||
-    !newDocument.querySelector(".page-root") ||
-    newDocument.querySelector("meta[http-equiv='refresh']")
-  ) {
-    window.location.assign(url.href);
-    return;
-  }
-
-  if (!pop) {
-    rememberScroll();
-    history.pushState({ frameNav: true }, "", url.href);
-  }
-  swapPage(newDocument);
-
-  const target = url.hash
-    ? document.getElementById(decodeURIComponent(url.hash.slice(1)))
-    : null;
-  if (target) {
-    target.scrollIntoView();
-  } else if (pop) {
-    const state = history.state as { frameScroll?: number } | null;
-    window.scrollTo(0, state?.frameScroll ?? 0);
-  } else {
-    window.scrollTo(0, 0);
-  }
-
-  void typesetArticle();
-}
-
-export default function LinkInterceptor() {
-  useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented) return;
-      if (event.button !== 0) return;
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-        return;
-      }
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const anchor = target.closest("a");
-      if (!anchor) return;
-      if (anchor.target && anchor.target !== "_self") return;
-      if (anchor.hasAttribute("download")) return;
-      const href = anchor.getAttribute("href");
-      if (!href) return;
-      // Internal links are written root-relative; an absolute
-      // URL for this same origin is internal too.
-      let url: URL;
-      try {
-        url = new URL(href, window.location.href);
-      } catch {
-        return;
-      }
-      if (url.origin !== window.location.origin) return;
-      if (url.pathname.startsWith("/assets/")) return;
-      // An anchor on the page being read: let the browser
-      // scroll, as it always has.
-      if (
-        url.pathname === window.location.pathname &&
-        url.search === window.location.search
-      ) {
-        return;
-      }
-      event.preventDefault();
-      void navigate(url, false);
-    };
-    const onPopState = () => {
-      void navigate(new URL(window.location.href), true);
-    };
-    document.addEventListener("click", onClick);
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      document.removeEventListener("click", onClick);
-      window.removeEventListener("popstate", onPopState);
-    };
-  }, []);
-
-  return null;
 }

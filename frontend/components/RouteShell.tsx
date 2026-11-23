@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import site from "../../site.json";
-import { pageHref } from "../lib/i18n";
+import { aiStringsFor, pageHref } from "../lib/i18n";
 import { articlePageDataFull, homePageData } from "../lib/page-data";
 import { routeFor } from "../lib/routes";
 import BaseHead from "./BaseHead";
@@ -48,13 +48,7 @@ export default async function RouteShell({
           languageLinks={data.languageLinks}
           isHome
           className="home"
-          aiStrings={{
-            summarize: ui.aiSummarize,
-            loading: ui.aiLoading,
-            send: ui.aiSend,
-            unsupported: ui.aiUnsupported,
-            error: ui.aiError,
-          }}
+          aiStrings={aiStringsFor(ui)}
           leftSidebar={
             <ul>
               {data.listedEntries.map((entry) => (
@@ -102,13 +96,7 @@ export default async function RouteShell({
       <Shell
         language={route.entry.data.language}
         languageLinks={data.articleLinks}
-        aiStrings={{
-          summarize: ui.aiSummarize,
-          loading: ui.aiLoading,
-          send: ui.aiSend,
-          unsupported: ui.aiUnsupported,
-          error: ui.aiError,
-        }}
+        aiStrings={aiStringsFor(ui)}
         leftSidebar={<Toc headings={data.headings} />}
         footerHtml={data.footerHtml}
       >

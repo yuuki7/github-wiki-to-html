@@ -71,6 +71,17 @@ export interface AlternateLink {
   href: string;
 }
 
+// The strings the AI assistant needs, in its own terms. They are
+// derived from UiStrings, which names the same texts in the
+// site's interface vocabulary.
+export interface AiStrings {
+  summarize: string;
+  loading: string;
+  send: string;
+  unsupported: string;
+  error: string;
+}
+
 // The one redirect stub: its title, the language its link is
 // written in, and the target URL already resolved to the
 // version's own URL form. The stub has no canonical page of

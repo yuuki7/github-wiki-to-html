@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import site from "../../site.json";
 import { homeHref, languageName } from "../lib/i18n";
-import type { AlternateLink } from "../lib/types";
-import AiAssistant, { type AiStrings } from "./AiAssistant";
+import type { AiStrings, AlternateLink } from "../lib/types";
+import AiAssistant from "./AiAssistant";
 import CodeCopy from "./CodeCopy";
-import LinkInterceptor from "./LinkInterceptor";
+import LinkInterceptor from "./link-interceptor";
 
 // The shell of the app: everything around the article — the
 // scripts, the header with the language switcher, the two
