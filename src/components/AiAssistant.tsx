@@ -10,14 +10,15 @@ import { useEffect, useRef, useState } from "react";
 // the component has mounted: without script there is no form,
 // rather than a form that does nothing.
 //
-// The box is part of the app, not of the page: the engine,
-// once loaded, is kept in this module for the whole session,
-// across in-app navigation, and the conversation is mirrored
-// to session storage, so that even a full page load — a
-// language switch reloads the document, whose <html> language
-// differs — keeps it. The question being typed is kept the
-// same way: it is the reader's, not the page's, and moving
-// to another page must not throw it away.
+// The box is part of the app's frame, not of the page: the
+// frame stays mounted while the reader moves between pages,
+// so the box's own state — the question being typed above
+// all — is kept by the box itself staying in place. The
+// engine, once loaded, is kept in this module for the whole
+// session, across in-app navigation, and the conversation is
+// mirrored to session storage, so that even a full page
+// load — a language switch reloads the document, whose
+// <html> language differs — keeps it.
 
 // The library's own types, for the copy loaded from the CDN
 // below: the two are the same version.
@@ -55,10 +56,6 @@ const modelStorageKey = "ai-assistant-model";
 // Where the conversation is mirrored, against full page loads.
 const historyStorageKey = "ai-assistant-history";
 
-// Where the question being typed is mirrored, against full
-// page loads, like the conversation.
-const draftStorageKey = "ai-assistant-draft";
-
 // WebLLM itself, loaded on first use from the same CDN the site
 // already uses for MathJax. The version is pinned exactly, and
 // package.json pins its @mlc-ai/web-llm devDependency to the
@@ -81,8 +78,8 @@ class UnsupportedError extends Error {}
 
 // The loaded engine, once there is one, and the conversation
 // so far (without the system message). Both live in the
-// module, not in the component, so they survive the component
-// being remounted by navigation.
+// module, not in the component, so they survive even a full
+// page load's new component.
 let engine: Engine | null = null;
 let history: Message[] | null = null;
 
@@ -113,33 +110,6 @@ const saveHistory = (): void => {
   } catch {
     // The mirror is not kept; the conversation still lives in
     // the module for this session.
-  }
-};
-
-// The question being typed, in the module and mirrored to
-// session storage like the conversation: the box is remounted
-// when the document is reloaded or the layout over it changes,
-// and what the reader has typed must not be thrown away with
-// the old box.
-let draft: string | null = null;
-
-const loadDraft = (): string => {
-  if (draft !== null) return draft;
-  try {
-    draft = sessionStorage.getItem(draftStorageKey) ?? "";
-  } catch {
-    draft = "";
-  }
-  return draft;
-};
-
-const saveDraft = (value: string): void => {
-  draft = value;
-  try {
-    sessionStorage.setItem(draftStorageKey, value);
-  } catch {
-    // The mirror is not kept; the draft still lives in the
-    // module for this session.
   }
 };
 
@@ -205,7 +175,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   useEffect(() => {
     setMounted(true);
     setLog([...loadHistory()]);
-    setDraftText(loadDraft());
   }, []);
 
   // The article's text, as the reader sees it, cut to the
@@ -236,7 +205,9 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     found.webllm.CreateMLCEngine(modelId, {
       initProgressCallback: (report) => {
         if (!found.cached) {
-          setStatus(`${strings.loading} ${Math.round(report.progress * 100)}%`);
+          setStatus(
+            `${liveStrings().loading} ${Math.round(report.progress * 100)}%`,
+          );
         }
       },
     });
@@ -271,18 +242,18 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busyRef.current) return;
-    const question = draftText.trim() || strings.summarize;
+    const question = draftText.trim() || liveStrings().summarize;
     setDraftText("");
-    saveDraft("");
     setLog((previous) => [...previous, { role: "user", content: question }]);
     loadHistory().push({ role: "user", content: question });
     busyRef.current = true;
     setBusy(true);
     try {
       if (!engine) {
-        if (!navigator.gpu) throw new UnsupportedError(strings.unsupported);
+        if (!navigator.gpu)
+          throw new UnsupportedError(liveStrings().unsupported);
         const found = await checkCache();
-        if (!found) throw new Error(strings.error);
+        if (!found) throw new Error(liveStrings().error);
         await dropPreviousModel(found.webllm);
         engine = await createEngine(found);
         setStatus(null);
@@ -292,15 +263,38 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       loadHistory().pop();
       saveHistory();
       setStatus(
-        error instanceof UnsupportedError ? strings.unsupported : strings.error,
+        error instanceof UnsupportedError
+          ? liveStrings().unsupported
+          : liveStrings().error,
       );
     }
     busyRef.current = false;
     setBusy(false);
   };
 
+  // The box's texts, read from the section's own data
+  // attributes at the moment of use. The frame is not
+  // re-rendered when the reader moves — in-app navigation
+  // updates the attributes in place, the language included —
+  // so the texts current when the reader acts are the ones
+  // in the document, not the ones this render was given. The
+  // render's own strings are the fallback before the section
+  // exists.
+  const sectionRef = useRef<HTMLElement>(null);
+  const liveStrings = (): AiStrings => {
+    const data = sectionRef.current?.dataset;
+    return {
+      summarize: data?.summarize ?? strings.summarize,
+      loading: data?.loading ?? strings.loading,
+      send: data?.send ?? strings.send,
+      unsupported: data?.unsupported ?? strings.unsupported,
+      error: data?.error ?? strings.error,
+    };
+  };
+
   return (
     <section
+      ref={sectionRef}
       className="ai-assistant"
       data-summarize={strings.summarize}
       data-loading={strings.loading}
@@ -329,10 +323,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             type="text"
             placeholder={strings.summarize}
             value={draftText}
-            onChange={(event) => {
-              setDraftText(event.target.value);
-              saveDraft(event.target.value);
-            }}
+            onChange={(event) => setDraftText(event.target.value)}
             disabled={busy}
           />
           <button className="ai-assistant__send" type="submit" disabled={busy}>
