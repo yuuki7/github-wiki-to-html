@@ -89,19 +89,21 @@
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
     <p>Converts the GitHub Wiki Markdown dialect to standard GFM Markdown.</p>
-<p>Wikilinks use the double-bracket syntax: [[Page]], [[Page|Display]],
-images either use ![[image.png]] or reference a file by its image
-extension: [[image.png]] is taken to be an image.</p>
-<p>Wiki links become standard Markdown links, except when they appear
-in raw HTML blocks, where the Markdown pipeline would not process
-them. All raw HTML blocks of a page are parsed together as a single
-HTML5 stream (Nokogiri), because constructs such as <details>
-routinely span several blocks separated by blank lines — parsing
-each block in isolation would auto-close elements that a later
-block closes and drop their closing tags. Wikilinks in text nodes
-are rewritten as raw HTML anchors; everything else is reserialized
-by the parser, which normalizes the markup (supplying an implied</p>
-<tbody>, for example) rather than preserving the source bytes.
+<p>Wikilinks use the double-bracket syntax: [[Page]],
+[[Page|Display]]; images use ![[image.png]] or are
+recognized by extension: [[image.png]] is taken to be an
+image.</p>
+<p>Wiki links become standard Markdown links — except in raw
+HTML blocks, which the Markdown pipeline would not process.
+All raw HTML blocks of a page are parsed together as a
+single HTML5 stream (Nokogiri), because constructs such as</p>
+<details> routinely span several blocks: parsed in
+isolation, an element a later block closes would be
+auto-closed and its closing tag dropped. Wikilinks in text
+nodes become raw HTML anchors; everything else is
+reserialized by the parser, which normalizes the markup
+(supplying an implied <tbody>, for example) rather than
+preserving the source bytes.
 
   </div>
 </div>
@@ -263,28 +265,6 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#escape_markdown_url-class_method" title="escape_markdown_url (class method)">.<strong>escape_markdown_url</strong>(url)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'><p>Markdown link URLs are terminated by a closing parenthesis; angle brackets allow spaces and parens in the destination.</p></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
       <a href="#escape_url_path-class_method" title="escape_url_path (class method)">.<strong>escape_url_path</strong>(path)  &#x21d2; Object </a>
     
 
@@ -299,7 +279,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Percent-encodes ASCII characters that are unsafe in a URL path segment.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>The one spelling of a page path, used everywhere a page is linked — bodies, templates, canonical URLs and the sitemap alike: percent-encode the path's UTF-8 bytes, exactly as JavaScript's encodeURIComponent does, leaving A-Z a-z 0-9 and - _ .</p></div></span>
   
 </li>
 
@@ -321,7 +301,7 @@ the scan linear, and a match can never span lines.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>The folded comparison key: spaces become hyphens and case is folded, as in gollum's path_compare with its hyphened and case-insensitive tag lookups enabled.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>The folded comparison key: spaces become hyphens and case is folded, as in gollum's path_compare with its hyphened and case-insensitive lookups enabled.</p></div></span>
   
 </li>
 
@@ -461,6 +441,28 @@ the scan linear, and a match can never span lines.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#link_destination-class_method" title="link_destination (class method)">.<strong>link_destination</strong>(url)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A URL written as a Markdown link destination, always in the angle-bracket form.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#parse_fragment-class_method" title="parse_fragment (class method)">.<strong>parse_fragment</strong>(text)  &#x21d2; Object </a>
     
 
@@ -476,6 +478,28 @@ the scan linear, and a match can never span lines.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>: (String) -&gt; Nokogiri::XML::DocumentFragment.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#pipe_parts-class_method" title="pipe_parts (class method)">.<strong>pipe_parts</strong>(ref)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The pipe-separated parts of a wikilink's inner text, each stripped: the target first, then the display text or the image options.</p></div></span>
   
 </li>
 
@@ -743,14 +767,14 @@ the scan linear, and a match can never span lines.</p>
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Builds the lookup used to canonicalize link targets against a
-wiki's actual pages and files. Each map holds every name under
-its exact spelling first and then under a folded key (spaces
-become hyphens, compared case-insensitively), mirroring how
-GitHub Wiki resolves internal links: [[my page]] and [[MY-PAGE]]
-both find the page whose file is &quot;My-Page.md&quot;, and the link is
-emitted with the found page's own spelling. Names that collide
-only after folding keep the first page in the order given.
+    <p>Builds the lookup used to canonicalize link targets
+against a wiki's actual pages and files. Each map holds
+every name under its exact spelling first, then under a
+folded key (spaces become hyphens, case folded), mirroring
+how GitHub Wiki resolves internal links: [[my page]] and
+[[MY-PAGE]] both find &quot;My-Page.md&quot;, and the link is emitted
+with the found page's own spelling. Names colliding only
+after folding keep the first page in the order given.
 : (<a href="String">Array</a>, <a href="String">Array</a>) -&gt; Hash[Symbol, Hash[String, String]]</p>
 
   </div>
@@ -764,15 +788,15 @@ only after folding keep the first page in the order given.
       <pre class="lines">
 
 
-58
-59
 60
 61
 62
-63</pre>
+63
+64
+65</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 58</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_link_index'>build_link_index</span><span class='lparen'>(</span><span class='id identifier rubyid_page_slugs'>page_slugs</span><span class='comma'>,</span> <span class='id identifier rubyid_asset_names'>asset_names</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -809,17 +833,17 @@ only after folding keep the first page in the order given.
       <pre class="lines">
 
 
-66
-67
 68
 69
 70
 71
 72
-73</pre>
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 66</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 68</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_name_index'>build_name_index</span><span class='lparen'>(</span><span class='id identifier rubyid_names'>names</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_index'>index</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, String]
@@ -858,10 +882,10 @@ only after folding keep the first page in the order given.
       <pre class="lines">
 
 
-477</pre>
+497</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 477</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 497</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_escape_markdown_text'>escape_markdown_text</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\\\</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>[</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\[</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>]</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>\\]</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></pre>
     </td>
@@ -870,9 +894,9 @@ only after folding keep the first page in the order given.
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="escape_markdown_url-class_method">
+  <h3 class="signature " id="escape_url_path-class_method">
   
-    .<strong>escape_markdown_url</strong>(url)  &#x21d2; <tt>Object</tt> 
+    .<strong>escape_url_path</strong>(path)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -880,8 +904,19 @@ only after folding keep the first page in the order given.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Markdown link URLs are terminated by a closing parenthesis;
-angle brackets allow spaces and parens in the destination.
+    <p>The one spelling of a page path, used everywhere a page
+is linked — bodies, templates, canonical URLs and the
+sitemap alike: percent-encode the path's UTF-8 bytes,
+exactly as JavaScript's encodeURIComponent does, leaving
+A-Z a-z 0-9 and - _ . ! ~ * ' ( ) as they are. The
+templates' escapeUrlPath is that function itself; the
+two must agree, or one page ends up with two different
+URLs.</p>
+<p>Parentheses stay raw under this rule, so Markdown link
+destinations are always written in the angle-bracket
+form (see link_destination): the spelling of a URL never
+depends on Markdown's destination syntax, and no
+character a slug can contain can break a destination.
 : (String) -&gt; String</p>
 
   </div>
@@ -902,50 +937,8 @@ angle brackets allow spaces and parens in the destination.
     <td>
       <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 482</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_escape_markdown_url'>escape_markdown_url</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_url'>url</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>)</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_url'>url</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_url'>url</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>(</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='id identifier rubyid_url'>url</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="escape_url_path-class_method">
-  
-    .<strong>escape_url_path</strong>(path)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    <p>Percent-encodes ASCII characters that are unsafe in a URL
-path segment. Non-ASCII (UTF-8 IRI) characters are left
-alone, so Japanese slugs remain readable.
-: (String) -&gt; String</p>
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-462
-463
-464</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 462</span>
-
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_escape_url_path'>escape_url_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>[^\u{80}-\u{10FFFF}A-Za-z0-9\-._~,]</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_c'>c</span><span class='op'>|</span> <span class='id identifier rubyid_format'>format</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>%%%02X</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_c'>c</span><span class='period'>.</span><span class='id identifier rubyid_ord'>ord</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_b'>b</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>[^A-Za-z0-9\-._!~*&#39;()]</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_byte'>byte</span><span class='op'>|</span> <span class='id identifier rubyid_format'>format</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>%%%02X</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_byte'>byte</span><span class='period'>.</span><span class='id identifier rubyid_ord'>ord</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -963,9 +956,13 @@ alone, so Japanese slugs remain readable.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>The folded comparison key: spaces become hyphens and case is
-folded, as in gollum's path_compare with its hyphened and
-case-insensitive tag lookups enabled.
+    <p>The folded comparison key: spaces become hyphens and case
+is folded, as in gollum's path_compare with its hyphened
+and case-insensitive lookups enabled. The name is composed
+(NFC) first — a name read from a macOS filesystem can be
+decomposed (NFD), and both forms must fold to the same
+key. Gollum does not normalize; this step exists because
+the converter also runs on macOS.
 : (String) -&gt; String</p>
 
   </div>
@@ -979,15 +976,15 @@ case-insensitive tag lookups enabled.
       <pre class="lines">
 
 
-79
-80
-81</pre>
+85
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 85</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_fold_key'>fold_key</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>-</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
+  <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_unicode_normalize'>unicode_normalize</span><span class='lparen'>(</span><span class='symbol'>:nfc</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>-</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1020,18 +1017,18 @@ blocks with it cannot collide with page content.
       <pre class="lines">
 
 
-320
-321
-322
 323
-324</pre>
+324
+325
+326
+327</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 320</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 323</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_gap_marker'>gap_marker</span><span class='lparen'>(</span><span class='id identifier rubyid_blocks'>blocks</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_marker'>marker</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>wikinder-gap</span><span class='tstring_end'>&#39;</span></span>
-  <span class='id identifier rubyid_marker'>marker</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_marker'>marker</span><span class='embexpr_end'>}</span><span class='tstring_content'>-</span><span class='embexpr_beg'>#{</span><span class='const'>SecureRandom</span><span class='period'>.</span><span class='id identifier rubyid_hex'>hex</span><span class='lparen'>(</span><span class='int'>4</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>while</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_text'>text</span><span class='op'>|</span> <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_marker'>marker</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_marker'>marker</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_marker'>marker</span><span class='embexpr_end'>}</span><span class='tstring_content'>-</span><span class='embexpr_beg'>#{</span><span class='const'>SecureRandom</span><span class='period'>.</span><span class='id identifier rubyid_hex'>hex</span><span class='lparen'>(</span><span class='int'>4</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>while</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_it'>it</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_marker'>marker</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
   <span class='id identifier rubyid_marker'>marker</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1068,21 +1065,21 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-448
-449
-450
-451
-452
-453
-454
-455
-456</pre>
+457
+458
+459
+460
+461
+462
+463
+464
+465</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 448</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 457</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_image_parts'>image_parts</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_ref'>ref</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>|</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:strip</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_pipe_parts'>pipe_parts</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_parts'>parts</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;=</span> <span class='int'>2</span>
     <span class='lbracket'>[</span><span class='id identifier rubyid_parts'>parts</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='id identifier rubyid_parts'>parts</span><span class='lbracket'>[</span><span class='int'>1</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span>
   <span class='kw'>else</span>
@@ -1132,15 +1129,15 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-467
-468
-469
-470
-471
-472</pre>
+487
+488
+489
+490
+491
+492</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 467</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 487</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_image_target?'>image_target?</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_ref'>ref</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>#</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1178,12 +1175,12 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-85
-86
-87</pre>
+91
+92
+93</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 91</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_index_lookup'>index_lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_index'>index</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_index'>index</span><span class='lbracket'>[</span><span class='id identifier rubyid_name'>name</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_index'>index</span><span class='lbracket'>[</span><span class='id identifier rubyid_fold_key'>fold_key</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span><span class='rbracket'>]</span>
@@ -1230,12 +1227,12 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-356
-357
-358</pre>
+359
+360
+361</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 356</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 359</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_inside_raw_text?'>inside_raw_text?</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_node'>node</span><span class='period'>.</span><span class='id identifier rubyid_ancestors'>ancestors</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_ancestor'>ancestor</span><span class='op'>|</span> <span class='const'><span class='object_link'><a href="#RAW_TEXT_ELEMENTS-constant" title="Wikinder::GitHub::Wiki::Tags::RAW_TEXT_ELEMENTS (constant)">RAW_TEXT_ELEMENTS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_ancestor'>ancestor</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
@@ -1269,18 +1266,18 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-235
-236
-237
 238
 239
 240
 241
 242
-243</pre>
+243
+244
+245
+246</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 235</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 238</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_line_offsets'>line_offsets</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_offsets'>offsets</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[Integer]
@@ -1290,6 +1287,51 @@ second are ignored, as in gollum's parse_tag_parts.
     <span class='id identifier rubyid_pos'>pos</span> <span class='op'>+=</span> <span class='id identifier rubyid_line'>line</span><span class='period'>.</span><span class='id identifier rubyid_bytesize'>bytesize</span>
   <span class='kw'>end</span>
   <span class='id identifier rubyid_offsets'>offsets</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="link_destination-class_method">
+  
+    .<strong>link_destination</strong>(url)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A URL written as a Markdown link destination, always in
+the angle-bracket form. Inside the brackets a destination
+ends only at '&gt;', so the characters the URL rule leaves
+raw — parentheses, and spaces in a target passed through
+as written — can never terminate the destination early
+or break its parsing downstream.
+: (String) -&gt; String</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+506
+507
+508</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 506</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_link_destination'>link_destination</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1320,16 +1362,54 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-327
-328
-329</pre>
+330
+331
+332</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 327</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 330</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_parse_fragment'>parse_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='rparen'>)</span>
   <span class='const'>Nokogiri</span><span class='op'>::</span><span class='const'>HTML5</span><span class='period'>.</span><span class='id identifier rubyid_fragment'>fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='period'>.</span><span class='id identifier rubyid_force_encoding'>force_encoding</span><span class='lparen'>(</span><span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="pipe_parts-class_method">
+  
+    .<strong>pipe_parts</strong>(ref)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The pipe-separated parts of a wikilink's inner text,
+each stripped: the target first, then the display text
+or the image options.
+: (String) -&gt; <a href="String">Array</a></p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+449</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 449</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_pipe_parts'>pipe_parts</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_ref'>ref</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>|</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:strip</span><span class='rparen'>)</span></pre>
     </td>
   </tr>
 </table>
@@ -1359,19 +1439,19 @@ second are ignored, as in gollum's parse_tag_parts.
       <pre class="lines">
 
 
-393
-394
-395
 396
 397
 398
 399
 400
 401
-402</pre>
+402
+403
+404
+405</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 393</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 396</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_range_for'>range_for</span><span class='lparen'>(</span><span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_source_position'>source_position</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_start_line'>start_line</span> <span class='op'>=</span> <span class='id identifier rubyid_source_position'>source_position</span><span class='lbracket'>[</span><span class='symbol'>:start_line</span><span class='rbracket'>]</span>
@@ -1414,15 +1494,15 @@ GFM Markdown.
       <pre class="lines">
 
 
-42
-43
 44
 45
 46
-47</pre>
+47
+48
+49</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 42</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 44</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='label'>link_index:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>routes:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_offsets'>offsets</span> <span class='op'>=</span> <span class='id identifier rubyid_line_offsets'>line_offsets</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='rparen'>)</span>
@@ -1461,9 +1541,6 @@ Markdown rewriter.
       <pre class="lines">
 
 
-407
-408
-409
 410
 411
 412
@@ -1471,10 +1548,13 @@ Markdown rewriter.
 414
 415
 416
-417</pre>
+417
+418
+419
+420</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 407</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 410</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite'>rewrite</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_segments'>segments</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_out'>out</span> <span class='op'>=</span> <span class='op'>+</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span>
@@ -1517,9 +1597,6 @@ Markdown rewriter.
       <pre class="lines">
 
 
-421
-422
-423
 424
 425
 426
@@ -1536,10 +1613,13 @@ Markdown rewriter.
 437
 438
 439
-440</pre>
+440
+441
+442
+443</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 421</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 424</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_fragment'>rewrite_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_text'>text</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_text'>text</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#WIKILINK_PATTERN-constant" title="Wikinder::GitHub::Wiki::Tags::WIKILINK_PATTERN (constant)">WIKILINK_PATTERN</a></span></span><span class='rparen'>)</span> <span class='kw'>do</span>
@@ -1593,17 +1673,17 @@ left verbatim, as are attribute values.
       <pre class="lines">
 
 
-335
-336
-337
 338
 339
 340
 341
-342</pre>
+342
+343
+344
+345</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 335</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 338</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_fragment_text_nodes'>rewrite_fragment_text_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment'>fragment</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_fragment'>fragment</span><span class='period'>.</span><span class='id identifier rubyid_traverse'>traverse</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_node'>node</span><span class='op'>|</span>
@@ -1646,14 +1726,14 @@ rewrite_html_stream).
       <pre class="lines">
 
 
-349
-350
-351
 352
-353</pre>
+353
+354
+355
+356</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 349</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 352</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_html_block'>rewrite_html_block</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment_text'>fragment_text</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_fragment'>fragment</span> <span class='op'>=</span> <span class='id identifier rubyid_parse_fragment'>parse_fragment</span><span class='lparen'>(</span><span class='id identifier rubyid_fragment_text'>fragment_text</span><span class='rparen'>)</span>
@@ -1676,18 +1756,18 @@ rewrite_html_stream).
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Rewrites wikilinks in a page's raw HTML blocks. The blocks are
-joined with unique comment markers and parsed as one HTML5
-stream, so an element opened in one block can be closed in a
-later one; after rewriting, the stream is split at the markers
-again. Content the parser moved across a marker (an unclosed
-element before the first block, auto-closures after the last)
-is added to the nearest block. If a marker does not survive
-the round trip — a <script> spanning several blocks can hold
-it as raw text, so it is no longer a comment — each block is
-rewritten on its own instead, so the result is never worse
+    <p>Rewrites wikilinks in a page's raw HTML blocks. The blocks
+are joined with unique comment markers and parsed as one
+HTML5 stream, so an element opened in one block can be
+closed in a later one; after rewriting, the stream is
+split at the markers again. Content the parser moved
+across a marker (an unclosed element before the first
+block, auto-closures after the last) goes to the nearest
+block. If a marker does not survive the round trip — a</p>
+<script> spanning several blocks can hold it as raw text —
+each block is rewritten on its own instead, never worse
 than per-block parsing.
-: (<a href="String">Array</a>, LinkResolver) -&gt; <a href="String">Array</a></p>
+: (Array[String], LinkResolver) -> Array[String]
 
   </div>
 </div>
@@ -1700,9 +1780,6 @@ than per-block parsing.
       <pre class="lines">
 
 
-287
-288
-289
 290
 291
 292
@@ -1713,10 +1790,13 @@ than per-block parsing.
 297
 298
 299
-300</pre>
+300
+301
+302
+303</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 287</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 290</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rewrite_html_stream'>rewrite_html_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_blocks'>blocks</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_blocks'>blocks</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -1763,9 +1843,6 @@ the text and element nodes the links produce.
       <pre class="lines">
 
 
-363
-364
-365
 366
 367
 368
@@ -1781,10 +1858,13 @@ the text and element nodes the links produce.
 378
 379
 380
-381</pre>
+381
+382
+383
+384</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 363</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 366</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_and_replace_wikilinks'>split_and_replace_wikilinks</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_text'>text</span> <span class='op'>=</span> <span class='id identifier rubyid_node'>node</span><span class='period'>.</span><span class='id identifier rubyid_content'>content</span>
@@ -1837,19 +1917,19 @@ survive in order.
       <pre class="lines">
 
 
-306
-307
-308
 309
 310
 311
 312
 313
 314
-315</pre>
+315
+316
+317
+318</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 306</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 309</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_split_stream'>split_stream</span><span class='lparen'>(</span><span class='id identifier rubyid_serialized'>serialized</span><span class='comma'>,</span> <span class='id identifier rubyid_marker'>marker</span><span class='comma'>,</span> <span class='id identifier rubyid_count'>count</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='id identifier rubyid_serialized'>serialized</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>&lt;!--</span><span class='embexpr_beg'>#{</span><span class='const'>Regexp</span><span class='period'>.</span><span class='id identifier rubyid_escape'>escape</span><span class='lparen'>(</span><span class='id identifier rubyid_marker'>marker</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>:(\d+)--&gt;</span><span class='regexp_end'>/</span></span><span class='comma'>,</span> <span class='op'>-</span><span class='int'>1</span><span class='rparen'>)</span>
@@ -1907,12 +1987,12 @@ turning them into links.
       <pre class="lines">
 
 
-388
-389
-390</pre>
+391
+392
+393</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 388</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 391</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_toc_literal?'>toc_literal?</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="#TOC_LITERALS-constant" title="Wikinder::GitHub::Wiki::Tags::TOC_LITERALS (constant)">TOC_LITERALS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_inner'>inner</span><span class='rparen'>)</span>
@@ -1950,9 +2030,6 @@ raw HTML blocks.
       <pre class="lines">
 
 
-250
-251
-252
 253
 254
 255
@@ -1973,10 +2050,13 @@ raw HTML blocks.
 270
 271
 272
-273</pre>
+273
+274
+275
+276</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/tags.rb', line 253</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_typed_ranges'>typed_ranges</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='id identifier rubyid_offsets'>offsets</span><span class='comma'>,</span> <span class='id identifier rubyid_resolver'>resolver</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_ranges'>ranges</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[[Range[Integer], String]]
@@ -2014,7 +2094,7 @@ raw HTML blocks.
       <div id="footer">
   Generated by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.45 (ruby-4.0.9).
+  0.9.45 (ruby-4.0.10).
 </div>
 
     </div>

@@ -107,12 +107,11 @@
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
     <p>Represents the Wikinder GitHub Wiki.</p>
-<p>The wiki repository contains .md files; this class enumerates them,
-rewrites wiki-specific syntax, and produces YAML front matter
-with metadata for downstream consumers.</p>
-<p>GitHub Wiki is flat: it has no notion of nested page directories, and
-pages are addressed by name only. Subdirectory blobs are therefore
-silently unsupported — they are ignored entirely.</p>
+<p>The wiki repository contains .md files; this class enumerates
+them, rewrites wiki-specific syntax, and produces YAML front
+matter with metadata for downstream consumers.</p>
+<p>GitHub Wiki is flat — pages are addressed by name only — so
+subdirectory blobs are unsupported and ignored entirely.</p>
 
   </div>
 </div>
@@ -131,6 +130,31 @@ silently unsupported — they are ignored entirely.</p>
     
   
 </p>
+
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="IMAGE_EXTENSIONS-constant" class="">IMAGE_EXTENSIONS =
+          <div class="docstring">
+  <div class="discussion">
+    <p>The file extensions of the image assets a page can embed.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='qwords_beg'>%w[</span><span class='tstring_content'>.png</span><span class='words_sep'> </span><span class='tstring_content'>.jpg</span><span class='words_sep'> </span><span class='tstring_content'>.jpeg</span><span class='words_sep'> </span><span class='tstring_content'>.gif</span><span class='words_sep'> </span><span class='tstring_content'>.webp</span><span class='words_sep'> </span><span class='tstring_content'>.svg</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
 
 
 
@@ -469,12 +493,11 @@ documented below.</p></div>
           </span>
           
             &mdash; <div class='inline'><p>Pages the
-build never generates as articles. The default is the
-same set the conversion CLI passes — the site parts and
-repository files that are not articles — so Home and
-_Footer are not emitted as ordinary articles by default.
-Pass <a href="'META'">Set</a> (or any subset) explicitly to opt out of
-each.</p></div>
+build never generates as articles. The default is the set
+the conversion CLI passes — the site parts and repository
+files that are not articles — so Home and _Footer are not
+emitted as ordinary articles. Pass a subset (such as
+<a href="'META'">Set</a>) to opt out of each.</p></div>
           
         </li>
       
@@ -524,13 +547,10 @@ sync.</p></div>
           </span>
           
             &mdash; <div class='inline'><p>The site's
-language, stamped onto special pages. Site metadata belongs
-to the caller (the conversion CLI maintains it); the
-module never reads a site file itself and never detects a
-language for site parts. It is also the language the
-original special pages belong to: every output is written
-under a language directory named by the page's own
-language.</p></div>
+language, stamped onto special pages, whose originals
+belong to it. Site metadata belongs to the caller (the
+conversion CLI maintains it); the module never reads a
+site file and never detects a language for site parts.</p></div>
           
         </li>
       
@@ -542,10 +562,17 @@ language.</p></div>
           </span>
           
             &mdash; <div class='inline'><p>The
-languages the site offers translations in. A translation
-directory naming any other language fails the build. When
-empty, every language found under the translations
-directory is accepted.</p></div>
+languages the site offers. Non-empty, the list declares
+the site's language set: the site language must belong to
+it, every page must exist in every language in it, and a
+translation directory naming any other language fails the
+build. Original pages may be written in any language: a
+page's language comes from its META row or from
+detection, and detection is a heuristic taken as it comes,
+never a ground truth to fail a build on. Empty, no set is
+declared: every language found is accepted, and a link to
+a page with no version in the reader's language points at
+the original.</p></div>
           
         </li>
       
@@ -558,10 +585,10 @@ directory is accepted.</p></div>
           
             &mdash; <div class='inline'><p>Directory holding translated pages as data, one
 subdirectory per language
-(translations/<language>/<Slug>.md). Translation itself is
-not this module's business; the files are inputs, produced
-elsewhere, and may carry a YAML front matter whose only key
-the converter reads is <code>title</code> (the translated title).</p></div>
+(translations/<language>/<Slug>.md). The files are inputs
+produced elsewhere — translation is not this module's
+business — and their front matter's only key read is
+<code>title</code> (the translated title).</p></div>
           
         </li>
       
@@ -588,11 +615,6 @@ the converter reads is <code>title</code> (the translated title).</p></div>
       <pre class="lines">
 
 
-139
-140
-141
-142
-143
 144
 145
 146
@@ -613,10 +635,44 @@ the converter reads is <code>title</code> (the translated title).</p></div>
 161
 162
 163
-164</pre>
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 139</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 144</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@path</span> <span class='op'>=</span> <span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span>
@@ -638,9 +694,38 @@ the converter reads is <code>title</code> (the translated title).</p></div>
   <span class='ivar'>@prev_head</span> <span class='op'>=</span> <span class='id identifier rubyid_prev_head'>prev_head</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_prev_head'>prev_head</span> <span class='op'>:</span> <span class='kw'>nil</span>
   <span class='id identifier rubyid_supported'>supported</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:supported_languages</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_site_language'>site_language</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:site_language</span><span class='rbracket'>]</span>
-  <span class='ivar'>@site_language</span> <span class='op'>=</span> <span class='id identifier rubyid_site_language'>site_language</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="Wiki/Language.html" title="Wikinder::GitHub::Wiki::Language (module)">Language</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize'><span class='object_link'><a href="Wiki/Language.html#normalize-class_method" title="Wikinder::GitHub::Wiki::Language.normalize (method)">normalize</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_site_language'>site_language</span><span class='comma'>,</span> <span class='label'>supported:</span> <span class='id identifier rubyid_supported'>supported</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='kw'>nil</span>
-  <span class='id identifier rubyid_supported_list'>supported_list</span> <span class='op'>=</span> <span class='id identifier rubyid_supported'>supported</span><span class='period'>.</span><span class='id identifier rubyid_filter_map'>filter_map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_code'>code</span><span class='op'>|</span> <span class='const'><span class='object_link'><a href="Wiki/Language.html" title="Wikinder::GitHub::Wiki::Language (module)">Language</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize'><span class='object_link'><a href="Wiki/Language.html#normalize-class_method" title="Wikinder::GitHub::Wiki::Language.normalize (method)">normalize</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span><span class='comma'>,</span> <span class='label'>supported:</span> <span class='id identifier rubyid_supported'>supported</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='comment'># A supplied site language must name a language: dropping a
+</span>  <span class='comment'># malformed value would stamp the special pages with no
+</span>  <span class='comment'># language and let a caller error build successfully.
+</span>  <span class='comment'># Omitting the option stays valid; the special pages then
+</span>  <span class='comment'># carry no language, as the option documentation states.
+</span>  <span class='ivar'>@site_language</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_site_language'>site_language</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span>
+                     <span class='id identifier rubyid_normalized'>normalized</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Wiki/Language.html" title="Wikinder::GitHub::Wiki::Language (module)">Language</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize'><span class='object_link'><a href="Wiki/Language.html#normalize-class_method" title="Wikinder::GitHub::Wiki::Language.normalize (method)">normalize</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_site_language'>site_language</span><span class='comma'>,</span> <span class='label'>supported:</span><span class='rparen'>)</span>
+                     <span class='kw'>if</span> <span class='id identifier rubyid_normalized'>normalized</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+                       <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="Wiki/Error.html" title="Wikinder::GitHub::Wiki::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>site_language </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_site_language'>site_language</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'> does not name a language</span><span class='tstring_end'>&quot;</span></span>
+                     <span class='kw'>end</span>
+
+                     <span class='id identifier rubyid_normalized'>normalized</span>
+                   <span class='kw'>end</span>
+  <span class='comment'># The same rule applies to each supported language the
+</span>  <span class='comment'># caller named: a value that names no language fails here
+</span>  <span class='comment'># instead of being dropped from the list silently.
+</span>  <span class='id identifier rubyid_supported_list'>supported_list</span> <span class='op'>=</span> <span class='id identifier rubyid_supported'>supported</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_code'>code</span><span class='op'>|</span>
+    <span class='id identifier rubyid_normalized'>normalized</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Wiki/Language.html" title="Wikinder::GitHub::Wiki::Language (module)">Language</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize'><span class='object_link'><a href="Wiki/Language.html#normalize-class_method" title="Wikinder::GitHub::Wiki::Language.normalize (method)">normalize</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span><span class='comma'>,</span> <span class='label'>supported:</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="Wiki/Error.html" title="Wikinder::GitHub::Wiki::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>supported_languages entry </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_code'>code</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'> does not name a language</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_normalized'>normalized</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+
+    <span class='id identifier rubyid_normalized'>normalized</span>
+  <span class='kw'>end</span>
   <span class='ivar'>@supported_languages</span> <span class='op'>=</span> <span class='id identifier rubyid_supported_list'>supported_list</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
+  <span class='comment'># When a language set is declared, the site language must
+</span>  <span class='comment'># belong to it: the original special pages are part of the
+</span>  <span class='comment'># set&#39;s matrix like any other page.
+</span>  <span class='id identifier rubyid_site_language_value'>site_language_value</span> <span class='op'>=</span> <span class='ivar'>@site_language</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_site_language_value'>site_language_value</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ivar'>@supported_languages</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>&amp;&amp;</span>
+     <span class='op'>!</span><span class='ivar'>@supported_languages</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_site_language_value'>site_language_value</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="Wiki/Error.html" title="Wikinder::GitHub::Wiki::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>site_language </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_site_language_value'>site_language_value</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'> is not a supported language</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+
   <span class='id identifier rubyid_translations_dir'>translations_dir</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:translations_dir</span><span class='rbracket'>]</span>
   <span class='ivar'>@translations_dir</span> <span class='op'>=</span> <span class='id identifier rubyid_translations_dir'>translations_dir</span> <span class='op'>?</span> <span class='const'>Pathname</span><span class='lparen'>(</span><span class='id identifier rubyid_translations_dir'>translations_dir</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>:</span> <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
@@ -794,12 +879,12 @@ the converter reads is <code>title</code> (the translated title).</p></div>
       <pre class="lines">
 
 
-77
-78
-79</pre>
+79
+80
+81</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 77</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 79</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_head'>head</span>
   <span class='ivar'>@head</span>
@@ -835,12 +920,12 @@ the converter reads is <code>title</code> (the translated title).</p></div>
       <pre class="lines">
 
 
-80
-81
-82</pre>
+82
+83
+84</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 80</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 82</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_supported_languages'>supported_languages</span>
   <span class='ivar'>@supported_languages</span>
@@ -876,12 +961,12 @@ the converter reads is <code>title</code> (the translated title).</p></div>
       <pre class="lines">
 
 
-78
-79
-80</pre>
+80
+81
+82</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 78</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 80</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_ungenerated_pages'>ungenerated_pages</span>
   <span class='ivar'>@ungenerated_pages</span>
@@ -917,12 +1002,12 @@ the converter reads is <code>title</code> (the translated title).</p></div>
       <pre class="lines">
 
 
-79
-80
-81</pre>
+81
+82
+83</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 81</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unlisted_pages'>unlisted_pages</span>
   <span class='ivar'>@unlisted_pages</span>
@@ -951,13 +1036,12 @@ the converter reads is <code>title</code> (the translated title).</p></div>
 </h3><div class="docstring">
   <div class="discussion">
     <p>Builds the entire output tree, writing Markdown files with YAML front matter.</p>
-<p>All outputs are computed in memory first; only when computation of
-every page (or asset) succeeded are files written, each via a
-same-directory temporary file atomically renamed into place. A crash
-can therefore leave previous-generation and new files mixed, but
-never a torn individual file. After the write, files the new build
-no longer produces are removed (keeping anything unrelated to the
-build untouched).
+<p>Outputs are computed in memory first and written only when
+every one succeeded, each via a same-directory temporary
+file renamed into place: a crash can mix old and new files,
+but never tear an individual file. Files the new build no
+longer produces are then removed; unrelated files stay
+untouched.
 : (String) -&gt; void</p>
 
   </div>
@@ -971,31 +1055,31 @@ build untouched).
       <pre class="lines">
 
 
-176
-177
-178
-179
-180
-181
-182
-183
-184
-185
-186
-187
-188
-189
-190
-191
-192
-193
-194
-195
-196
-197</pre>
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 176</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 209</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_target_dir'>target_dir</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_outputs'>outputs</span> <span class='op'>=</span> <span class='id identifier rubyid_compute_outputs'>compute_outputs</span>
@@ -1048,10 +1132,10 @@ build untouched).
       <pre class="lines">
 
 
-87</pre>
+89</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 87</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 89</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_commit_bounds_for'>commit_bounds_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='ivar'>@history</span><span class='period'>.</span><span class='id identifier rubyid_commit_bounds_for'>commit_bounds_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span></pre>
     </td>
@@ -1083,10 +1167,10 @@ build untouched).
       <pre class="lines">
 
 
-93</pre>
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 93</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 95</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diff_paths'>diff_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='ivar'>@history</span><span class='period'>.</span><span class='id identifier rubyid_diff_paths'>diff_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span></pre>
     </td>
@@ -1118,10 +1202,10 @@ build untouched).
       <pre class="lines">
 
 
-90</pre>
+92</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 90</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 92</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='ivar'>@history</span><span class='period'>.</span><span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span></pre>
     </td>
@@ -1153,10 +1237,10 @@ build untouched).
       <pre class="lines">
 
 
-96</pre>
+98</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 96</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki.rb', line 98</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='ivar'>@history</span><span class='period'>.</span><span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span></pre>
     </td>
@@ -1171,7 +1255,7 @@ build untouched).
       <div id="footer">
   Generated by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.45 (ruby-4.0.9).
+  0.9.45 (ruby-4.0.10).
 </div>
 
     </div>

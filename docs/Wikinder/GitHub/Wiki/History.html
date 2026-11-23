@@ -104,14 +104,13 @@
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-    <p>Reads the wiki's git history: the HEAD tree's contents,
-the commits that touched each page (following renames),
-the rename map across the whole history, and the paths
-changed between two refs. Everything the converter
-derives from git lives here, so Wiki itself only
-orchestrates the build. Results are cached per instance:
-a build reads the same history many times, and the
-repository does not move under it.</p>
+    <p>Reads the wiki's git history: the HEAD tree, the commits
+that touched each page (following renames), the rename map
+across the whole history, and the paths changed between
+two refs. Everything the converter derives from git lives
+here, so Wiki itself only orchestrates the build. Results
+are cached per instance: a build reads the same history
+many times, and the repository does not move under it.</p>
 
   </div>
 </div>
@@ -316,7 +315,7 @@ repository does not move under it.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Builds a map of rename deltas across the full history: every file path that was ever renamed maps to its predecessor path.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Builds the rename map across the full history: every file path that was ever renamed maps to its predecessor path.</p></div></span>
   
 </li>
 
@@ -470,7 +469,7 @@ repository does not move under it.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Emits a one-line warning when the commit deletes an .md file and adds another .md file, and the git rename detector found no link between them.</p></div></span>
+    <span class="summary_desc"><div class='inline'><p>Warns when a commit deletes one .md file and adds another and the rename detector found no link between them — the telltale shape of &quot;rename and fully rewrite&quot;.</p></div></span>
   
 </li>
 
@@ -506,14 +505,14 @@ repository does not move under it.</p>
       <pre class="lines">
 
 
+25
 26
 27
 28
-29
-30</pre>
+29</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 26</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 25</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_repo'>repo</span><span class='comma'>,</span> <span class='id identifier rubyid_head'>head</span><span class='rparen'>)</span>
   <span class='ivar'>@repo</span> <span class='op'>=</span> <span class='id identifier rubyid_repo'>repo</span>
@@ -620,12 +619,12 @@ repository does not move under it.</p>
       <pre class="lines">
 
 
+22
 23
-24
-25</pre>
+24</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 23</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 22</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_head_commit'>head_commit</span>
   <span class='ivar'>@head_commit</span>
@@ -666,13 +665,13 @@ repository does not move under it.</p>
       <pre class="lines">
 
 
+127
 128
 129
-130
-131</pre>
+130</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 128</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 127</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_cached_diff'>cached_diff</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
   <span class='ivar'>@diffs</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[[Rugged::Commit, Rugged::Commit], Rugged::Diff]
@@ -710,6 +709,7 @@ these commits are the source of its author and dates.
       <pre class="lines">
 
 
+77
 78
 79
 80
@@ -727,11 +727,10 @@ these commits are the source of its author and dates.
 92
 93
 94
-95
-96</pre>
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 78</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 77</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_commit_bounds_for'>commit_bounds_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='ivar'>@commit_bounds</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='comment'>#: Hash[String, commit_bounds]
@@ -744,13 +743,13 @@ these commits are the source of its author and dates.
 </span>  <span class='comment'># logical page across renames.
 </span>  <span class='id identifier rubyid_paths'>paths</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_walk'>walk</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HEAD</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_commit'>commit</span><span class='op'>|</span>
-    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_candidate'>candidate</span><span class='op'>|</span> <span class='id identifier rubyid_touched?'>touched?</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_candidate'>candidate</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_touched?'>touched?</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_it'>it</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
 
     <span class='id identifier rubyid_time'>time</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_time'>time</span>
     <span class='id identifier rubyid_earliest'>earliest</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span> <span class='kw'>if</span> <span class='id identifier rubyid_earliest'>earliest</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_time'>time</span> <span class='op'>&lt;</span> <span class='id identifier rubyid_earliest'>earliest</span><span class='period'>.</span><span class='id identifier rubyid_time'>time</span>
     <span class='id identifier rubyid_latest'>latest</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span> <span class='kw'>if</span> <span class='id identifier rubyid_latest'>latest</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_time'>time</span> <span class='op'>&gt;</span> <span class='id identifier rubyid_latest'>latest</span><span class='period'>.</span><span class='id identifier rubyid_time'>time</span>
   <span class='kw'>end</span>
-  <span class='ivar'>@commit_bounds</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='label'>earliest:</span> <span class='id identifier rubyid_earliest'>earliest</span><span class='comma'>,</span> <span class='label'>latest:</span> <span class='id identifier rubyid_latest'>latest</span> <span class='rbrace'>}</span>
+  <span class='ivar'>@commit_bounds</span><span class='lbracket'>[</span><span class='id identifier rubyid_path'>path</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='label'>earliest:</span><span class='comma'>,</span> <span class='label'>latest:</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -784,6 +783,7 @@ page as changed and rewrites every row.
       <pre class="lines">
 
 
+101
 102
 103
 104
@@ -798,11 +798,10 @@ page as changed and rewrites every row.
 113
 114
 115
-116
-117</pre>
+116</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 102</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 101</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diff_paths'>diff_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_from_ref'>from_ref</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -862,16 +861,12 @@ page as changed and rewrites every row.
       <pre class="lines">
 
 
-244
-245
-246</pre>
+240</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 244</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 240</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>.md</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></pre>
     </td>
   </tr>
 </table>
@@ -904,14 +899,14 @@ map's, so they can be compared against it directly.
       <pre class="lines">
 
 
-207
 208
 209
 210
-211</pre>
+211
+212</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_plain_delta_paths'>plain_delta_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_diff'>diff</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
@@ -934,17 +929,18 @@ map's, so they can be compared against it directly.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Builds a map of rename deltas across the full history: every file path
-that was ever renamed maps to its predecessor path.
-Additionally, surface a warning when a single commit deletes one
-.md file and adds another .md file with no detectable rename —
-that is the most likely shape of a rename+rewrite that git cannot
-link statistically. The wiki schema can only pick one answer when
-similarity is low, so the author should curate the alias by hand.</p>
-<p>One diff is computed per (commit, parent) pair and shared with
-touched? through cached_diff. The plain delta list is snapshotted
-before find_similar! runs, because similarity detection consumes
-exactly the added/deleted pairs warn_unlinked_rename looks for.
+    <p>Builds the rename map across the full history: every file
+path that was ever renamed maps to its predecessor path.</p>
+<p>A commit that deletes one .md file and adds another with
+no detectable rename also draws a warning: that is the
+likely shape of a rename+rewrite git cannot link
+statistically, and the author should then curate the
+alias by hand.</p>
+<p>One diff is computed per (commit, parent) pair and shared
+with touched? through cached_diff. The plain delta list
+is snapshotted before find_similar! runs, because
+similarity detection consumes exactly the added/deleted
+pairs warn_unlinked_rename looks for.
 : () -&gt; Hash[String, String]</p>
 
   </div>
@@ -958,7 +954,6 @@ exactly the added/deleted pairs warn_unlinked_rename looks for.
       <pre class="lines">
 
 
-164
 165
 166
 167
@@ -995,10 +990,11 @@ exactly the added/deleted pairs warn_unlinked_rename looks for.
 198
 199
 200
-201</pre>
+201
+202</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 164</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 165</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rename_deltas'>rename_deltas</span>
   <span class='ivar'>@rename_deltas</span> <span class='op'>||=</span> <span class='kw'>begin</span>
@@ -1012,16 +1008,16 @@ exactly the added/deleted pairs warn_unlinked_rename looks for.
         <span class='id identifier rubyid_diff'>diff</span><span class='period'>.</span><span class='id identifier rubyid_deltas'>deltas</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_delta'>delta</span><span class='op'>|</span>
           <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:renamed</span>
 
-          <span class='comment'># Rugged&#39;s +commit.diff(parent)+ reports the commit side as
-</span>          <span class='comment'># old_file and the parent side as new_file (chronologically
-</span>          <span class='comment'># reversed). The rename map therefore reads &quot;current name -&gt;
-</span>          <span class='comment'># name it was renamed from&quot;. First seen wins; walked from
-</span>          <span class='comment'># HEAD so the most recent rename is recorded first.
+          <span class='comment'># Rugged&#39;s +commit.diff(parent)+ reports the commit
+</span>          <span class='comment'># side as old_file and the parent side as new_file
+</span>          <span class='comment'># (chronologically reversed), so the map reads
+</span>          <span class='comment'># &quot;current name -&gt; name it was renamed from&quot;. First
+</span>          <span class='comment'># seen wins; the walk starts at HEAD, so the most
+</span>          <span class='comment'># recent rename is recorded first.
 </span>          <span class='comment'>#
-</span>          <span class='comment'># The paths are normalised to valid UTF-8 here so all
-</span>          <span class='comment'># downstream consumers (slug/alias handling, front-matter
-</span>          <span class='comment'># YAML) can treat them as plain Strings without ever having
-</span>          <span class='comment'># to worry about ASCII-8BIT.
+</span>          <span class='comment'># Paths are normalised to valid UTF-8 here, so
+</span>          <span class='comment'># downstream consumers can treat them as plain
+</span>          <span class='comment'># Strings, never ASCII-8BIT.
 </span>          <span class='id identifier rubyid_newer_path'>newer_path</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_old_file'>old_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span>
           <span class='id identifier rubyid_older_path'>older_path</span> <span class='op'>=</span> <span class='id identifier rubyid_delta'>delta</span><span class='period'>.</span><span class='id identifier rubyid_new_file'>new_file</span><span class='lbracket'>[</span><span class='symbol'>:path</span><span class='rbracket'>]</span>
           <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_newer_path'>newer_path</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_older_path'>older_path</span>
@@ -1069,6 +1065,7 @@ based on git rename detection across history.
       <pre class="lines">
 
 
+135
 136
 137
 138
@@ -1081,11 +1078,10 @@ based on git rename detection across history.
 145
 146
 147
-148
-149</pre>
+148</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 136</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 135</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rename_history_for'>rename_history_for</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_renames'>renames</span> <span class='op'>=</span> <span class='id identifier rubyid_rename_deltas'>rename_deltas</span> <span class='comment'>#: Hash[String, String]
@@ -1130,15 +1126,15 @@ based on git rename detection across history.
       <pre class="lines">
 
 
+119
 120
 121
 122
 123
-124
-125</pre>
+124</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 120</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 119</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_commit'>commit</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_rev_parse'>rev_parse</span><span class='lparen'>(</span><span class='id identifier rubyid_from_ref'>from_ref</span><span class='rparen'>)</span>
@@ -1178,6 +1174,7 @@ inline.
       <pre class="lines">
 
 
+53
 54
 55
 56
@@ -1195,11 +1192,10 @@ inline.
 68
 69
 70
-71
-72</pre>
+71</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 54</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 53</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_text_for'>text_for</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_entry'>entry</span> <span class='op'>=</span> <span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
@@ -1264,20 +1260,20 @@ every path in its tree.
       <pre class="lines">
 
 
+245
+246
+247
+248
+249
+250
 251
 252
 253
 254
-255
-256
-257
-258
-259
-260
-261</pre>
+255</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 251</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 245</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_touched?'>touched?</span><span class='lparen'>(</span><span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parents'>parents</span> <span class='op'>=</span> <span class='id identifier rubyid_commit'>commit</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span>
@@ -1322,12 +1318,12 @@ any lookup happens.
       <pre class="lines">
 
 
+35
 36
-37
-38</pre>
+37</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 36</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 35</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_tree'>tree</span>
   <span class='ivar'>@tree</span> <span class='op'>||=</span> <span class='ivar'>@head_commit</span><span class='op'>&amp;.</span><span class='id identifier rubyid_tree'>tree</span>
@@ -1363,15 +1359,15 @@ tree lookup always suffices.
       <pre class="lines">
 
 
+42
 43
 44
 45
 46
-47
-48</pre>
+47</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 43</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 42</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_tree_entry'>tree_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>tree:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_resolved'>resolved</span> <span class='op'>=</span> <span class='id identifier rubyid_tree'>tree</span> <span class='op'>||</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_tree'>tree</span>
@@ -1395,13 +1391,13 @@ tree lookup always suffices.
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Emits a one-line warning when the commit deletes an .md file and adds
-another .md file, and the git rename detector found no link between
-them. This is the usual telltale shape of &quot;rename and fully rewrite&quot;.
-Has no effect on the returned rows; only diagnostics.</p>
-<p><code>plain</code> is the pre-similarity snapshot of the reversed diff
-(commit side as old), so a forward deletion appears as :added
-and a forward addition as :deleted.
+    <p>Warns when a commit deletes one .md file and adds another
+and the rename detector found no link between them — the
+telltale shape of &quot;rename and fully rewrite&quot;. Diagnostics
+only; no effect on the returned rows.</p>
+<p><code>plain</code> is the pre-similarity snapshot of the reversed
+diff (commit side as old), so a forward deletion appears
+as :added and a forward addition as :deleted.
 : (Array[[Symbol, String]], <a href="String">Set</a>) -&gt; void</p>
 
   </div>
@@ -1415,7 +1411,6 @@ and a forward addition as :deleted.
       <pre class="lines">
 
 
-222
 223
 224
 225
@@ -1430,27 +1425,18 @@ and a forward addition as :deleted.
 234
 235
 236
-237
-238
-239
-240
-241</pre>
+237</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 222</span>
+      <pre class="code"><span class="info file"># File 'lib/wikinder/github/wiki/history.rb', line 223</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_warn_unlinked_rename'>warn_unlinked_rename</span><span class='lparen'>(</span><span class='id identifier rubyid_plain'>plain</span><span class='comma'>,</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
-</span>  <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='comment'>#: Array[String]
-</span>  <span class='id identifier rubyid_plain'>plain</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='op'>|</span>
-    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>=</span> <span class='id identifier rubyid_plain'>plain</span><span class='period'>.</span><span class='id identifier rubyid_filter_map'>filter_map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='op'>|</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:added</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>=</span> <span class='id identifier rubyid_plain'>plain</span><span class='period'>.</span><span class='id identifier rubyid_filter_map'>filter_map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='op'>|</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:deleted</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_md?'>md?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
 
-    <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:added</span>
-    <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='symbol'>:deleted</span>
-  <span class='kw'>end</span>
-
-  <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span> <span class='op'>=</span> <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
-  <span class='id identifier rubyid_unmatched_added'>unmatched_added</span> <span class='op'>=</span> <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+  <span class='id identifier rubyid_marked'>marked</span> <span class='op'>=</span> <span class='id identifier rubyid_marked_renames'>marked_renames</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+  <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span> <span class='op'>=</span> <span class='id identifier rubyid_deleted_md'>deleted_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked'>marked</span>
+  <span class='id identifier rubyid_unmatched_added'>unmatched_added</span> <span class='op'>=</span> <span class='id identifier rubyid_added_md'>added_md</span> <span class='op'>-</span> <span class='id identifier rubyid_marked'>marked</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>||</span> <span class='id identifier rubyid_unmatched_added'>unmatched_added</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
 
   <span class='id identifier rubyid_deleted_list'>deleted_list</span> <span class='op'>=</span> <span class='id identifier rubyid_unmatched_deleted'>unmatched_deleted</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1471,7 +1457,7 @@ and a forward addition as :deleted.
       <div id="footer">
   Generated by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.45 (ruby-4.0.9).
+  0.9.45 (ruby-4.0.10).
 </div>
 
     </div>
