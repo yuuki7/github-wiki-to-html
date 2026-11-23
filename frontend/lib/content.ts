@@ -16,12 +16,16 @@ import type { AlternateLink, ArticleEntry, PageEntry } from "./types";
 const mdDir = path.join(process.cwd(), "md");
 
 // A date as the front matter carries it: an ISO 8601 string
-// or a YAML date, normalized here to a string. A string that
+// or a YAML date, normalized here to a UTC string. A string that
 // is not a date fails the build here, naming the file,
-// instead of crashing a presenter later.
+// instead of crashing a presenter later. Normalizing to UTC also
+// keeps the sitemap's plain string ordering chronological when
+// front matter uses a non-UTC offset.
 const dateLike = z
   .union([z.iso.datetime({ offset: true }), z.date()])
-  .transform((v) => (v instanceof Date ? v.toISOString() : v));
+  .transform((v) =>
+    v instanceof Date ? v.toISOString() : new Date(v).toISOString(),
+  );
 
 const pageSchema = z.discriminatedUnion("kind", [
   z.object({

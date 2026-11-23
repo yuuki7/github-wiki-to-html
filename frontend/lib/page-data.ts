@@ -65,7 +65,7 @@ export interface HomePageData {
 // its own body (the Home special page), and its footer — its
 // edit link names the original's language when the home page
 // is itself a translation.
-export async function homePageData(lang: string): Promise<HomePageData> {
+async function computeHomePageData(lang: string): Promise<HomePageData> {
   const entries = getEntries();
   const ui = uiFor(lang);
 
@@ -124,7 +124,7 @@ export interface ArticlePageDataFull {
 // One article page. A redirect entry carries no page of its
 // own — the caller renders the stub instead — so for one,
 // only the redirect's own fields are filled.
-export async function articlePageDataFull(
+async function computeArticlePageDataFull(
   entry: PageEntry,
   lang: string,
 ): Promise<ArticlePageDataFull> {
@@ -189,4 +189,33 @@ export async function articlePageDataFull(
     bodyHtml: rendered.html,
     headings: rendered.headings,
   };
+}
+
+// A layout and the page it frames ask for the same data. Cache the
+// promise so the second caller cannot render the page's Markdown a
+// second time or disagree with the first about its language strings.
+
+const homeCache = new Map<string, Promise<HomePageData>>();
+const articleCache = new Map<string, Promise<ArticlePageDataFull>>();
+
+export function homePageData(lang: string): Promise<HomePageData> {
+  let data = homeCache.get(lang);
+  if (!data) {
+    data = computeHomePageData(lang);
+    homeCache.set(lang, data);
+  }
+  return data;
+}
+
+export function articlePageDataFull(
+  entry: PageEntry,
+  lang: string,
+): Promise<ArticlePageDataFull> {
+  const key = `${lang}/${entry.id}`;
+  let data = articleCache.get(key);
+  if (!data) {
+    data = computeArticlePageDataFull(entry, lang);
+    articleCache.set(key, data);
+  }
+  return data;
 }

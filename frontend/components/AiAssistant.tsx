@@ -17,8 +17,8 @@ import { useEffect, useRef, useState } from "react";
 // engine, once loaded, is kept in this module for the whole
 // session, across in-app navigation, and the conversation is
 // mirrored to session storage, so that even a full page
-// load — a language switch reloads the document, whose
-// <html> language differs — keeps it.
+// load — one that does not go through the shell's in-app
+// navigation — keeps it.
 
 // The library's own types, for the copy loaded from the CDN
 // below: the two are the same version.
@@ -231,6 +231,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     const conversation = loadHistory();
     conversation.push({ role: "assistant", content: reply });
     history = conversation.slice(-historyLimit);
+    // Keep what is on screen in step with what survives a reload.
+    setLog((previous) => previous.slice(-historyLimit));
     saveHistory();
   };
 
@@ -248,6 +250,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     loadHistory().push({ role: "user", content: question });
     busyRef.current = true;
     setBusy(true);
+    // A retry must not keep an earlier failure's message on screen.
+    setStatus(null);
     try {
       if (!engine) {
         if (!navigator.gpu)
