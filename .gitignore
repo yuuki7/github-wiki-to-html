@@ -1,14 +1,14 @@
 .DS_Store
-.astro/
 .cache/
 .config/.gem_rbs_collection/
+.next/
 .yardoc/
 node_modules/
 
-dist/**
-!dist/**/
-!dist/index.html
-!dist/Wikinder.html
+out/**
+!out/**/
+!out/index.html
+!out/Wikinder.html
 
 md/**
 !md/**/

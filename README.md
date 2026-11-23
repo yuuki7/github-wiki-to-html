@@ -25,12 +25,14 @@ Starts preview server.
 - `.config/` — Tool configuration files
 - `bin/`
   - `convert.rb` — Ruby script to convert GitHub Wiki to GFM
-- `dist/` — HTML converted from GFM
+- `out/` — The built static site
 - `docs/` — YARD documentation
 - `lib/` — Ruby modules
 - `md/` — GFM converted from GitHub Wiki
 - `sig/` — RBS signatures
-- `templates/` — Astro templates
+- `public/` — Static assets, served as they are
+- `scripts/` — Build scripts
+- `src/` — Next.js (React) source of the site
 - `test/` — RSpec tests
 - `translations/` — Translated GFM by coding agent
 - `AGENTS.md` — Guidance for coding agents
@@ -39,7 +41,7 @@ Starts preview server.
 - `LICENSE` — License file
 - `README.md` — This file
 - `Rakefile` — Rake tasks
-- `ec.config.mjs` — Expressive Code configuration
+- `next.config.mjs` — Next.js configuration
 - `package-lock.json` — Locked NPM dependency versions
 - `package.json` — NPM dependencies
 - `site.json` — Site metadata
@@ -55,7 +57,7 @@ GitHub Wiki originally ran on Gollum, a Ruby wiki system developed by GitHub. Th
 ```mermaid
 graph TD
     A["GitHub Wiki (Markdown files)"] -->|"Wikinder::GitHub::Wiki (Ruby)"| B["GFM with YAML front matter"]
-    B -->|"Astro (TypeScript)"| C["Static HTML site"]
+    B -->|"Next.js (TypeScript)"| C["Static HTML site"]
 ```
 
 We only support Markdown articles.
@@ -64,7 +66,7 @@ We are considering converting GitHub Wiki Markdown (including the internal link 
 
 The Ruby library `gollum-lib` offers no readable API for Markdown-to-Markdown conversion, so we are considering building a separate, compatible Ruby module from a copy of its code (which would also make it easier to port to other languages).
 
-For the SSG, we are considering Astro, which is written in TypeScript.
+For the SSG, we use Next.js (React), which is written in TypeScript.
 
 An article URL looks like `/Hello-world`. Its Japanese translation is at `/ja/Hello-world`. So the original is at the root, and a translation starts with its language code. The translations are written by a coding agent and supplied as data under `translations/`. See `translations/README.md` for details.
 
@@ -74,4 +76,4 @@ This project uses the following tools for maintainability:
 
 - RuboCop: Ruby linter and formatter.
 - RBS & Steep: Ruby type checking.
-- Prettier: HTML/CSS/JS/TS/Astro formatter.
+- Prettier: HTML/CSS/JS/TS formatter.

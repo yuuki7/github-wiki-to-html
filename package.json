@@ -1,27 +1,39 @@
 {
-  "name": "github-wiki-to-html",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "tsc --project tsconfig.scripts.json && astro build --config .config/astro.config.ts --silent",
-    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"templates/**/*.{astro,css,js,ts}\" \"dist/**/*.{html,js}\"",
-    "check": "astro check --config .config/astro.config.ts",
-    "preview": "astro preview --config .config/astro.config.ts --host 127.0.0.1"
-  },
   "dependencies": {
     "hastscript": "^9.0.3",
+    "next": "^15.5.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "unist-util-visit": "^5.2.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.12",
-    "@astrojs/markdown-satteri": "^0.4.7",
     "@mlc-ai/web-llm": "0.2.88",
-    "astro": "^7.4.2",
-    "astro-expressive-code": "^0.44.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "gray-matter": "^4.0.3",
+    "image-size": "^2.0.2",
     "prettier": "^3.9.10",
-    "prettier-plugin-astro": "^1.1.2",
-    "satteri": "^0.11.6",
+    "rehype-raw": "^7.0.0",
+    "rehype-slug": "^6.0.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "serve": "^14.2.5",
     "shiki": "^4.6.0",
-    "typescript": "^6.0.3"
-  }
+    "typescript": "^6.0.3",
+    "unified": "^11.0.5",
+    "zod": "^4.1.0"
+  },
+  "name": "github-wiki-to-html",
+  "private": true,
+  "scripts": {
+    "build": "tsc --project tsconfig.scripts.json && next build && node scripts/copy-assets.mjs",
+    "check": "tsc --noEmit",
+    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"src/**/*.{css,js,ts,tsx}\"",
+    "preview": "serve -l tcp://127.0.0.1:4321 out",
+    "preview:stop": "pkill -f 'serve -l tcp://127.0.0.1:4321' || true"
+  },
+  "type": "module"
 }

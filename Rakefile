@@ -18,7 +18,7 @@ task :check do
   sh 'rbs-inline --output sig lib'
   sh 'rbs --collection .config/rbs_collection.yaml -I sig validate'
   sh 'steep check --steepfile .config/Steepfile'
-  # astro check, for the TypeScript side.
+  # TypeScript type check, for the site's side.
   sh 'npm run check'
 end
 
@@ -58,7 +58,10 @@ task docs: 'docs:build'
 
 desc 'Start the preview server'
 task :server do
-  sh 'npm run preview -- --background'
+  # The preview is a static file server over out/, with no
+  # background mode of its own, so it is started detached.
+  # Stop it with `npm run preview:stop`.
+  sh 'nohup npm run preview >/dev/null 2>&1 &'
 end
 
 task default: :setup
