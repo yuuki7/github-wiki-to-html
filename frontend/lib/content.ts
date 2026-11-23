@@ -21,18 +21,9 @@ const mdDir = path.join(process.cwd(), "md");
 // a YAML date with fractional seconds, fail the build here,
 // naming the file, instead of being rewritten into form or
 // crashing a presenter later. A YAML date arrives as a Date
-// and is written in the same form.
-
-// Writing a Date in that form, field by field. toISOString is
-// not used: it always writes milliseconds.
-const formatUtc = (d: Date): string => {
-  const pad = (n: number, w = 2) => String(n).padStart(w, "0");
-  return (
-    `${pad(d.getUTCFullYear(), 4)}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}` +
-    `T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}Z`
-  );
-};
-
+// and is written in the same form, as a Temporal Instant at
+// second precision. The fractional-second check comes first:
+// the Instant's string form would silently truncate them.
 const dateLike = z.union([
   z.iso.datetime({ offset: false, precision: 0 }),
   z.date().transform((v, ctx) => {
@@ -43,7 +34,7 @@ const dateLike = z.union([
       });
       return z.NEVER;
     }
-    return formatUtc(v);
+    return v.toTemporalInstant().toString({ smallestUnit: "second" });
   }),
 ]);
 

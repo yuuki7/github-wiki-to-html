@@ -104,7 +104,7 @@ export async function GET() {
   // are, never as strings; equal dates fall back to the slug,
   // to keep the output deterministic.
   groups.sort((a, b) => {
-    const byDate = Date.parse(b.date) - Date.parse(a.date);
+    const byDate = Temporal.Instant.compare(b.date, a.date);
     return byDate !== 0 ? byDate : a.slug.localeCompare(b.slug);
   });
   for (const group of groups) {
