@@ -100,14 +100,13 @@ export async function GET() {
       } satisfies SitemapUrl,
     };
   });
-  // Newest updated first. The dates are ISO strings in one
-  // format, so they order as plain strings; equal dates fall
-  // back to the slug, to keep the output deterministic.
-  groups.sort((a, b) =>
-    a.date === b.date
-      ? a.slug.localeCompare(b.slug)
-      : b.date.localeCompare(a.date),
-  );
+  // Newest updated first. Dates compare as the instants they
+  // are, never as strings; equal dates fall back to the slug,
+  // to keep the output deterministic.
+  groups.sort((a, b) => {
+    const byDate = Date.parse(b.date) - Date.parse(a.date);
+    return byDate !== 0 ? byDate : a.slug.localeCompare(b.slug);
+  });
   for (const group of groups) {
     urls.push(group.url);
   }

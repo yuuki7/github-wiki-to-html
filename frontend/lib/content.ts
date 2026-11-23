@@ -15,17 +15,37 @@ import type { AlternateLink, ArticleEntry, PageEntry } from "./types";
 
 const mdDir = path.join(process.cwd(), "md");
 
-// A date as the front matter carries it: an ISO 8601 string
-// or a YAML date, normalized here to a UTC string. A string that
-// is not a date fails the build here, naming the file,
-// instead of crashing a presenter later. Normalizing to UTC also
-// keeps the sitemap's plain string ordering chronological when
-// front matter uses a non-UTC offset.
-const dateLike = z
-  .union([z.iso.datetime({ offset: true }), z.date()])
-  .transform((v) =>
-    v instanceof Date ? v.toISOString() : new Date(v).toISOString(),
+// A date as the front matter carries it. Dates take one form
+// in this project — ISO 8601, UTC, second precision — and the
+// schema accepts nothing else: a string in any other form, and
+// a YAML date with fractional seconds, fail the build here,
+// naming the file, instead of being rewritten into form or
+// crashing a presenter later. A YAML date arrives as a Date
+// and is written in the same form.
+
+// Writing a Date in that form, field by field. toISOString is
+// not used: it always writes milliseconds.
+const formatUtc = (d: Date): string => {
+  const pad = (n: number, w = 2) => String(n).padStart(w, "0");
+  return (
+    `${pad(d.getUTCFullYear(), 4)}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}` +
+    `T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}Z`
   );
+};
+
+const dateLike = z.union([
+  z.iso.datetime({ offset: false, precision: 0 }),
+  z.date().transform((v, ctx) => {
+    if (v.getUTCMilliseconds() !== 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "a date with fractional seconds has no canonical form",
+      });
+      return z.NEVER;
+    }
+    return formatUtc(v);
+  }),
+]);
 
 const pageSchema = z.discriminatedUnion("kind", [
   z.object({

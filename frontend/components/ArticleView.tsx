@@ -20,6 +20,10 @@ export default async function ArticleView({
   entry: PageEntry;
   lang: string;
 }) {
+  if (entry.data.kind !== "article" && entry.data.kind !== "redirect") {
+    throw new Error(`${entry.id}: not an article or a redirect`);
+  }
+
   const data = await articlePageDataFull(entry, lang);
 
   if (data.isRedirect) {
@@ -30,9 +34,6 @@ export default async function ArticleView({
         targetHref={data.targetHref!}
       />
     );
-  }
-  if (entry.data.kind !== "article") {
-    throw new Error(`${entry.id}: not an article or a redirect`);
   }
 
   return (

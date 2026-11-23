@@ -83,7 +83,10 @@ async function computeHomePageData(lang: string): Promise<HomePageData> {
         p.data.language === lang &&
         (p.data.listed ?? true),
     )
-    .sort((a, b) => b.data.creation_date.localeCompare(a.data.creation_date));
+    .sort(
+      (a, b) =>
+        Date.parse(b.data.creation_date) - Date.parse(a.data.creation_date),
+    );
 
   // The other languages' home pages, for the switcher and
   // hreflang: the site's declared languages, in site.json order.
