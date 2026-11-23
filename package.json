@@ -1,4 +1,13 @@
 {
+  "name": "github-wiki-to-html",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project frontend/tsconfig.scripts.json && next build frontend && node scripts/copy-assets.mjs",
+    "check": "tsc -p frontend/tsconfig.json --noEmit",
+    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"frontend/{app,components,lib,scripts}/**/*.{css,js,ts,tsx}\"",
+    "preview": "serve -l tcp://127.0.0.1:4321 frontend/out"
+  },
   "dependencies": {
     "hastscript": "^9.0.3",
     "next": "^15.5.0",
@@ -25,15 +34,5 @@
     "typescript": "^6.0.3",
     "unified": "^11.0.5",
     "zod": "^4.1.0"
-  },
-  "name": "github-wiki-to-html",
-  "private": true,
-  "scripts": {
-    "build": "tsc --project site/tsconfig.scripts.json && next build site && node scripts/copy-assets.mjs",
-    "check": "tsc -p site/tsconfig.json --noEmit",
-    "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"site/{app,components,lib,scripts}/**/*.{css,js,ts,tsx}\"",
-    "preview": "serve -l tcp://127.0.0.1:4321 site/out",
-    "preview:stop": "pkill -f 'serve -l tcp://127.0.0.1:4321' || true"
-  },
-  "type": "module"
+  }
 }

@@ -7,10 +7,10 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 
-site/out/**
-!site/out/**/
-!site/out/index.html
-!site/out/Wikinder.html
+frontend/out/**
+!frontend/out/**/
+!frontend/out/index.html
+!frontend/out/Wikinder.html
 
 md/**
 !md/**/

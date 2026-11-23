@@ -4,11 +4,14 @@
 
 - `bundle exec rake` — Install the dependencies. First setup only, or when dependency files change.
 - `bundle exec rake check` — Run the linter and type checks. Also regenerates `sig/generated/` from the inline annotations in `lib/`; commit the regeneration together with the `lib/` change. Temporarily ignore RuboCop Metrics offenses; do not ignore any other offenses.
+- `bundle exec rake check:ruby` — Run the Ruby linter and type checks only. `bundle exec rake check:ts` — Run the TypeScript type check only.
 - `bundle exec rake test` — Run the tests.
 - `bundle exec rake build` — Build the site. Side effect: `bin/convert.rb` rewrites `META.md` in the real wiki repository.
+- `bundle exec rake build:convert` — Convert the wiki to Markdown only. `bundle exec rake build:site` — Build the site from the converted Markdown only.
+- `bundle exec rake server` — Start the preview server over `frontend/out/`, in the foreground.
 - Do not run `bundle exec rake docs` — it would regenerate `docs/` and bloat the diff. Keep diffs concise.
 
-The standard verification sequence is `bundle exec rake check && bundle exec rake test && bundle exec rake build`.
+The standard verification sequence is `bundle exec rake check && bundle exec rake test && bundle exec rake build`. For a change that only touches the frontend, `bundle exec rake check:ts build:site` is enough.
 
 Gotchas:
 

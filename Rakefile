@@ -75,10 +75,7 @@ task docs: 'docs:build'
 
 desc 'Start the preview server'
 task :server do
-  # The preview is a static file server over out/, with no
-  # background mode of its own, so it is started detached.
-  # Stop it with `npm run preview:stop`.
-  sh 'nohup npm run preview >/dev/null 2>&1 &'
+  sh 'npm run preview'
 end
 
 task default: :setup

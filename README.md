@@ -11,14 +11,24 @@
 Installs Ruby & NPM dependencies.
 * `bundle exec rake check`
 Runs linter and type checks.
+  * `bundle exec rake check:ruby`
+  Runs the Ruby linter and type checks only.
+  * `bundle exec rake check:ts`
+  Runs the TypeScript type check only.
 * `bundle exec rake test`
 Runs unit tests.
 * `bundle exec rake build`
 Converts wiki to HTML site.
+  * `bundle exec rake build:convert`
+  Converts the wiki to Markdown only.
+  * `bundle exec rake build:site`
+  Builds the site from the converted Markdown only.
 * `bundle exec rake docs`
 Builds docs.
 * `bundle exec rake server`
 Starts preview server.
+
+For a change that only touches the frontend, `bundle exec rake check:ts build:site` runs just the check and the build for that side.
 
 ## Directory structure
 
@@ -30,7 +40,7 @@ Starts preview server.
 - `md/` — GFM converted from GitHub Wiki
 - `sig/` — RBS signatures
 - `scripts/` — Build scripts
-- `site/` — Next.js (React) site: source, configuration and static assets, with the built static site in `site/out/`
+- `frontend/` — Next.js (React) frontend: source, configuration and static assets, with the built static site in `frontend/out/`
 - `test/` — RSpec tests
 - `translations/` — Translated GFM by coding agent
 - `AGENTS.md` — Guidance for coding agents
@@ -42,8 +52,6 @@ Starts preview server.
 - `package-lock.json` — Locked NPM dependency versions
 - `package.json` — NPM dependencies
 - `site.json` — Site metadata
-- `tsconfig.json` — TypeScript configuration
-- `tsconfig.scripts.json` — TypeScript configuration for browser scripts
 
 ## Overview
 

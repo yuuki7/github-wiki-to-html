@@ -1,6 +1,6 @@
 // Copies the content's non-Markdown files into the built
 // site's assets. Articles reference images by a path relative
-// to their own file (see site/lib/markdown.ts, which rewrites the
+// to their own file (see frontend/lib/markdown.ts, which rewrites the
 // references to /assets/<name>); the files themselves live
 // beside the articles, one copy per language. The copies of
 // one name must be the same file — a name that means two
@@ -12,7 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const mdDir = "md";
-const assetsDir = path.join("site", "out", "assets");
+const assetsDir = path.join("frontend", "out", "assets");
 
 const byName = new Map();
 const walk = (dir) => {
