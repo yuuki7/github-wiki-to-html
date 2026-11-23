@@ -51,6 +51,21 @@ function rememberScroll(): void {
   }
 }
 
+// Set an element's text only when the text actually
+// changes, and change it in its existing text node where it
+// has one: assigning textContent replaces the node even
+// when the new text is the same as the old, and a selection
+// the reader has in that text dies with the node.
+function setText(element: Element, text: string): void {
+  if (element.textContent === text) return;
+  const only = element.childNodes.length === 1 ? element.firstChild : null;
+  if (only instanceof Text) {
+    only.nodeValue = text;
+  } else {
+    element.textContent = text;
+  }
+}
+
 // The head: drop this page's own elements and take the new
 // page's, in the new head's own order.
 function swapHead(newDocument: Document): void {
@@ -83,7 +98,7 @@ function swapHeader(newDocument: Document): void {
   if (currentHome && newHome) {
     const href = newHome.getAttribute("href");
     if (href) currentHome.setAttribute("href", href);
-    currentHome.textContent = newHome.textContent;
+    setText(currentHome, newHome.textContent);
   } else if (!currentHome && newHome) {
     nav.prepend(document.importNode(newHome, true));
   } else if (currentHome && !newHome) {
@@ -93,10 +108,21 @@ function swapHeader(newDocument: Document): void {
   const menu = nav.querySelector(".language-menu");
   const newMenu = newNav.querySelector(".language-menu");
   if (menu && newMenu) {
-    // The button names the current language.
+    // The button names the current language, in the text
+    // node after its globe: update that node in place, and
+    // only when the name changed.
     const button = menu.querySelector(".language-menu__button");
     const newButton = newMenu.querySelector(".language-menu__button");
-    if (button && newButton) button.textContent = newButton.textContent;
+    if (button && newButton && button.textContent !== newButton.textContent) {
+      const textNode = (root: Element): Text | null =>
+        [...root.childNodes].find(
+          (node): node is Text =>
+            node instanceof Text && node.textContent.trim() !== "",
+        ) ?? null;
+      const current = textNode(button);
+      const next = textNode(newButton);
+      if (current && next) current.nodeValue = next.textContent;
+    }
 
     // The panel's items, one per language, matched by their
     // language names: a link stays a link and only its
@@ -178,7 +204,7 @@ function swapFooter(newDocument: Document): void {
   if (currentLink && newLink) {
     const href = newLink.getAttribute("href");
     if (href) currentLink.setAttribute("href", href);
-    currentLink.textContent = newLink.textContent;
+    setText(currentLink, newLink.textContent);
   } else if (!currentLink && newLink) {
     footer.appendChild(document.importNode(newLink, true));
   } else if (currentLink && !newLink) {
@@ -211,7 +237,7 @@ function swapRightAside(newDocument: Document): void {
   }
   const send = section.querySelector(".ai-assistant__send");
   const sendText = newSection.getAttribute("data-send");
-  if (send && sendText !== null) send.textContent = sendText;
+  if (send && sendText !== null) setText(send, sendText);
 }
 
 // Replace the page's own regions with the new document's,

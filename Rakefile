@@ -10,17 +10,25 @@ task :setup do
   sh 'npm install'
 end
 
-desc 'Run linter and type checks'
-task :check do
-  # Metrics cops are reported but do not fail the build (severity refactor).
-  # Style, Layout and Lint cops fail the build (convention and above).
-  sh 'rubocop --config .config/.rubocop.yaml --fail-level convention'
-  sh 'rbs-inline --output sig lib'
-  sh 'rbs --collection .config/rbs_collection.yaml -I sig validate'
-  sh 'steep check --steepfile .config/Steepfile'
-  # TypeScript type check, for the site's side.
-  sh 'npm run check'
+namespace :check do
+  desc 'Run the Ruby linter and type checks'
+  task :ruby do
+    # Metrics cops are reported but do not fail the build (severity refactor).
+    # Style, Layout and Lint cops fail the build (convention and above).
+    sh 'rubocop --config .config/.rubocop.yaml --fail-level convention'
+    sh 'rbs-inline --output sig lib'
+    sh 'rbs --collection .config/rbs_collection.yaml -I sig validate'
+    sh 'steep check --steepfile .config/Steepfile'
+  end
+
+  desc "Run the TypeScript type check, for the site's side"
+  task :ts do
+    sh 'npm run check'
+  end
 end
+
+desc 'Run linter and type checks'
+task check: ['check:ruby', 'check:ts']
 
 RSpec::Core::RakeTask.new(:test) do |t|
   # The pattern must live here: an unset pattern makes the task inject its
@@ -30,12 +38,21 @@ RSpec::Core::RakeTask.new(:test) do |t|
   t.rspec_opts = '--options .config/.rspec'
 end
 
-desc 'Generate HTML from Markdown'
-task :build do
-  sh 'ruby bin/convert.rb'
-  sh 'npm run build'
-  sh 'npm run format'
+namespace :build do
+  desc 'Convert the wiki to Markdown'
+  task :convert do
+    sh 'ruby bin/convert.rb'
+  end
+
+  desc 'Build the site from the converted Markdown'
+  task :site do
+    sh 'npm run build'
+    sh 'npm run format'
+  end
 end
+
+desc 'Generate HTML from Markdown'
+task build: ['build:convert', 'build:site']
 
 namespace :docs do
   YARD::Rake::YardocTask.new(:build) do |t|
