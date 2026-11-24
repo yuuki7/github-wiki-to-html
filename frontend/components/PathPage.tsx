@@ -13,9 +13,8 @@ import RedirectStub from "./RedirectStub";
 export { pathsForLanguage };
 
 export default async function PathPage({ segments }: { segments: string[] }) {
-  // Next.js decodes dynamic route params before passing them
-  // to the page. Decode them again and a literal '%' in a wiki
-  // slug can throw or resolve to a different route.
+  // The segments are the route params as Next.js delivered
+  // them, still percent-encoded; routeFor decodes them.
   const route = routeFor(segments);
   if (!route) notFound();
   switch (route.type) {

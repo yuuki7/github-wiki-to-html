@@ -202,7 +202,15 @@ export function pathsForLanguage(lang: string): string[][] {
     .map(([path]) => (path === "" ? [] : path.split("/")));
 }
 
-// What one path serves, if anything.
-export function routeFor(segments: string[]): Route | undefined {
+// What one path serves, if anything: the one lookup into the
+// route table. The table is keyed by
+// raw segments, while Next.js hands route params to pages and
+// layouts still percent-encoded, so decode each segment here —
+// exactly once, at this boundary. Callers pass the params as
+// they received them.
+export function routeFor(encodedSegments: string[]): Route | undefined {
+  const segments = encodedSegments.map((segment) =>
+    decodeURIComponent(segment),
+  );
   return routeTable().get(segments.join("/"));
 }
