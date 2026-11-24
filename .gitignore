@@ -4,6 +4,7 @@
 .next/
 .yardoc/
 node_modules/
+vendor/bundle/
 *.tsbuildinfo
 next-env.d.ts
 
