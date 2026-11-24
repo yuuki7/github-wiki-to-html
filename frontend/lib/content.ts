@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { missingVersions, supportedLanguages } from "./i18n";
+import { isLanguageCode, missingVersions } from "./i18n";
 import { renderMarkdown, type Heading } from "./markdown";
 import { parsePageData } from "./page-schema";
 import type { PageEntry } from "./types";
@@ -57,15 +57,29 @@ export function getEntries(): PageEntry[] {
 // Refuse to build while any page lacks a version in some
 // language; missingVersions in i18n.ts states the rule.
 export function assertComplete(entries: PageEntry[]): void {
-  const supported = new Set(supportedLanguages);
+  // Language values reach the content from the wiki's
+  // META.md, which any editor can rewrite by hand, so they
+  // cannot be held to the site's declared languages — an
+  // original may be written in any language. A value that is
+  // not a language code at all is still worth naming: it is
+  // almost certainly a mistake in META.md. Warn, do not fail:
+  // one editor's typo must not stop the whole build.
   for (const entry of entries) {
+    if (entry.data.kind !== "article" && entry.data.kind !== "special") {
+      continue;
+    }
+    if (entry.data.language && !isLanguageCode(entry.data.language)) {
+      console.warn(
+        `${entry.filePath}: language ${entry.data.language} is not an ISO language code`,
+      );
+    }
     if (
-      (entry.data.kind === "article" || entry.data.kind === "special") &&
-      entry.data.language &&
-      !supported.has(entry.data.language)
+      entry.data.kind === "article" &&
+      entry.data.original_language &&
+      !isLanguageCode(entry.data.original_language)
     ) {
-      throw new Error(
-        `${entry.filePath}: unsupported content language ${entry.data.language}`,
+      console.warn(
+        `${entry.filePath}: original language ${entry.data.original_language} is not an ISO language code`,
       );
     }
   }

@@ -79,9 +79,7 @@ const RTL_BASE_LANGUAGES = new Set(["ar", "fa", "he", "ur"]);
 // The writing direction of a language: right-to-left for Arabic and
 // its RTL peers, left-to-right for everything else.
 export function directionFor(language: string): "rtl" | "ltr" {
-  const baseLanguage = language.split("-")[0];
-  if (!baseLanguage) throw new Error(`invalid language tag: ${language}`);
-  return RTL_BASE_LANGUAGES.has(baseLanguage) ? "rtl" : "ltr";
+  return RTL_BASE_LANGUAGES.has(language.split("-")[0] ?? "") ? "rtl" : "ltr";
 }
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -93,11 +91,25 @@ const LANGUAGE_NAMES: Record<string, string> = {
   de: "Deutsch",
 } satisfies Record<SupportedLanguage, string>;
 
+// Whether a value is a language code at all. The platform's
+// language data (Intl.DisplayNames, following ISO 639) is the
+// judge: a value it can only echo back, or cannot parse, is
+// not a code. Language tags built on ISO codes, such as the
+// site's own "zh-hant", pass.
+const languageDisplayNames = new Intl.DisplayNames(["en"], {
+  type: "language",
+});
+export function isLanguageCode(language: string): boolean {
+  try {
+    return languageDisplayNames.of(language) !== language;
+  } catch {
+    return false;
+  }
+}
+
 // A language's own name for itself, for the language switcher.
 export function languageName(language: string): string {
-  const name = LANGUAGE_NAMES[language];
-  if (!name) throw new Error(`no language name configured for ${language}`);
-  return name;
+  return LANGUAGE_NAMES[language] ?? language;
 }
 
 // Language names as written in another language, for sentences
@@ -157,11 +169,7 @@ const LANGUAGE_NAMES_IN: Record<string, Record<string, string>> = {
 // The name of the target language as written in the given
 // language, falling back to the target's own name for itself.
 export function languageNameIn(language: string, target: string): string {
-  const sourceNames = LANGUAGE_NAMES_IN[language];
-  if (!sourceNames) {
-    throw new Error(`no translated language names configured for ${language}`);
-  }
-  return sourceNames[target] ?? languageName(target);
+  return LANGUAGE_NAMES_IN[language]?.[target] ?? languageName(target);
 }
 
 // Language names in the nominative, for the parenthetical in the
@@ -293,11 +301,10 @@ const UI_STRINGS: Record<string, UiStrings> = {
 // The interface strings in a language, falling back to the default
 // language for languages without their own set.
 export function uiFor(language: string): UiStrings {
-  const strings = UI_STRINGS[language];
-  if (!strings) {
-    throw new Error(`no interface strings configured for ${language}`);
-  }
-  return strings;
+  // The last term cannot miss: the table satisfies
+  // Record<SupportedLanguage, UiStrings>, so "en" is present
+  // by construction.
+  return UI_STRINGS[language] ?? UI_STRINGS[defaultLanguage] ?? UI_STRINGS.en!;
 }
 
 // The AI assistant's strings, in the vocabulary it uses. One
