@@ -137,7 +137,10 @@ const languageTitle = definePlugin({
 // into the output's assets (see scripts/copy-assets.mjs), and
 // the reference is rewritten to that location. The element
 // carries the image's own size, so the page does not move when
-// the image loads.
+// the image loads. An editor can reference an image that is not
+// there, or one no size can be read from; that warns and the
+// page is published as written, instead of failing the whole
+// build over one image.
 const images = (assetDir: string) => (tree: Root) => {
   visit(tree, "element", (node) => {
     if (node.tagName !== "img") return;
@@ -154,15 +157,16 @@ const images = (assetDir: string) => (tree: Root) => {
       size = imageSize(fs.readFileSync(assetPath));
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(
+      console.warn(
         `cannot resolve local image ${src} from ${assetDir}: ${detail}`,
       );
+      return;
     }
     if (size.width === undefined || size.height === undefined) {
-      throw new Error(`image dimensions are unavailable for ${assetPath}`);
+      console.warn(`image dimensions are unavailable for ${assetPath}`);
     }
-    node.properties.width = size.width;
-    node.properties.height = size.height;
+    if (size.width !== undefined) node.properties.width = size.width;
+    if (size.height !== undefined) node.properties.height = size.height;
   });
 };
 
