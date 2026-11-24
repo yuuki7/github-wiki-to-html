@@ -20,6 +20,9 @@ export interface RedirectData {
   title: string;
   slug: string;
   target_slug: string;
+  // The language the target's body had under this old name,
+  // recorded on the name's META.md row by the converter.
+  language: string;
 }
 
 export interface SpecialData {
@@ -71,46 +74,26 @@ export interface AlternateLink {
   href: string;
 }
 
-export interface BaseProps {
-  title: string;
-  language: string;
-  className?: string;
-  alternates?: AlternateLink[];
-  // The page's canonical URL, absolute. A redirect stub has no
-  // canonical version of its own, so it points this at its target.
-  canonical?: string;
-  // The page's Open Graph type: "article" for an article page,
-  // "website" for a home page. Redirect stubs set neither this
-  // nor the tags that go with it.
-  ogType?: "article" | "website";
-  // Whether the page loads the site's scripts (MathJax; the AI
-  // assistant is a component of the page itself). Real pages do;
-  // redirect stubs, which send the reader elsewhere at once,
-  // do not.
-  scripts?: boolean;
+// The strings the AI assistant needs, in its own terms. They are
+// derived from UiStrings, which names the same texts in the
+// site's interface vocabulary.
+export interface AiStrings {
+  summarize: string;
+  loading: string;
+  send: string;
+  unsupported: string;
+  error: string;
 }
 
-export type ArticleProps = BaseProps & {
-  isHome?: boolean;
-  meta?: ArticleMetaProps;
-  languageLinks?: AlternateLink[];
-};
-
-export type HomeProps = BaseProps & {
-  isHome?: true;
-  languageLinks?: AlternateLink[];
-};
-
-export type RedirectProps = Omit<BaseProps, "language"> & {
-  // The language of the version the stub stands in for. The
-  // stub's only text is its redirect link, written in that
-  // language, and the document itself is in it too: its lang
-  // and dir are the reader's context. Callers pass the
-  // language; the component's default only covers a caller
-  // that does not know it.
+// The one redirect stub: its title, the language its link is
+// written in, and the target URL already resolved to the
+// version's own URL form. The stub has no canonical page of
+// its own and no page-specific head tags; the target's URL is
+// its canonical instead.
+export interface RedirectProps {
+  title: string;
+  // The version the stub stands in for. The component's default
+  // only covers a caller that does not know the language.
   language?: string;
-  // The URL of the target page's best version (the version in the
-  // redirect's own language when one exists, the original otherwise),
-  // already resolved to the version's own URL form.
   targetHref: string;
-};
+}

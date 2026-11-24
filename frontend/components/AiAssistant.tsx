@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { AiStrings } from "../lib/types";
 
 // The AI box in a page's right sidebar: one question form,
 // answered by a small language model that runs entirely in
@@ -32,15 +33,6 @@ type Message = {
   role: "system" | "user" | "assistant";
   content: string;
 };
-
-// The box's texts, localized by the caller.
-export interface AiStrings {
-  summarize: string;
-  loading: string;
-  send: string;
-  unsupported: string;
-  error: string;
-}
 
 // The model: small, and covered for the site's languages. Its
 // answers are not checked for accuracy; the box is a reading

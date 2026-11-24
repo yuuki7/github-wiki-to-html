@@ -1,4 +1,5 @@
 import site from "../../site.json";
+import type { AiStrings } from "./types";
 
 // The languages the site is published in, as a type. This is the
 // type-level copy of site.json's language list: the name and
@@ -285,6 +286,19 @@ const UI_STRINGS: Record<string, UiStrings> = {
 // language for languages without their own set.
 export function uiFor(language: string): UiStrings {
   return UI_STRINGS[language] ?? UI_STRINGS[defaultLanguage] ?? UI_STRINGS.en;
+}
+
+// The AI assistant's strings, in the vocabulary it uses. One
+// mapping for every caller, so the shell and the pages cannot
+// disagree about which UI text is which.
+export function aiStringsFor(ui: UiStrings): AiStrings {
+  return {
+    summarize: ui.aiSummarize,
+    loading: ui.aiLoading,
+    send: ui.aiSend,
+    unsupported: ui.aiUnsupported,
+    error: ui.aiError,
+  };
 }
 
 // The URL of one page in one language. An original page lives at

@@ -60,8 +60,9 @@ RSpec.describe Wikinder::GitHub::Wiki do
         canonical = kinds.select { |d| d['kind'] == 'article' }.map { |d| d['slug'] }
         kinds.select { |d| d['kind'] == 'redirect' }.each do |d|
           expect(canonical).to include(d['target_slug'])
-          # A redirect is a stub with no body, so it has no language.
-          expect(d).not_to have_key('language')
+          # A redirect carries the language its body had under the
+          # old name, recorded on its META.md row.
+          expect(d['language']).to be_a(String)
         end
       end
     end
@@ -687,7 +688,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
-    # A rename history with multiple chained renames must restore every ancestor alias.
+    # A rename history with multiple chained renames must restore
+    # every ancestor name as a redirect row naming the current title.
     it 'restores rename aliases across multiple levels' do
       scratch = Dir.mktmpdir('chain-wiki')
       begin
@@ -704,9 +706,11 @@ RSpec.describe Wikinder::GitHub::Wiki do
         begin
           described_class.new(scratch, { ungenerated_pages: Set[], unlisted_pages: Set[] })
                          .build(out)
-          row_line = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[page c]]') }
-          expect(row_line).to include('page a')
-          expect(row_line).to include('page b')
+          lines = File.readlines(File.join(scratch, 'META.md'))
+          expect(lines.find { |l| l.include?('[[page a]]') }).to include('[[page c]]')
+          expect(lines.find { |l| l.include?('[[page b]]') }).to include('[[page c]]')
+          expect(File.read(File.join(out, 'en', 'page-a.md'))).to include('kind: redirect')
+          expect(File.read(File.join(out, 'en', 'page-a.md'))).to include('target_slug: page-c')
         ensure
           FileUtils.remove_entry(out)
         end
@@ -751,47 +755,52 @@ RSpec.describe Wikinder::GitHub::Wiki do
       FileUtils.remove_entry(scratch)
     end
 
-    # Replaces the empty aliases cell of the given [[Title]] row with
-    # +alias_text+. Raises when the row is missing or its aliases cell is
-    # not empty, so a shape change in the fixture is never silently skipped.
-    def set_alias(title, alias_text)
+    # Appends a redirect row for +alias_title+, in +language+,
+    # pointing at [[target_title]].
+    def add_redirect_row(alias_title, target_title, language)
       meta_path = File.join(scratch, 'META.md')
       lines = File.readlines(meta_path).map(&:chomp)
-      index = lines.find_index { |line| line.include?("[[#{title}]]") }
-      raise "no row for [[#{title}]]" if index.nil?
-
-      updated = lines[index].sub(/\|\s*\|\z/, "| #{alias_text} |")
-      raise "aliases cell is not empty on row [[#{title}]]: #{lines[index]}" if updated == lines[index]
-
-      lines[index] = updated
+      lines << "| [[#{alias_title}]] | | | | #{language} | [[#{target_title}]] |"
       File.write(meta_path, "#{lines.join("\n")}\n")
     end
 
+    # The redirect row for +alias_title+ in the rewritten META.md,
+    # or nil when the sync dropped it.
+    def redirect_row_for(alias_title)
+      File.readlines(File.join(scratch, 'META.md'))
+          .find { |l| l.include?("[[#{alias_title}]]") && l.include?('[[Japanese page]]') }
+    end
+
     # A stale name from a rename must never shadow an existing article.
+    # The redirect row stands alone in META.md here — the state a
+    # rename leaves behind before a new page takes the name — and
+    # the page's own row replaces it.
     it 'keeps the existing article when an alias collides with its slug' do
       FixtureWiki.build(scratch)
-      set_alias('Japanese page', 'About')
+      meta_path = File.join(scratch, 'META.md')
+      lines = File.readlines(meta_path).map(&:chomp)
+      lines.reject! { |l| l.include?('[[About]]') }
+      File.write(meta_path, "#{lines.join("\n")}\n")
+      add_redirect_row('About', 'Japanese page', 'en')
 
       target = Dir.mktmpdir('content')
       described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
 
       expect(File.read(File.join(target, 'en', 'About.md'))).to include('kind: article')
-      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
-      expect(row).not_to include('About')
+      expect(redirect_row_for('About')).to be_nil
       FileUtils.remove_entry(target)
     end
 
     # Same priority applies to the special pages.
     it 'keeps the special Home page when an alias collides with it' do
       FixtureWiki.build(scratch)
-      set_alias('Japanese page', 'Home')
+      add_redirect_row('Home', 'Japanese page', 'en')
 
       target = Dir.mktmpdir('content')
       described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
 
       expect(File.read(File.join(target, 'Home.md'))).to include('kind: special')
-      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
-      expect(row).not_to include('Home')
+      expect(redirect_row_for('Home')).to be_nil
       FileUtils.remove_entry(target)
     end
 
@@ -803,31 +812,33 @@ RSpec.describe Wikinder::GitHub::Wiki do
       described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
       base_sha = Dir.chdir(scratch) { `git rev-parse HEAD`.strip }
 
-      set_alias('Japanese page', 'About')
+      add_redirect_row('Home', 'Japanese page', 'en')
 
       target2 = Dir.mktmpdir('content2')
       wiki = described_class.new(scratch, fixture_options(unlisted_pages: Set[]).merge(prev_head: base_sha))
       wiki.build(target2)
       expect(wiki.send(:diff_paths, base_sha)).to eq([]) # provenance: incremental keep path ran
-      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
-      expect(row).not_to include('About')
-      expect(File.read(File.join(target2, 'en', 'About.md'))).to include('kind: article')
+      expect(redirect_row_for('Home')).to be_nil
+      expect(File.read(File.join(target2, 'Home.md'))).to include('kind: special')
       FileUtils.remove_entry(target)
       FileUtils.remove_entry(target2)
     end
 
-    # A non-colliding alias is still materialised as a redirect.
+    # A non-colliding alias is materialised as one redirect, in the
+    # directory of the language its body had under the old name.
     it 'writes a redirect for a free alias' do
       FixtureWiki.build(scratch)
-      set_alias('Japanese page', 'Timeline of yuuki')
+      add_redirect_row('Timeline of yuuki', 'Japanese page', 'ja')
 
       target = Dir.mktmpdir('content')
       described_class.new(scratch, fixture_options(unlisted_pages: Set[])).build(target)
 
-      expect(File.read(File.join(target, 'en', 'Timeline-of-yuuki.md'))).to include('kind: redirect')
-      expect(File.read(File.join(target, 'ja', 'Timeline-of-yuuki.md'))).to include('kind: redirect')
-      row = File.readlines(File.join(scratch, 'META.md')).find { |l| l.include?('[[Japanese page]]') }
-      expect(row).to include('Timeline of yuuki')
+      redirect = File.read(File.join(target, 'ja', 'Timeline-of-yuuki.md'))
+      expect(redirect).to include('kind: redirect')
+      expect(redirect).to include('language: ja')
+      expect(redirect).to include('target_slug: Japanese-page')
+      expect(File.exist?(File.join(target, 'en', 'Timeline-of-yuuki.md'))).to be(false)
+      expect(redirect_row_for('Timeline of yuuki')).not_to be_nil
       FileUtils.remove_entry(target)
     end
   end
@@ -868,27 +879,20 @@ RSpec.describe Wikinder::GitHub::Wiki do
       end
     end
 
-    # An alias claimed by two different pages names neither wrapper nor
-    # redirect uniquely — it must be dropped from every claimant.
-    it 'drops an alias claimed by two different pages, and warns' do
+    # One name has one row: two rows bearing the same title are a
+    # broken hand edit, refused outright rather than resolved by
+    # picking a winner.
+    it 'refuses a META.md with two rows for one name' do
       FixtureWiki.build(scratch)
       meta_path = File.join(scratch, 'META.md')
       lines = File.readlines(meta_path).map(&:chomp)
-      rows = lines.map do |line|
-        if line.include?('[[About]]') || line.include?('[[Japanese page]]')
-          line.sub(/\|\s*\|\z/, '| Shared |')
-        else
-          line
-        end
-      end
-      File.write(meta_path, "#{rows.join("\n")}\n")
+      lines << '| [[About]] | | | | en | [[Japanese page]] |'
+      File.write(meta_path, "#{lines.join("\n")}\n")
 
       target = Dir.mktmpdir('robust-out')
       begin
         expect { Wikinder::GitHub::Wiki.new(scratch, fixture_options(unlisted_pages: Set[])).build(target) }
-          .to output(/claimed by/).to_stderr
-        expect(File.exist?(File.join(target, 'Shared.md'))).to be(false)
-        expect(File.read(File.join(scratch, 'META.md'))).not_to include('| Shared |')
+          .to raise_error(Wikinder::GitHub::Wiki::Error, /duplicate row/)
       ensure
         FileUtils.remove_entry(target)
       end
@@ -899,14 +903,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
       FixtureWiki.build(scratch)
       meta_path = File.join(scratch, 'META.md')
       lines = File.readlines(meta_path).map(&:chomp)
-      rows = lines.map do |line|
-        if line.include?('[[Japanese page]]')
-          line.sub(/\|\s*\|\z/, '| ../escape |')
-        else
-          line
-        end
-      end
-      File.write(meta_path, "#{rows.join("\n")}\n")
+      lines << '| [[../escape]] | | | | en | [[Japanese page]] |'
+      File.write(meta_path, "#{lines.join("\n")}\n")
 
       target = Dir.mktmpdir('robust-out')
       begin
@@ -986,7 +984,8 @@ RSpec.describe Wikinder::GitHub::Wiki do
       row_line = File.readlines(meta_path).find { |line| line.include?('[[renamed final]]') }
       expect(row_line).to include('curated-author')   # hand-curated value survives
       expect(row_line).to include('2020-01-01')       # creation_date from git history
-      expect(row_line).to include('history')          # rename alias recovered
+      alias_line = File.readlines(meta_path).find { |line| line.include?('[[history]]') }
+      expect(alias_line).to include('[[renamed final]]') # rename alias recovered as a redirect row
       FileUtils.remove_entry(out1)
       FileUtils.remove_entry(out2)
     end
@@ -1042,25 +1041,26 @@ end
 RSpec.describe Wikinder::GitHub::Wiki::Meta do
   it 'round-trips cells containing pipes and backslashes' do
     line = '| [[French programmer]] | O-\|Chan | 2024-01-01T00:00:00Z | ' \
-           '2024-01-01T00:00:00Z | en | ex<br>a\|b<br>z \\ |'
+           '2024-01-01T00:00:00Z | fr | [[a\|b]] |'
     row = described_class.parse_row(line)
     expect(row.author).to eq('O-|Chan')
-    expect(row.aliases).to eq(['ex', 'a|b', 'z \\'])
+    expect(row.language).to eq('fr')
+    expect(row.redirect_to).to eq('a|b')
     cells = [
       "[[#{described_class.escape_cell(row.title)}]]",
       described_class.escape_cell(row.author),
       described_class.escape_cell(row.creation_date),
       described_class.escape_cell(row.modified_date),
       described_class.escape_cell(row.language),
-      described_class.escape_cell(row.aliases.join('<br>'))
+      "[[#{described_class.escape_cell(row.redirect_to)}]]"
     ]
     expect(cells).to eq([
                           '[[French programmer]]',
                           'O-\|Chan',
                           '2024-01-01T00:00:00Z',
                           '2024-01-01T00:00:00Z',
-                          'en',
-                          'ex<br>a\|b<br>z \\\\'
+                          'fr',
+                          '[[a\|b]]'
                         ])
   end
 
@@ -1069,7 +1069,7 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
   end
 
   it 'skips the header row silently' do
-    line = '| Title | Author | Creation date | Modified date | Language | Aliases |'
+    line = '| Title | Author | Creation date | Modified date | Language | Redirect to |'
     expect { described_class.parse_row(line) }.not_to output.to_stderr
     expect(described_class.parse_row(line)).to be_nil
   end
@@ -1084,9 +1084,28 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
     begin
       File.write(File.join(path, 'META.md'), <<~MD)
         | [[page]] | t | d | d | en | |
-        | [[page]] | t | d2 | d2 | en | curated |
+        | [[page]] | t | d2 | d2 | en | |
       MD
       expect { described_class.load(Pathname(path) / 'META.md') }.to raise_error(/duplicate row/)
+    ensure
+      FileUtils.remove_entry(path)
+    end
+  end
+
+  it 'reads a legacy Aliases column as redirect rows' do
+    path = Dir.mktmpdir('legacy-meta')
+    begin
+      File.write(File.join(path, 'META.md'), <<~MD)
+        | Title | Author | Creation date | Modified date | Language | Aliases |
+        | --- | --- | --- | --- | --- | --- |
+        | [[New name]] | t | 2024-01-01T00:00:00Z | 2024-01-01T00:00:00Z | ja | Old name<br>Older name |
+      MD
+      rows = described_class.load(Pathname(path) / 'META.md')
+      expect(rows['New-name'].redirect_to).to be_nil
+      expect(rows['Old-name'].redirect_to).to eq('New name')
+      expect(rows['Old-name'].language).to eq('ja')
+      expect(rows['Old-name'].author).to eq('')
+      expect(rows['Older-name'].redirect_to).to eq('New name')
     ensure
       FileUtils.remove_entry(path)
     end

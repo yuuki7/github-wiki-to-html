@@ -37,14 +37,14 @@ module Wikinder
 
         attr_reader language(): String
 
-        attr_reader aliases(): Array[String]
+        attr_reader redirect_to(): String?
 
-        def self.new: (String slug, String title, String author, String creation_date, String modified_date, String language, Array[String] aliases) -> instance
-                    | (slug: String, title: String, author: String, creation_date: String, modified_date: String, language: String, aliases: Array[String]) -> instance
+        def self.new: (String slug, String title, String author, String creation_date, String modified_date, String language, String? redirect_to) -> instance
+                    | (slug: String, title: String, author: String, creation_date: String, modified_date: String, language: String, redirect_to: String?) -> instance
 
-        def self.members: () -> [ :slug, :title, :author, :creation_date, :modified_date, :language, :aliases ]
+        def self.members: () -> [ :slug, :title, :author, :creation_date, :modified_date, :language, :redirect_to ]
 
-        def members: () -> [ :slug, :title, :author, :creation_date, :modified_date, :language, :aliases ]
+        def members: () -> [ :slug, :title, :author, :creation_date, :modified_date, :language, :redirect_to ]
       end
 
       # An original page: its file path and its own language.
@@ -291,8 +291,9 @@ module Wikinder
       # build — so reaching it here means the build's own checks
       # disagree, and it fails. In an undeclared language the
       # matrix promises nothing, and the link points at the
-      # original at the root instead. Aliases route to their
-      # redirect: at the root in the target's original language,
+      # original at the root instead. Redirect rows route to their
+      # redirect: at the root in the language the old name's body
+      # had — the version the root form of the old URL serves —
       # under the reader's language elsewhere (see
       # redirect_outputs).
       # : (Array[String], page_versions, Hash[String, MetaRow]) -> Hash[String, link_routes]
@@ -336,18 +337,21 @@ module Wikinder
       # : (String, String, ?Hash[String, String]?) -> String
       def special_output: (String, String, ?Hash[String, String]?) -> String
 
-      # One redirect per alias per emitted language, each in that
-      # language's directory. The redirect for a language is skipped
-      # when a real page of that language already bears the alias's
-      # slug: the existing page always wins over a generated redirect.
-      # : (Hash[String, MetaRow], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
-      def redirect_outputs: (Hash[String, MetaRow], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
-
-      # The slugs a redirect must not shadow within one language: the
-      # pages that language actually has, its special pages, and the
-      # pages the build never generates in any language.
-      # : (String, page_versions, Hash[String, Set[String]]) -> Set[String]
-      def occupied_slugs: (String, page_versions, Hash[String, Set[String]]) -> Set[String]
+      # One redirect per redirect row, written in the directory of
+      # the language the page's body had under that name. That
+      # language is a fact about the old name, recorded on its
+      # META.md row, and the front matter carries it: the site
+      # resolves the root form of the old URL to that language's
+      # version of the target, because the old URL named that
+      # language's page. The old name's forms in other languages
+      # are the site's own projection from the target's versions,
+      # so no per-language file is emitted. Where a real page of
+      # some language bears the old name's slug, that page wins —
+      # the existing page always wins over a redirect — and the
+      # site applies that when it builds its routes, since only
+      # it sees every version.
+      # : (Hash[String, MetaRow]) -> Hash[String, String]
+      def redirect_outputs: (Hash[String, MetaRow]) -> Hash[String, String]
 
       # Yields each file at the repository root, the only place
       # GitHub Wiki keeps files: subdirectory files are unsupported

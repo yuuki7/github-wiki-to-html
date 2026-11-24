@@ -43,7 +43,7 @@ module Wikinder
         :creation_date,  #: String
         :modified_date,  #: String
         :language,       #: String
-        :aliases         #: Array[String]
+        :redirect_to     #: String?
       )
 
       # An original page: its file path and its own language.
@@ -262,12 +262,10 @@ module Wikinder
           raise Error, "page slug #{slug.inspect} collides with a language code"
         end
         meta.each_value do |row|
-          row.aliases.each do |title|
-            alias_slug = Slugs.for_title(title)
-            next unless codes.include?(alias_slug.downcase)
+          next unless row.redirect_to
+          next unless codes.include?(row.slug.downcase)
 
-            raise Error, "alias slug #{alias_slug.inspect} collides with a language code"
-          end
+          raise Error, "alias slug #{row.slug.inspect} collides with a language code"
         end
       end
 
@@ -371,7 +369,6 @@ module Wikinder
           outputs["#{record.language}/#{record.slug}.md"] = content
         end
 
-        special_languages = {} #: Hash[String, Set[String]]
         %w[Home _Footer].each do |name|
           file_name = "#{name}.md"
           next unless @history.tree_entry(file_name)
@@ -379,22 +376,9 @@ module Wikinder
           language = @site_language
           key = language ? "#{language}/#{file_name}" : file_name
           outputs[key] = special_output(name, file_name, language ? routes[language] : nil)
-          if language
-            (special_languages[name] ||= Set.new) << language
-          else
-            # Without a site language the special page sits at the root;
-            # its slug is still occupied in every language, so no
-            # redirect may claim it anywhere.
-            languages.each { (special_languages[name] ||= Set.new) << it }
-          end
-        end
-        translations.each do |record|
-          next unless record.special
-
-          (special_languages[record.slug] ||= Set.new) << record.language
         end
 
-        redirect_outputs(meta, languages, versions, special_languages).each do |relative, content|
+        redirect_outputs(meta).each do |relative, content|
           outputs[relative] = content
         end
 
@@ -577,8 +561,9 @@ module Wikinder
       # build — so reaching it here means the build's own checks
       # disagree, and it fails. In an undeclared language the
       # matrix promises nothing, and the link points at the
-      # original at the root instead. Aliases route to their
-      # redirect: at the root in the target's original language,
+      # original at the root instead. Redirect rows route to their
+      # redirect: at the root in the language the old name's body
+      # had — the version the root form of the old URL serves —
       # under the reader's language elsewhere (see
       # redirect_outputs).
       #: (Array[String], page_versions, Hash[String, MetaRow]) -> Hash[String, link_routes]
@@ -589,10 +574,11 @@ module Wikinder
           versions.each do |slug, by_language|
             routes[slug] = route_prefix(slug, by_language, language)
           end
-          meta.each do |target_slug, row|
-            original_language = versions[target_slug]&.key(false)
-            prefix = original_language == language ? '' : "/#{language}"
-            row.aliases.each { routes[Slugs.for_title(it)] = prefix }
+          meta.each_value do |row|
+            next unless row.redirect_to
+
+            own_language = Language.normalize(row.language, supported: @supported_languages)
+            routes[row.slug] = own_language == language ? '' : "/#{language}"
           end
           result[language] = routes
         end
@@ -691,51 +677,37 @@ module Wikinder
         "#{front_matter.to_yaml}---\n\n#{render_page_with_context(file_name, routes)}"
       end
 
-      # One redirect per alias per emitted language, each in that
-      # language's directory. The redirect for a language is skipped
-      # when a real page of that language already bears the alias's
-      # slug: the existing page always wins over a generated redirect.
-      #: (Hash[String, MetaRow], Array[String], page_versions, Hash[String, Set[String]]) -> Hash[String, String]
-      def redirect_outputs(meta, languages, versions, special_languages)
+      # One redirect per redirect row, written in the directory of
+      # the language the page's body had under that name. That
+      # language is a fact about the old name, recorded on its
+      # META.md row, and the front matter carries it: the site
+      # resolves the root form of the old URL to that language's
+      # version of the target, because the old URL named that
+      # language's page. The old name's forms in other languages
+      # are the site's own projection from the target's versions,
+      # so no per-language file is emitted. Where a real page of
+      # some language bears the old name's slug, that page wins —
+      # the existing page always wins over a redirect — and the
+      # site applies that when it builds its routes, since only
+      # it sees every version.
+      #: (Hash[String, MetaRow]) -> Hash[String, String]
+      def redirect_outputs(meta)
         outputs = {} #: Hash[String, String]
-        languages.each do |language|
-          occupied = occupied_slugs(language, versions, special_languages)
-          meta.each do |target_slug, row|
-            row.aliases.each do |title|
-              alias_slug = Slugs.for_title(title)
-              downcased = alias_slug.downcase
-              next if occupied.include?(downcased) || downcased == target_slug.downcase
+        meta.each_value do |row|
+          next unless row.redirect_to
 
-              # A redirect has no body, so it carries no language: language
-              # is a property of content, and a stub has none. Consumers
-              # that need one resolve it from the target page. The
-              # redirect's own language is its directory, nothing more.
-              front_matter = {
-                'kind' => 'redirect',
-                'title' => title,
-                'slug' => alias_slug,
-                'target_slug' => target_slug
-              }.to_yaml
-              outputs["#{language}/#{alias_slug}.md"] = "#{front_matter}---\n\n"
-            end
-          end
+          target_slug = Slugs.for_title(row.redirect_to)
+          language = Language.normalize(row.language, supported: @supported_languages) || row.language
+          front_matter = {
+            'kind' => 'redirect',
+            'title' => row.title,
+            'slug' => row.slug,
+            'target_slug' => target_slug,
+            'language' => language
+          }.to_yaml
+          outputs["#{language}/#{row.slug}.md"] = "#{front_matter}---\n\n"
         end
         outputs
-      end
-
-      # The slugs a redirect must not shadow within one language: the
-      # pages that language actually has, its special pages, and the
-      # pages the build never generates in any language.
-      #: (String, page_versions, Hash[String, Set[String]]) -> Set[String]
-      def occupied_slugs(language, versions, special_languages)
-        occupied = Set.new(@ungenerated_pages.map(&:downcase))
-        versions.each do |slug, by_language|
-          occupied << slug.downcase if by_language.key?(language)
-        end
-        special_languages.each do |name, languages|
-          occupied << name.downcase if languages.include?(language)
-        end
-        occupied
       end
 
       # Yields each file at the repository root, the only place

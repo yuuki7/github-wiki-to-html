@@ -5,18 +5,34 @@ module Wikinder
     class Wiki
       # Reads and writes META.md, syncing article rows with git history.
       #
-      # Existing rows are kept — author, creation date and aliases
+      # META.md holds one row per name: an article row for each
+      # page, and a redirect row for each name a page was renamed
+      # away from. A redirect row carries only what is its own —
+      # the language the page's body had under that name, and the
+      # current title it redirects to. The author and dates live
+      # on the target's article row alone. Renames are absorbed as
+      # redirect rows and retargeted on every further rename, so a
+      # redirect always names the current title directly.
+      #
+      # Existing article rows are kept — author and creation date
       # are curated by hand — but modified_date is refreshed from
       # git, and rows for missing or deleted pages are rebuilt from
       # history. Language is detected once, when a row is created,
       # and never refreshed: detection is heuristic, and flipping
       # it would silently rewrite a value a human may already have
-      # reviewed.
+      # reviewed. A redirect row's language is fixed the same way,
+      # inherited from the page's language at the moment of the
+      # rename.
       #
-      # Aliases that would shadow an existing page are dropped; see
-      # prune_colliding_aliases!. With ignore_meta set, every row
-      # is rebuilt from history and the committed META.md is
-      # disregarded.
+      # Redirect rows that would shadow an existing page are
+      # dropped; see prune_colliding_aliases!. With ignore_meta
+      # set, every article row is rebuilt from history and the
+      # committed META.md is disregarded.
+      #
+      # Files written by older versions, whose last column is
+      # Aliases, are still read: each listed alias becomes a
+      # redirect row inheriting its page's language, and the file
+      # is rewritten in the current form on the next sync.
       #
       # Cells are written with backslash escapes ('\|' for a pipe,
       # '\\' for a backslash) so any value is represented
@@ -26,9 +42,11 @@ module Wikinder
       module Meta
         META_HEADERS: Array[String]
 
-        META_TABLE_HEADER: Array[String]
+        LEGACY_ALIASES_HEADER: String
 
-        ALIAS_SEPARATOR: String
+        LEGACY_ALIAS_SEPARATOR: String
+
+        META_TABLE_HEADER: Array[String]
 
         # Escapes a value for one META.md table cell.
         # : (String?) -> String
@@ -44,6 +62,30 @@ module Wikinder
         # ignore_meta is set or the file does not exist.
         # : (Pathname, ?ignore_meta: bool) -> Hash[String, MetaRow]
         def self.load: (Pathname, ?ignore_meta: bool) -> Hash[String, MetaRow]
+
+        # Whether the file still uses the legacy Aliases column,
+        # judged by its header row alone.
+        # : (Array[String]) -> bool
+        def self.legacy_format?: (Array[String]) -> bool
+
+        # Rewrites legacy lines in the current form, in memory:
+        # each article line keeps its cells with an empty redirect
+        # cell, and each alias it lists becomes a redirect row of
+        # its own, inheriting the article's language. An alias
+        # whose slug an article already bears is dropped — the
+        # existing page always wins — and an alias listed by more
+        # than one article is dropped with a warning, as the sync's
+        # pruning drops contested aliases. Diagnostics from the
+        # parse that follows cite the rewritten lines, not the
+        # original ones; the file itself is rewritten in the
+        # current form on the next sync.
+        # : (Array[String]) -> Array[String]
+        def self.legacy_lines_to_current: (Array[String]) -> Array[String]
+
+        # One META.md table line for the given raw cell values,
+        # escaped and padded the way write emits them.
+        # : (Array[String]) -> String
+        def self.table_line: (Array[String]) -> String
 
         # : (String, ?Integer?) -> MetaRow?
         #  Line numbers are only used for diagnostics. A broken row
@@ -61,46 +103,75 @@ module Wikinder
         # : (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
         def self.sync: (Wiki, Array[String], Pathname, ?ignore_meta: bool, ?prev_head: String?) -> Hash[String, MetaRow]
 
-        # Drops aliases that slugify to a name already used by an
-        # existing page (generated or ungenerated), or to the row's
-        # own slug. Such an alias would produce a redirect that
-        # shadows the page — the existing page always wins — so the
-        # alias is removed from META.md itself: a renamed-away name
-        # cannot be re-added by an automated pass, and a curated
-        # alias since claimed by another page is dropped instead of
-        # shadowing it.
+        # Turns every name a page was renamed away from into a
+        # redirect row for that page, and retargets redirect rows
+        # whose target was itself renamed away, so a redirect
+        # always names the current title directly. A new redirect
+        # row inherits the page's language: that is the language
+        # the page's body had under the old name, unless a human
+        # has recorded otherwise on an existing row — an existing
+        # row keeps its language, and only its target moves.
         #
-        # An alias claimed by more than one page is dropped from
-        # every claimant and reported: a redirect can have only one
-        # healthy target, and letting the last page win would hide
-        # the ambiguity.
+        # A name absorbed by more than one page is dropped with a
+        # warning: a redirect can have only one healthy target, and
+        # letting the last page win would hide the ambiguity.
+        # : (Wiki, Array[String], Hash[String, MetaRow]) -> void
+        def self.absorb_renames!: (Wiki, Array[String], Hash[String, MetaRow]) -> void
+
+        # Flattens every redirect row onto the article row it
+        # ultimately names, following chains a hand edit may have
+        # written. A target with no row, or a cycle, is a fatal
+        # error, not a skip: the sync rewrites META.md from the
+        # rows it read, so absorbing a broken redirect silently
+        # would lose it or emit a redirect to nowhere.
+        # : (Hash[String, MetaRow]) -> void
+        def self.resolve_redirect_rows!: (Hash[String, MetaRow]) -> void
+
+        # Drops redirect rows that name a slug already used by an
+        # existing page (generated or ungenerated), or that point
+        # at themselves. Such a redirect would shadow the page —
+        # the existing page always wins — so the row is removed
+        # from META.md itself: a renamed-away name cannot be
+        # re-added by an automated pass, and a curated redirect
+        # since claimed by another page is dropped instead of
+        # shadowing it.
         #
         # Comparison is case-insensitive: the output may live on a
         # case-insensitive filesystem.
         # : (Hash[String, MetaRow], Array[String], Set[String]) -> void
         def self.prune_colliding_aliases!: (Hash[String, MetaRow], Array[String], Set[String]) -> void
 
-        # Finds the row to inherit for a page, trying the current slug first
-        # and every predecessor slug from rename history otherwise.
+        # Finds the article row to inherit for a page, trying the
+        # current slug first and every predecessor slug from rename
+        # history otherwise. Redirect rows are never inherited: they
+        # carry none of an article row's curated fields.
         # : (Wiki, Hash[String, MetaRow], String, String) -> MetaRow?
         def self.inherited_row: (Wiki, Hash[String, MetaRow], String, String) -> MetaRow?
 
-        # Rebuilds one row, refreshing git-derived fields and keeping curated ones.
+        # Rebuilds one article row, refreshing git-derived fields
+        # and keeping curated ones.
         # : (Wiki, String, MetaRow?) -> MetaRow
         def self.refresh_row: (Wiki, String, MetaRow?) -> MetaRow
 
-        # Builds a fresh row from git history and the page's own text.
-        # : (Wiki, String, ?commit_bounds, ?Array[String]) -> MetaRow
-        def self.build_row: (Wiki, String, ?commit_bounds, ?Array[String]) -> MetaRow
-
-        # : (Array[String], Array[String]) -> Array[String]
-        def self.merge_aliases: (Array[String], Array[String]) -> Array[String]
+        # Builds a fresh article row from git history and the
+        # page's own text.
+        # : (Wiki, String, ?commit_bounds) -> MetaRow
+        def self.build_row: (Wiki, String, ?commit_bounds) -> MetaRow
 
         # Writes the rows as the META.md table: newest first by
-        # creation date, ties broken by slug. Does nothing when the
-        # file already holds exactly this content.
+        # creation date, ties broken by slug. A redirect row sorts
+        # by its target's creation date and follows article rows on
+        # a tie, so a renamed-away name sits near the page it names.
+        # Does nothing when the file already holds exactly this
+        # content.
         # : (Pathname, Hash[String, MetaRow]) -> void
         def self.write: (Pathname, Hash[String, MetaRow]) -> void
+
+        # The creation date a row sorts by: its own, or — for a
+        # redirect row, which keeps no dates of its own — its
+        # target's.
+        # : (MetaRow, Hash[String, MetaRow]) -> String
+        def self.sort_date: (MetaRow, Hash[String, MetaRow]) -> String
 
         # Writes via a temporary file so a crash mid-write can never leave
         # META.md truncated or half-written for the next invocation.

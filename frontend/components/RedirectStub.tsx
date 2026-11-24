@@ -10,7 +10,6 @@ import BaseHead from "./BaseHead";
 export default function RedirectStub({
   title,
   language = "en",
-  className,
   targetHref,
 }: RedirectProps) {
   const ui = uiFor(language);
