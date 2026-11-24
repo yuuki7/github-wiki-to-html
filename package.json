@@ -18,6 +18,7 @@
     "next": "^15.5.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "rehype-expressive-code": "^0.44.4",
     "unist-util-visit": "^5.2.0"
   },
   "devDependencies": {

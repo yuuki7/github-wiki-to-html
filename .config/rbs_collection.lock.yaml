@@ -93,6 +93,22 @@ gems:
     revision: 72b69c95bc0b6c50c918013544fedb750a66615a
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: loofah
+  version: '2.25'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: 64c5a2e15eb7ff6c81c06eaccf1bfebdf75d0f58
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: mime-types
+  version: '3.5'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: 64c5a2e15eb7ff6c81c06eaccf1bfebdf75d0f58
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: monitor
   version: '0'
   source:
@@ -185,6 +201,14 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: rouge
+  version: '5.1'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: 64c5a2e15eb7ff6c81c06eaccf1bfebdf75d0f58
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: rubocop
   version: '1.57'
   source:

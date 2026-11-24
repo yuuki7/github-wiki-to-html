@@ -46,6 +46,26 @@ async function typesetArticle(): Promise<void> {
   }
 }
 
+// A code block wider than its frame scrolls sideways, and
+// one that overflows is made focusable, as the site's wide
+// tables are, so it can be scrolled from the keyboard too.
+// Expressive Code ships a script that keeps this true, but
+// a swapped-in page's scripts do not run — the same reason
+// the mathematics above is typeset from here — so the shell
+// keeps it true itself: when a page arrives, and when the
+// window changes size.
+export function enhanceCodeBlocks(): void {
+  document.querySelectorAll(".expressive-code pre").forEach((pre) => {
+    if (pre.scrollWidth > pre.clientWidth) {
+      pre.setAttribute("tabindex", "0");
+      pre.setAttribute("role", "region");
+    } else {
+      pre.removeAttribute("tabindex");
+      pre.removeAttribute("role");
+    }
+  });
+}
+
 // Go to one internal URL by swapping the page's regions. A
 // document that cannot be fetched, or that carries no frame
 // — a redirect stub, an error page — is gone to in full
@@ -90,5 +110,6 @@ export async function navigate(url: URL, pop: boolean): Promise<void> {
     window.scrollTo(0, 0);
   }
 
+  enhanceCodeBlocks();
   void typesetArticle();
 }

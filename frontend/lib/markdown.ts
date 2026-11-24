@@ -1,11 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Element, ElementContent, Root, Text } from "hast";
+import type { Element, Root, Text } from "hast";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { imageSize } from "image-size";
 import type { ReactNode } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-import { bundledLanguagesInfo, codeToHast, ShikiError } from "shiki";
+import rehypeExpressiveCode, {
+  createRenderer,
+  definePlugin,
+} from "rehype-expressive-code";
+import { bundledLanguagesInfo } from "shiki";
 import { unified } from "unified";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
@@ -24,8 +28,8 @@ export interface Heading {
 
 // The display name of each language Shiki knows, by its ID and
 // by each of its aliases: py is an alias of Python, for example.
-// A language Shiki does not know is missing here, and the code
-// block plugin below falls back to the ID itself.
+// A language Shiki does not know is missing here, and the
+// language title plugin below falls back to the ID itself.
 const languageNames = new Map<string, string>();
 for (const info of bundledLanguagesInfo) {
   languageNames.set(info.id, info.name);
@@ -104,178 +108,29 @@ const smartPunctuation = () => (tree: Root) => {
   });
 };
 
-// The raw code of a <code> element: the text of its children.
-const codeText = (code: Element): string =>
-  code.children
-    .map((child) => (child.type === "text" ? child.value : ""))
-    .join("");
-
-// The language a code block names, from its class, or
-// "plaintext" when it names none.
-const blockLanguage = (code: Element): string => {
-  const classes = code.properties?.className;
-  if (Array.isArray(classes)) {
-    for (const name of classes) {
-      if (typeof name === "string" && name.startsWith("language-")) {
-        return name.slice("language-".length);
-      }
-    }
-  }
-  return "plaintext";
-};
-
-// XXX: whether an error from Shiki is its "no such language"
-// error, judged by the error's full message. Shiki offers no
-// fallback option for a language it does not know, and no way
-// to ask in advance — its grammars load lazily, so the loaded
-// set cannot answer for a name not yet used. The message is
-// not a stable API, and it is not even one message: another
-// entry point into the same library words it differently. If
-// a Shiki upgrade rewords this one, the test stops matching
-// and the error propagates, failing the build loudly rather
-// than misrendering silently. There is no better test the
-// library gives.
-const isUnknownLanguageError = (error: unknown, language: string): boolean =>
-  error instanceof ShikiError &&
-  error.message ===
-    `Language \`${language}\` is not included in this bundle. You may want to load it from external source.`;
-
-// Code blocks: Shiki highlights the code at build time, and the
-// block is framed with its language as its title, in the shape
-// the site's stylesheet styles: a figure with a header, the
-// code, and a copy button whose behaviour the shell's client
-// script provides. A block in a language Shiki does not know is
-// highlighted as plain text and keeps its own language's name.
-const codeBlocks = () => async (tree: Root) => {
-  const blocks: { pre: Element; parent: Root | Element; index: number }[] = [];
-  visit(tree, "element", (node, index, parent) => {
-    if (node.tagName !== "pre" || !parent || index === undefined) return;
-    const code = node.children.find(
-      (child): child is Element =>
-        child.type === "element" && child.tagName === "code",
-    );
-    if (code)
-      blocks.push({ pre: node, parent: parent as Root | Element, index });
-  });
-
-  for (const { pre, parent, index } of blocks) {
-    const code = pre.children.find(
-      (child): child is Element =>
-        child.type === "element" && child.tagName === "code",
-    )!;
-    const text = codeText(code).replace(/\n$/, "");
-    const language = blockLanguage(code);
-
-    // The lines of the block highlighted in the given language.
-    // A result with no code node is a broken highlight, not a
-    // rendering of the block, whichever language produced it.
-    const highlightLines = async (lang: string): Promise<ElementContent[]> => {
-      const highlighted = await codeToHast(text, {
-        lang,
-        theme: "github-light",
-      });
-      const highlightedPre = highlighted.children.find(
-        (child): child is Element =>
-          child.type === "element" && child.tagName === "pre",
-      );
-      const highlightedCode = highlightedPre?.children.find(
-        (child): child is Element =>
-          child.type === "element" && child.tagName === "code",
-      );
-      if (!highlightedCode) {
-        throw new Error(`Shiki returned no code node for language ${language}`);
-      }
-      return highlightedCode.children;
-    };
-
-    let lines: ElementContent[];
-    try {
-      lines = await highlightLines(language);
-    } catch (error) {
-      if (!isUnknownLanguageError(error, language)) throw error;
-      lines = await highlightLines("txt");
-    }
-
-    // Plain text blocks have no language worth showing; every
-    // other block is titled with its language's display name.
-    const title =
-      language === "plaintext"
-        ? undefined
-        : (languageNames.get(language) ?? language);
-
-    const figure: Element = {
-      type: "element",
-      tagName: "figure",
-      properties: { className: title ? ["frame", "has-title"] : ["frame"] },
-      children: [
-        {
-          type: "element",
-          tagName: "figcaption",
-          properties: { className: ["header"] },
-          children: title
-            ? [
-                {
-                  type: "element",
-                  tagName: "span",
-                  properties: { className: ["title"] },
-                  children: [{ type: "text", value: title }],
-                },
-              ]
-            : [],
-        },
-        {
-          type: "element",
-          tagName: "pre",
-          properties: { dataLanguage: language },
-          children: [
-            {
-              type: "element",
-              tagName: "code",
-              properties: {},
-              children: lines,
-            },
-          ],
-        },
-        {
-          type: "element",
-          tagName: "div",
-          properties: { className: ["copy"] },
-          children: [
-            {
-              type: "element",
-              tagName: "div",
-              properties: { "aria-live": "polite" },
-              children: [],
-            },
-            {
-              type: "element",
-              tagName: "button",
-              properties: {
-                title: "Copy to clipboard",
-                dataCopied: "Copied!",
-                dataCode: text,
-              },
-              children: [
-                {
-                  type: "element",
-                  tagName: "div",
-                  properties: {},
-                  children: [],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    parent.children[index] = {
-      type: "element",
-      tagName: "div",
-      properties: { className: ["expressive-code"] },
-      children: [figure],
-    };
-  }
-};
+// An Expressive Code plugin that titles every code block
+// with its language. Expressive Code shows a frame title
+// only when the block itself sets one, so a block without
+// a title would show nothing. Setting the title here, from
+// the language's display name, keeps the language visible
+// on every block through the title display Expressive Code
+// already has.
+const languageTitle = definePlugin({
+  name: "Language title",
+  hooks: {
+    // Runs after the frames plugin has had its chance to
+    // find a title in the block's meta string or a file name
+    // comment, and fills in the language only when neither
+    // gave one.
+    preprocessCode: ({ codeBlock }) => {
+      // Plain text blocks have no language worth showing.
+      if (codeBlock.props.title || !codeBlock.language) return;
+      if (codeBlock.language === "plaintext") return;
+      codeBlock.props.title =
+        languageNames.get(codeBlock.language) ?? codeBlock.language;
+    },
+  },
+});
 
 // Images written with a relative path live beside the article's
 // file and are served as site assets: the build copies them
@@ -353,10 +208,11 @@ const headingText = (node: Element): string =>
 // Renders one article's Markdown body as React elements, and
 // collects its headings on the way. The pipeline is the
 // unified one: GFM parsing, heading ids, then the site's own
-// steps — image references, table wrapping, and code block
-// highlighting — and the finished tree becomes JSX. Math is
-// left as the $...$ text the authors wrote; MathJax renders
-// it in the reader's browser, as the site has always done.
+// steps — image references and table wrapping — and code
+// blocks rendered by Expressive Code, and the finished tree
+// becomes JSX. Math is left as the $...$ text the authors
+// wrote; MathJax renders it in the reader's browser, as the
+// site has always done.
 export async function renderMarkdown(
   body: string,
   assetDir: string,
@@ -367,10 +223,38 @@ export async function renderMarkdown(
     .use(smartPunctuation)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(tableWrap)
+    .use(rehypeExpressiveCode, {
+      themes: ["github-light"],
+      // The code background is GitHub's code block grey instead
+      // of the theme's white, so a block reads as a block on
+      // the page.
+      styleOverrides: {
+        codeBackground: "#f6f8fa",
+        frames: { editorBackground: "#f6f8fa" },
+      },
+      // Code is preserved as written: Expressive Code's own
+      // default replaces tabs with spaces.
+      tabWidth: 0,
+      // A block in a language Shiki does not know falls back
+      // to plain text by design — the wiki's authors write
+      // whatever languages they write — so the warning that
+      // comes with the fallback is not news and is not logged.
+      logger: { warn: () => {} },
+      plugins: [languageTitle],
+      // Expressive Code's own scripts are not emitted. A page
+      // reached by the shell's in-place navigation cannot run
+      // the scripts its document carries, so behaviour that
+      // must work on every page — the copy buttons, keyboard
+      // access to wide blocks — is the shell's, and the scripts
+      // would only duplicate it on pages loaded in full.
+      customCreateRenderer: async (options) => {
+        const renderer = await createRenderer(options);
+        return { ...renderer, jsModules: [] };
+      },
+    })
     .use(rehypeRaw)
     .use(rehypeSlug)
-    .use(images, assetDir)
-    .use(codeBlocks);
+    .use(images, assetDir);
   const tree = (await processor.run(processor.parse(body))) as Root;
 
   const headings: Heading[] = [];
