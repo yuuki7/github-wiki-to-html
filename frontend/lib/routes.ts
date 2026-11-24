@@ -27,14 +27,6 @@ export function routeTable(): Map<string, Route> {
   const table = new Map<string, Route>();
   const key = (segments: string[]): string => segments.join("/");
 
-  // A redirect carries no language of its own; the language it
-  // serves is the directory its file lives in.
-  const directoryLanguage = (entry: PageEntry): string => {
-    const parts = entry.filePath.split("/");
-    return parts.length > 1
-      ? (parts[parts.length - 2] ?? defaultLanguage)
-      : defaultLanguage;
-  };
   const originalOf = (slug: string) =>
     entries.find(
       (e): e is ArticleEntry =>
@@ -68,28 +60,6 @@ export function routeTable(): Map<string, Route> {
           redirectTo: pageHref(entry.data.language, entry.data.slug),
         });
       }
-    } else if (entry.data.kind === "redirect") {
-      // A redirect is served at the root in its target's original
-      // language, and under its directory's language elsewhere.
-      const lang = directoryLanguage(entry);
-      const original = originalOf(entry.data.target_slug);
-      if (original && original.data.language === lang) {
-        table.set(key([entry.data.slug]), { type: "article", entry, lang });
-        // The alias addressed with its language's code redirects
-        // to the code-less alias.
-        table.set(key([lang, entry.data.slug]), {
-          type: "stub",
-          title: entry.data.title,
-          lang,
-          redirectTo: pageHref(lang, entry.data.slug),
-        });
-      } else {
-        table.set(key([lang, entry.data.slug]), {
-          type: "article",
-          entry,
-          lang,
-        });
-      }
     }
   }
 
@@ -115,6 +85,47 @@ export function routeTable(): Map<string, Route> {
     lang: defaultLanguage,
     redirectTo: "/",
   });
+
+  // The redirects, last: a redirect claims only the paths no
+  // page or home already serves, because the existing page
+  // always wins over a redirect. A redirect carries the
+  // language its target's body had under the old name, and the
+  // root form of the old URL serves that language's version of
+  // the target — the old URL named that language's page. That
+  // version exists when the old name's language is the
+  // target's own or one the site declares; otherwise the root
+  // form serves the target's original, the successor of the
+  // old page itself. The old name's forms in the other declared
+  // languages serve those languages' versions.
+  for (const entry of entries) {
+    if (entry.data.kind !== "redirect") continue;
+    const { slug, language: own } = entry.data;
+    const original = originalOf(entry.data.target_slug);
+    const rootLang =
+      original &&
+      (own === original.data.language || supportedLanguages.includes(own))
+        ? own
+        : (original?.data.language ?? own);
+    if (!table.has(key([slug]))) {
+      table.set(key([slug]), { type: "article", entry, lang: rootLang });
+    }
+    if (!table.has(key([rootLang, slug]))) {
+      // The old name addressed with its own language's code
+      // redirects to the code-less form.
+      table.set(key([rootLang, slug]), {
+        type: "stub",
+        title: entry.data.title,
+        lang: rootLang,
+        redirectTo: pageHref(rootLang, slug),
+      });
+    }
+    for (const lang of supportedLanguages) {
+      if (lang === rootLang) continue;
+      if (!table.has(key([lang, slug]))) {
+        table.set(key([lang, slug]), { type: "article", entry, lang });
+      }
+    }
+  }
 
   tableCache = table;
   return table;

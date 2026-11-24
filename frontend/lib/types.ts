@@ -20,6 +20,9 @@ export interface RedirectData {
   title: string;
   slug: string;
   target_slug: string;
+  // The language the target's body had under this old name,
+  // recorded on the name's META.md row by the converter.
+  language: string;
 }
 
 export interface SpecialData {
