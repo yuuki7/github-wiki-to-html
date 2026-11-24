@@ -22,10 +22,10 @@ export default async function RouteShell({
   segments: string[];
   children: ReactNode;
 }) {
-  // The segments arrive as URL path segments, still
-  // percent-encoded; the route table is keyed by the raw
-  // segments, so decode before looking the path up.
-  const route = routeFor(segments.map((s) => decodeURIComponent(s)));
+  // Next.js decodes dynamic route params before passing them
+  // to layouts. Keep the route lookup consistent with PathPage
+  // and preserve literal percent signs in wiki slugs.
+  const route = routeFor(segments);
   if (!route || route.type === "stub") return <>{children}</>;
 
   if (route.type === "home") {

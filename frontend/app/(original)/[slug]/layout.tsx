@@ -18,7 +18,7 @@ export default async function Layout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const lang = routeFor([decodeURIComponent(slug)])?.lang ?? defaultLanguage;
+  const lang = routeFor([slug])?.lang ?? defaultLanguage;
   return (
     <html lang={lang} dir={directionFor(lang)}>
       <body>
