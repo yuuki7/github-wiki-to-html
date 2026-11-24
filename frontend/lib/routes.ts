@@ -92,25 +92,23 @@ export function routeTable(): Map<string, Route> {
   // never from the content itself. A home is set after the
   // articles, so it wins its single-segment path the way the
   // more specific route did under the old templates.
-  addRoute([], { type: "home", lang: defaultLanguage }, "default home");
+  // Home routes are reserved and intentionally take precedence over
+  // a one-segment article whose slug equals a language code.
+  table.set(key([]), { type: "home", lang: defaultLanguage });
   for (const lang of supportedLanguages) {
     if (lang !== defaultLanguage) {
-      addRoute([lang], { type: "home", lang }, `${lang} home`);
+      table.set(key([lang]), { type: "home", lang });
     }
   }
 
   // The default language's home addressed with its code
   // redirects to the root.
-  addRoute(
-    [defaultLanguage],
-    {
-      type: "stub",
-      title: site.name,
-      lang: defaultLanguage,
-      redirectTo: "/",
-    },
-    `${defaultLanguage} home redirect`,
-  );
+  table.set(key([defaultLanguage]), {
+    type: "stub",
+    title: site.name,
+    lang: defaultLanguage,
+    redirectTo: "/",
+  });
 
   // The redirects, last: a redirect claims only the paths no
   // page or home already serves, because the existing page
