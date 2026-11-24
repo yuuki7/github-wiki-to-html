@@ -1,77 +1,92 @@
 # github-wiki-to-html
 
-[WIP] Convert the Wikinder GitHub Wiki into a static HTML site.
+[WIP] Convert GitHub Wiki to HTML
 
 > [!NOTE]
-> This repository is a prototype. The production project is planned for April 2027; architecture and implementation may change as experiments provide new evidence.
+> This repository is a **throwaway prototype**; the production project begins in April 2027. We change direction or redesign from scratch at any time based on rational thinking grounded in new discoveries or experiments.
 
-## Build commands: choose the right one
+## Usage
 
-The full build and the frontend-only build have different inputs:
+All commands in this project run through Rake; the tasks are defined in the `Rakefile`. Do not call the underlying tools, such as `bundle install` or `npm`, directly.
 
-| Command | Reads | Writes | Use it when |
-| --- | --- | --- | --- |
-| `bundle exec rake build` | `yuukinder.wiki/`, `translations/`, `site.json` | Updates the wiki's `META.md`, generated `md/`, `.cache/head`, and `frontend/out/` | You want to convert the current wiki and translations, then build the complete site. This is the normal end-to-end build. |
-| `bundle exec rake build:site` | The already-converted files in `md/` | `frontend/out/` and formatted frontend source | You intentionally want to build only from the current `md/` snapshot. It does **not** read `translations/` or update `md/`. |
-| `bundle exec rake build:convert` | `yuukinder.wiki/`, `translations/`, `site.json` | The wiki's `META.md`, generated `md/`, `.cache/head` | You want to run conversion without building the site. |
+* `bundle exec rake`
+Installs Ruby & NPM dependencies and the RBS collection. This is a synonym for `bundle exec rake setup`; run it first, before the other commands, and again whenever the dependency files change.
+* `bundle exec rake check`
+Runs linter and type checks.
+  * `bundle exec rake check:ruby`
+  Runs the Ruby linter and type checks only.
+  * `bundle exec rake check:ts`
+  Runs the TypeScript type check only.
+* `bundle exec rake test`
+Runs the RSpec and TypeScript unit tests.
+  * `bundle exec rake test:ts`
+  Runs the TypeScript unit tests only.
+* `bundle exec rake build`
+Converts wiki to HTML site. This reads the wiki submodule, `translations/` and `site.json`. As side effects, the conversion synchronizes the wiki's `META.md` and regenerates `md/` and `.cache/head`; review those changes after building.
+  * `bundle exec rake build:md`
+  Converts the wiki to Markdown only.
+  * `bundle exec rake build:site`
+  Builds the site from the converted Markdown only. `bundle exec rake build:md` must have been run at least once beforehand.
+* `bundle exec rake docs`
+Builds docs.
+* `bundle exec rake server`
+Starts preview server.
 
-A successful `build:site` does not prove that the wiki conversion is current. Conversely, running it against an incomplete or stale `md/` directory can fail with missing translations even when the tracked translation source files are present. Run `bundle exec rake build` when checking the complete pipeline.
+For a change that only touches the frontend, `bundle exec rake check:ts test:ts build:site` runs just the check, the tests and the build for that side (but `bundle exec rake build:md` must have been run at least once beforehand).
 
-`bundle exec rake build` has intentional source-side effects: conversion synchronizes `yuukinder.wiki/META.md` and regenerates `md/` and `.cache/head`. Review those changes after building.
+Ruby ~> 4.0 and Node.js >= 26 are required; the requirements are recorded in the `Gemfile` and `package.json`.
 
-## Setup, checks, tests, and preview
+## Directory structure
 
-```sh
-bundle exec rake setup       # Install Ruby gems, RBS collections, and npm packages
-bundle exec rake check       # RuboCop, Ruby signatures/types, and TypeScript types
-bundle exec rake test        # Ruby and TypeScript unit tests
-bundle exec rake build       # Convert wiki/translations, then export the site
-bundle exec rake server      # Serve frontend/out/ at 127.0.0.1:4321
-```
+- `.config/` — Tool configuration files
+- `bin/`
+  - `convert.rb` — Ruby script to convert GitHub Wiki to GFM
+- `docs/` — YARD documentation
+- `lib/` — Ruby modules
+- `md/` — Generated GFM converted from GitHub Wiki
+- `sig/` — RBS signatures
+- `scripts/` — Build scripts
+- `frontend/` — Next.js (React) frontend: source, configuration and static assets, with the built static site in `frontend/out/`
+- `test/` — RSpec tests; the TypeScript tests live in `frontend/tests/`
+- `translations/` — Hand-maintained translated GFM by coding agent
+- `yuukinder.wiki/` — The GitHub Wiki repository, as a Git submodule; the converter's input
+- `AGENTS.md` — Guidance for coding agents
+- `Gemfile` — Ruby dependencies
+- `Gemfile.lock` — Locked Ruby dependency versions
+- `LICENSE` — License file
+- `README.md` — This file
+- `Rakefile` — Rake tasks
+- `package-lock.json` — Locked NPM dependency versions
+- `package.json` — NPM dependencies
+- `site.json` — Site metadata
 
-`bundle exec rake` with no task is the default setup task. Run setup once per worktree, or again when dependency files change. The Node.js requirement is recorded in `package.json` (`>=26`).
+## Overview
 
-For a frontend-only edit when `md/` is already known to be complete and current, use:
+This project aims to create an internal tool to convert the [Wikinder GitHub Wiki](https://github.com/yuuki7/yuukinder/wiki) to a static HTML site. It can work with any GitHub Wiki, although we do not offer support for external use.
 
-```sh
-bundle exec rake check:ts test:ts build:site
-```
-
-For a Ruby-only edit, run `bundle exec rake check:ruby` and `bundle exec rake test`. The `test` task runs both the RSpec suite and the TypeScript tests; `test:ts` runs only the latter.
-
-Do not run `bundle exec rake docs` unless documentation generation is specifically required; it rewrites the tracked `docs/` tree.
-
-## Pipeline
+GitHub Wiki originally ran on Gollum, a Ruby wiki system developed by GitHub. The two have since diverged; GitHub Wiki's current backend is proprietary, while Gollum continues as a compatible implementation. Gollum's newer features (such as `__TOC__` and subdirectories) are not reflected in GitHub Wiki.
 
 ```mermaid
-graph LR
-  A[GitHub Wiki repository] --> C[ Ruby converter ]
-  B[translations/] --> C
-  D[site.json] --> C
-  C --> E[md/: GFM plus YAML front matter]
-  E --> F[Next.js static export]
-  F --> G[frontend/out/]
+graph TD
+    A["GitHub Wiki (Markdown files)"] -->|"Wikinder::GitHub::Wiki (Ruby)"| B["GFM with YAML front matter"]
+    B -->|"Next.js (TypeScript)"| C["Static HTML site"]
 ```
 
-The Ruby converter turns GitHub Wiki Markdown, including supported Gollum-style wiki links, into standard GFM with YAML front matter. `translations/` contains hand-maintained translation source files; they are inputs to conversion, not direct Next.js input. Next.js reads the generated `md/` tree and exports static HTML suitable for static hosting.
+We only support Markdown articles.
 
-The project is primarily for the Wikinder Wiki. The converter may work with other GitHub Wiki repositories, but external use is not a supported responsibility. Markdown pages are supported; other wiki formats are out of scope.
+We are considering converting GitHub Wiki Markdown (including the internal link syntax `[[...]]`) to GFM with YAML front matter, and then converting the GFM to HTML with a static site generator (SSG). This makes the wiki article files more interchangeable.
 
-Original-language articles use root-level URLs such as `/Hello-world`; translations use language-prefixed URLs such as `/ja/Hello-world`. See [translations/README.md](translations/README.md) for translation file rules.
+The Ruby library `gollum-lib` offers no readable API for Markdown-to-Markdown conversion, so we are considering building a separate, compatible Ruby module from a copy of its code (which would also make it easier to port to other languages).
 
-## Repository layout
+For the SSG, we use Next.js (React), which is written in TypeScript.
 
-- `bin/`, `lib/` — Ruby conversion entry point and library.
-- `yuukinder.wiki/` — Wiki repository used as converter input (Git submodule).
-- `translations/` — Hand-maintained translated wiki Markdown, read during conversion.
-- `md/` — Generated GFM and front matter consumed by Next.js; do not treat this as the translation source.
-- `frontend/` — Next.js/React application, TypeScript code, static assets, and exported site in `out/`.
-- `scripts/` — Build helpers, including copying wiki assets into the export.
-- `test/`, `frontend/tests/` — Ruby and TypeScript tests.
-- `sig/` — RBS signatures for Ruby type checking.
-- `site.json` — Site URL, language, and other site metadata.
-- `Rakefile`, `AGENTS.md` — Project tasks and contributor/agent instructions.
+An article URL looks like `/Hello-world`. Its Japanese translation is at `/ja/Hello-world`. So the original is at the root, and a translation starts with its language code. The translations are written by a coding agent and supplied as data under `translations/`. See `translations/README.md` for details.
 
-## Development tools
+## Development
 
-RuboCop formats/lints Ruby, RBS and Steep validate Ruby signatures/types, TypeScript checks the frontend, Node's built-in test runner runs TypeScript tests, and Prettier formats frontend source. Use the Rake tasks above for project checks and builds so their ordering and side effects are explicit.
+This project uses the following tools for maintainability:
+
+- RuboCop: Ruby linter and formatter.
+- RBS & Steep: Ruby type checking.
+- Prettier: HTML/CSS/JS/TS formatter.
+- TypeScript: Frontend type checking; its unit tests use Node's built-in test runner.
