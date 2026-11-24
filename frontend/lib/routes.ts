@@ -14,9 +14,13 @@ export type Route =
   | { type: "article"; entry: PageEntry; lang: string }
   | { type: "stub"; title: string; lang: string; redirectTo: string };
 
-let tableCache: Map<string, Route> | null = null;
+function isOriginalArticle(entry: PageEntry): entry is ArticleEntry {
+  return entry.data.kind === "article" && !entry.data.translation;
+}
 
-export function routeTable(): Map<string, Route> {
+let tableCache: ReadonlyMap<string, Route> | null = null;
+
+export function routeTable(): ReadonlyMap<string, Route> {
   if (tableCache) return tableCache;
   const entries = getEntries();
 
@@ -37,13 +41,10 @@ export function routeTable(): Map<string, Route> {
     table.set(path, route);
   };
 
-  const originalOf = (slug: string) =>
-    entries.find(
-      (e): e is ArticleEntry =>
-        e.data.kind === "article" &&
-        e.data.slug === slug &&
-        !e.data.translation,
-    );
+  const originalsBySlug = new Map<string, ArticleEntry>();
+  for (const entry of entries) {
+    if (isOriginalArticle(entry)) originalsBySlug.set(entry.data.slug, entry);
+  }
 
   for (const entry of entries) {
     if (entry.data.kind === "article") {
@@ -124,7 +125,7 @@ export function routeTable(): Map<string, Route> {
   for (const entry of entries) {
     if (entry.data.kind !== "redirect") continue;
     const { slug, language: own } = entry.data;
-    const original = originalOf(entry.data.target_slug);
+    const original = originalsBySlug.get(entry.data.target_slug);
     const rootLang =
       original &&
       (own === original.data.language || supportedLanguages.includes(own))
