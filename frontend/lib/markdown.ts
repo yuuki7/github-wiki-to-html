@@ -157,24 +157,22 @@ const codeBlocks = () => async (tree: Root) => {
     const language = blockLanguage(code);
     const highlightLanguage = languageAliases[language] ?? language;
 
-    let lines: ElementContent[] = [];
-    try {
-      const highlighted = await codeToHast(text, {
-        lang: highlightLanguage,
-        theme: "github-light",
-      });
-      const highlightedPre = highlighted.children.find(
-        (child): child is Element =>
-          child.type === "element" && child.tagName === "pre",
-      );
-      const highlightedCode = highlightedPre?.children.find(
-        (child): child is Element =>
-          child.type === "element" && child.tagName === "code",
-      );
-      lines = highlightedCode?.children ?? [];
-    } catch {
-      lines = [{ type: "text", value: text } as Text];
+    const highlighted = await codeToHast(text, {
+      lang: highlightLanguage,
+      theme: "github-light",
+    });
+    const highlightedPre = highlighted.children.find(
+      (child): child is Element =>
+        child.type === "element" && child.tagName === "pre",
+    );
+    const highlightedCode = highlightedPre?.children.find(
+      (child): child is Element =>
+        child.type === "element" && child.tagName === "code",
+    );
+    if (!highlightedCode) {
+      throw new Error(`Shiki returned no code node for language ${language}`);
     }
+    const lines: ElementContent[] = highlightedCode.children;
 
     // Plain text blocks have no language worth showing; every
     // other block is titled with its language's display name.
@@ -273,16 +271,21 @@ const images = (assetDir: string) => (tree: Root) => {
     node.properties.src = `/assets/${name}`;
     node.properties.loading = "lazy";
     node.properties.decoding = "async";
+    const assetPath = path.join(assetDir, decodeURIComponent(name));
+    let size;
     try {
-      const size = imageSize(
-        fs.readFileSync(path.join(assetDir, decodeURIComponent(name))),
+      size = imageSize(fs.readFileSync(assetPath));
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `cannot resolve local image ${src} from ${assetDir}: ${detail}`,
       );
-      if (size.width !== undefined) node.properties.width = size.width;
-      if (size.height !== undefined) node.properties.height = size.height;
-    } catch {
-      // No readable file: the reference is rewritten anyway,
-      // and the element simply carries no size.
     }
+    if (size.width === undefined || size.height === undefined) {
+      throw new Error(`image dimensions are unavailable for ${assetPath}`);
+    }
+    node.properties.width = size.width;
+    node.properties.height = size.height;
   });
 };
 

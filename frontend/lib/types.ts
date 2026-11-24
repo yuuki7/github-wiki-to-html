@@ -10,9 +10,9 @@ export interface ArticleData {
   creation_date: string;
   modified_date: string;
   language: string;
-  original_language?: string;
-  translation?: boolean;
-  listed?: boolean;
+  original_language?: string | undefined;
+  translation?: boolean | undefined;
+  listed?: boolean | undefined;
 }
 
 export interface RedirectData {
@@ -31,7 +31,7 @@ export interface SpecialData {
   slug: string;
   // The converter omits the key when the site has no language;
   // missingVersions in i18n.ts treats such a page the same way.
-  language?: string;
+  language?: string | undefined;
 }
 
 export type PageData = ArticleData | RedirectData | SpecialData;

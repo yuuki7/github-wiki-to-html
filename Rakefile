@@ -38,6 +38,14 @@ RSpec::Core::RakeTask.new(:test) do |t|
   t.rspec_opts = '--options .config/.rspec'
 end
 
+namespace :test do
+  desc 'Run the TypeScript unit tests'
+  task :ts do
+    sh 'npm run test'
+  end
+end
+Rake::Task[:test].enhance(['test:ts'])
+
 namespace :build do
   desc 'Convert the wiki to Markdown'
   task :convert do

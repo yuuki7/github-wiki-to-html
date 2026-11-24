@@ -87,7 +87,7 @@ export default async function RouteShell({
         alternates={data.articleLinks}
         canonical={data.canonical}
         ogType="article"
-        meta={data.meta}
+        {...(data.meta ? { meta: data.meta } : {})}
       >
         {data.xDefaultHref && (
           <link rel="alternate" hrefLang="x-default" href={data.xDefaultHref} />

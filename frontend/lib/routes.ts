@@ -43,6 +43,21 @@ export function routeTable(): ReadonlyMap<string, Route> {
 
   const originalsBySlug = new Map<string, ArticleEntry>();
   for (const entry of entries) {
+    if (entry.data.kind === "article") {
+      if (!supportedLanguages.includes(entry.data.language)) {
+        throw new Error(
+          `${entry.filePath}: unsupported article language ${entry.data.language}`,
+        );
+      }
+      if (
+        entry.data.original_language &&
+        !supportedLanguages.includes(entry.data.original_language)
+      ) {
+        throw new Error(
+          `${entry.filePath}: unsupported original language ${entry.data.original_language}`,
+        );
+      }
+    }
     if (isOriginalArticle(entry)) originalsBySlug.set(entry.data.slug, entry);
   }
 
@@ -126,6 +141,11 @@ export function routeTable(): ReadonlyMap<string, Route> {
     if (entry.data.kind !== "redirect") continue;
     const { slug, language: own } = entry.data;
     const original = originalsBySlug.get(entry.data.target_slug);
+    if (!original) {
+      throw new Error(
+        `${entry.filePath}: redirect target ${entry.data.target_slug} has no original article`,
+      );
+    }
     const rootLang =
       original &&
       (own === original.data.language || supportedLanguages.includes(own))
