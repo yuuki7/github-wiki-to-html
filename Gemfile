@@ -11,6 +11,7 @@ gem 'rugged', '~> 1.9'
 gem 'whatlanguage', '~> 3.0'
 
 group :development do
+  gem 'gollum-lib', '~> 6.1'
   gem 'rake', '~> 13.4.2'
   gem 'rbs', '~> 4.2.0'
   gem 'rbs-inline', '~> 0.14.0'
