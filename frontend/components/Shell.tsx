@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import site from "../../site.json";
 import { homeHref, languageName } from "../lib/i18n";
+import type { FooterData } from "../lib/page-data";
 import type { AiStrings, AlternateLink } from "../lib/types";
 import AiAssistant from "./AiAssistant";
 import CodeCopy from "./CodeCopy";
@@ -30,7 +31,7 @@ type Props = {
   className?: string;
   aiStrings: AiStrings;
   leftSidebar?: ReactNode;
-  footerHtml: string;
+  footer: FooterData;
   children: ReactNode;
 };
 
@@ -41,7 +42,7 @@ export default function Shell({
   className,
   aiStrings,
   leftSidebar,
-  footerHtml,
+  footer,
   children,
 }: Props) {
   return (
@@ -103,10 +104,10 @@ export default function Shell({
           <AiAssistant strings={aiStrings} />
         </aside>
 
-        <footer
-          className="footer"
-          dangerouslySetInnerHTML={{ __html: footerHtml }}
-        />
+        <footer className="footer">
+          {footer.body}
+          <a href={footer.editHref}>{footer.editLabel}</a>
+        </footer>
       </div>
 
       <LinkInterceptor />

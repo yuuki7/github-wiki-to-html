@@ -43,10 +43,7 @@ export default async function ArticleView({
         {data.meta && <ArticleMeta {...data.meta} />}
       </header>
 
-      <div
-        className="article__main"
-        dangerouslySetInnerHTML={{ __html: data.bodyHtml }}
-      />
+      <div className="article__main">{data.body}</div>
     </article>
   );
 }

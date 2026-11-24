@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Element, ElementContent, Root, Text } from "hast";
+import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { imageSize } from "image-size";
+import type { ReactNode } from "react";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { bundledLanguagesInfo, codeToHast, ShikiError } from "shiki";
 import { unified } from "unified";
 import remarkGfm from "remark-gfm";
@@ -9,7 +12,6 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
-import rehypeStringify from "rehype-stringify";
 import { visit } from "unist-util-visit";
 
 // One heading of a rendered article, for the table of contents:
@@ -348,17 +350,17 @@ const headingText = (node: Element): string =>
     })
     .join("");
 
-// Renders one article's Markdown body to HTML, and collects
-// its headings on the way. The pipeline is the unified one:
-// GFM parsing, heading ids, then the site's own steps — image
-// references, table wrapping, and code block highlighting.
-// Math is left as the $...$ text the authors wrote; MathJax
-// renders it in the reader's browser, as the site has always
-// done.
+// Renders one article's Markdown body as React elements, and
+// collects its headings on the way. The pipeline is the
+// unified one: GFM parsing, heading ids, then the site's own
+// steps — image references, table wrapping, and code block
+// highlighting — and the finished tree becomes JSX. Math is
+// left as the $...$ text the authors wrote; MathJax renders
+// it in the reader's browser, as the site has always done.
 export async function renderMarkdown(
   body: string,
   assetDir: string,
-): Promise<{ html: string; headings: Heading[] }> {
+): Promise<{ body: ReactNode; headings: Heading[] }> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
@@ -384,8 +386,6 @@ export async function renderMarkdown(
     });
   });
 
-  const html = unified()
-    .use(rehypeStringify, { allowDangerousHtml: true })
-    .stringify(tree);
-  return { html, headings };
+  const rendered = toJsxRuntime(tree, { Fragment, jsx, jsxs });
+  return { body: rendered, headings };
 }

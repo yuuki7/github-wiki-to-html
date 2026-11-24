@@ -13,6 +13,7 @@
     "preview": "serve -l tcp://127.0.0.1:4321 frontend/out"
   },
   "dependencies": {
+    "hast-util-to-jsx-runtime": "^2.3.7",
     "hastscript": "^9.0.3",
     "next": "^15.5.0",
     "react": "^19.2.0",

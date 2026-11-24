@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import type { ReactNode } from "react";
 import { isLanguageCode, missingVersions } from "./i18n";
 import { renderMarkdown, type Heading } from "./markdown";
 import { parsePageData } from "./page-schema";
@@ -91,14 +92,15 @@ export function assertComplete(entries: PageEntry[]): void {
 
 const renderedCache = new Map<
   string,
-  Promise<{ html: string; headings: Heading[] }>
+  Promise<{ body: ReactNode; headings: Heading[] }>
 >();
 
-// One entry rendered: its body as HTML and its headings. The
-// images a body references live in the entry's own directory.
+// One entry rendered: its body as React elements and its
+// headings. The images a body references live in the entry's
+// own directory.
 export function renderEntry(
   entry: PageEntry,
-): Promise<{ html: string; headings: Heading[] }> {
+): Promise<{ body: ReactNode; headings: Heading[] }> {
   let rendered = renderedCache.get(entry.id);
   if (!rendered) {
     rendered = renderMarkdown(

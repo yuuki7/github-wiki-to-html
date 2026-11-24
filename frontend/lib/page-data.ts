@@ -1,6 +1,6 @@
+import type { ReactNode } from "react";
 import site from "../../site.json";
 import { getEntries, renderEntry, specialPage } from "./content";
-import { escapeHtml } from "./html";
 import {
   absoluteUrl,
   defaultLanguage,
@@ -32,18 +32,24 @@ import type {
 // language, falling back to the site's default language when
 // the fragment has not been translated, and the edit link
 // that closes every page.
-async function footerHtml(
+export interface FooterData {
+  body: ReactNode;
+  editHref: string;
+  editLabel: string;
+}
+
+async function footerData(
   entries: PageEntry[],
   lang: string,
   editSlug: string,
   editLabel: string,
-): Promise<string> {
+): Promise<FooterData> {
   const fragment = specialPage(entries, "_Footer", lang, defaultLanguage);
-  const html = fragment ? (await renderEntry(fragment)).html : "";
-  return (
-    html +
-    `<a href="${site.wiki_url}/${escapeUrlPath(editSlug)}">${escapeHtml(editLabel)}</a>`
-  );
+  return {
+    body: fragment ? (await renderEntry(fragment)).body : undefined,
+    editHref: `${site.wiki_url}/${escapeUrlPath(editSlug)}`,
+    editLabel,
+  };
 }
 
 export interface HomePageData {
@@ -52,8 +58,8 @@ export interface HomePageData {
   canonical: string;
   xDefaultHref: string;
   listedEntries: ArticleEntry[];
-  footerHtml: string;
-  bodyHtml: string;
+  footer: FooterData;
+  body: ReactNode;
 }
 
 // One language's home page: the article list for its sidebar,
@@ -100,8 +106,8 @@ async function computeHomePageData(lang: string): Promise<HomePageData> {
     canonical: absoluteUrl(homeHref(lang)),
     xDefaultHref: absoluteUrl(homeHref(site.language)),
     listedEntries,
-    footerHtml: await footerHtml(entries, lang, "Home", editLabel),
-    bodyHtml: home ? (await renderEntry(home)).html : "",
+    footer: await footerData(entries, lang, "Home", editLabel),
+    body: home ? (await renderEntry(home)).body : undefined,
   };
 }
 
@@ -113,8 +119,8 @@ export interface ArticlePageDataFull {
   canonical: string;
   meta: ArticleMetaProps | undefined;
   xDefaultHref: string | undefined;
-  footerHtml: string;
-  bodyHtml: string;
+  footer: FooterData;
+  body: ReactNode;
   headings: Heading[];
 }
 
@@ -203,8 +209,8 @@ async function computeArticlePageDataFull(
       canonical: "",
       meta: undefined,
       xDefaultHref: undefined,
-      footerHtml: "",
-      bodyHtml: "",
+      footer: { body: undefined, editHref: "", editLabel: "" },
+      body: undefined,
       headings: [],
     };
   }
@@ -247,8 +253,8 @@ async function computeArticlePageDataFull(
     xDefaultHref: base.originalLanguage
       ? absoluteUrl(pageHref(base.originalLanguage, entry.data.slug))
       : undefined,
-    footerHtml: await footerHtml(entries, lang, entry.data.slug, editLabel),
-    bodyHtml: rendered.html,
+    footer: await footerData(entries, lang, entry.data.slug, editLabel),
+    body: rendered.body,
     headings: rendered.headings,
   };
 }

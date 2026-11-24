@@ -65,7 +65,7 @@ export default async function RouteShell({
               ))}
             </ul>
           }
-          footerHtml={data.footerHtml}
+          footer={data.footer}
         >
           {children}
         </Shell>
@@ -97,7 +97,7 @@ export default async function RouteShell({
         languageLinks={data.articleLinks}
         aiStrings={aiStringsFor(ui)}
         leftSidebar={<Toc headings={data.headings} />}
-        footerHtml={data.footerHtml}
+        footer={data.footer}
       >
         {children}
       </Shell>
