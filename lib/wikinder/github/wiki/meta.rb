@@ -16,7 +16,11 @@ module Wikinder
       # current title it redirects to. The author and dates live
       # on the target's article row alone. Renames are absorbed as
       # redirect rows and retargeted on every further rename, so a
-      # redirect always names the current title directly.
+      # redirect always names the current title directly. A
+      # redirect row whose language is its target's leaves the
+      # cell empty — the target's row already states it — and
+      # reading fills it back in, so rows in memory always carry
+      # the language itself.
       #
       # Existing article rows are kept — author and creation date
       # are curated by hand — but modified_date is refreshed from
@@ -106,7 +110,43 @@ module Wikinder
 
             result[row.slug] = row
           end
+          inherit_redirect_languages!(result)
           result
+        end
+
+        # Fills a redirect row's empty language cell from the
+        # article row it ultimately names. A broken chain — a
+        # missing target or a cycle — leaves the cell empty; the
+        # sync's resolution reports it.
+        #: (Hash[String, MetaRow]) -> void
+        def self.inherit_redirect_languages!(rows)
+          rows.each_value do |row|
+            next unless row.redirect_to && row.language.empty?
+
+            target = redirect_target_row(rows, row)
+            rows[row.slug] = row.with(language: target.language) if target
+          end
+        end
+
+        # The article row a redirect row ultimately names,
+        # following any chain of redirect rows; nil when the chain
+        # is broken or cyclic.
+        #: (Hash[String, MetaRow], MetaRow) -> MetaRow?
+        def self.redirect_target_row(rows, row)
+          seen = Set.new([row.slug]) #: Set[String]
+          current = row
+          while (title = current.redirect_to)
+            slug = Slugs.for_title(title)
+            return nil if seen.include?(slug)
+
+            seen << slug
+            target = rows[slug]
+            return nil if target.nil?
+            return target if target.redirect_to.nil?
+
+            current = target
+          end
+          nil
         end
 
         # Whether the file still uses the legacy Aliases column,
@@ -484,7 +524,7 @@ module Wikinder
                                   row.author,
                                   row.creation_date,
                                   row.modified_date,
-                                  row.language,
+                                  written_language(row, rows),
                                   row.redirect_to ? "[[#{row.redirect_to}]]" : ''
                                 ])
           end
@@ -492,6 +532,17 @@ module Wikinder
           return if meta_path.exist? && meta_path.read == content
 
           write_atomically(meta_path, content)
+        end
+
+        # The language a row's cell carries in the file: a
+        # redirect row whose language is its target's writes an
+        # empty cell, since the target's row already states it.
+        #: (MetaRow, Hash[String, MetaRow]) -> String
+        def self.written_language(row, rows)
+          return row.language unless row.redirect_to
+
+          target = redirect_target_row(rows, row)
+          target && target.language == row.language ? '' : row.language
         end
 
         # The creation date a row sorts by: its own, or — for a

@@ -1110,4 +1110,49 @@ RSpec.describe Wikinder::GitHub::Wiki::Meta do
       FileUtils.remove_entry(path)
     end
   end
+
+  it 'fills an empty redirect language from its target on load' do
+    path = Dir.mktmpdir('elided-meta')
+    begin
+      File.write(File.join(path, 'META.md'), <<~MD)
+        | Title | Author | Creation date | Modified date | Language | Redirect to |
+        | --- | --- | --- | --- | --- | --- |
+        | [[New name]] | t | 2024-01-01T00:00:00Z | 2024-01-01T00:00:00Z | ja | |
+        | [[Old name]] | | | | | [[New name]] |
+      MD
+      rows = described_class.load(Pathname(path) / 'META.md')
+      expect(rows['Old-name'].language).to eq('ja')
+    ensure
+      FileUtils.remove_entry(path)
+    end
+  end
+
+  it 'writes an empty language for a redirect matching its target, and keeps a differing one' do
+    path = Dir.mktmpdir('write-elide-meta')
+    begin
+      row = Wikinder::GitHub::Wiki::MetaRow
+      rows = {
+        'New-name' => row.new(slug: 'New-name', title: 'New name', author: 't',
+                              creation_date: '2024-01-01T00:00:00Z',
+                              modified_date: '2024-01-01T00:00:00Z',
+                              language: 'ja', redirect_to: nil),
+        'Old-name' => row.new(slug: 'Old-name', title: 'Old name', author: '',
+                              creation_date: '', modified_date: '',
+                              language: 'ja', redirect_to: 'New name'),
+        'Older-name' => row.new(slug: 'Older-name', title: 'Older name', author: '',
+                                creation_date: '', modified_date: '',
+                                language: 'en', redirect_to: 'New name')
+      }
+      meta_path = Pathname(path) / 'META.md'
+      described_class.write(meta_path, rows)
+      lines = File.readlines(meta_path)
+      expect(lines.find { |l| l.include?('[[Old name]]') }).not_to include('ja')
+      expect(lines.find { |l| l.include?('[[Older name]]') }).to include('| en |')
+      loaded = described_class.load(meta_path)
+      expect(loaded['Old-name'].language).to eq('ja')
+      expect(loaded['Older-name'].language).to eq('en')
+    ensure
+      FileUtils.remove_entry(path)
+    end
+  end
 end
