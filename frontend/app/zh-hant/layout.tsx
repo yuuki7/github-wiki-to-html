@@ -1,15 +1,6 @@
 import type { ReactNode } from "react";
-import { directionFor } from "../../lib/i18n";
-
-// The Traditional Chinese document. The site's pages are grouped by the
-// language they are served in, so that the document element
-// itself carries the page's language and writing direction,
-// as it always has.
+import LanguageDocument from "../../components/LanguageDocument";
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="zh-hant" dir={directionFor("zh-hant")}>
-      <body>{children}</body>
-    </html>
-  );
+  return <LanguageDocument language="zh-hant">{children}</LanguageDocument>;
 }

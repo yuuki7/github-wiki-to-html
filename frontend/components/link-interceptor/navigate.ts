@@ -4,6 +4,14 @@ import { swapPage } from "./swap";
 // an older fetch still outstanding.
 let navigationSerial = 0;
 
+function decodeHash(hash: string): string {
+  try {
+    return decodeURIComponent(hash);
+  } catch {
+    return hash;
+  }
+}
+
 // The scroll position of the page being left, kept in its
 // history entry so going back returns to it. The entry's
 // other state — the framework's own keys — is preserved.
@@ -71,7 +79,7 @@ export async function navigate(url: URL, pop: boolean): Promise<void> {
   swapPage(newDocument);
 
   const target = url.hash
-    ? document.getElementById(decodeURIComponent(url.hash.slice(1)))
+    ? document.getElementById(decodeHash(url.hash.slice(1)))
     : null;
   if (target) {
     target.scrollIntoView();
