@@ -1,77 +1,69 @@
-# AGENTS.md
+# Instructions for coding agents
 
-## Build and Test Commands
+## Start here
 
-- `bundle exec rake` — Install the dependencies. First setup only, or when dependency files change.
-- `bundle exec rake check` — Run the linter and type checks. Also regenerates `sig/generated/` from the inline annotations in `lib/`; commit the regeneration together with the `lib/` change. Temporarily ignore RuboCop Metrics offenses; do not ignore any other offenses.
-- `bundle exec rake check:ruby` — Run the Ruby linter and type checks only. `bundle exec rake check:ts` — Run the TypeScript type check only.
-- `bundle exec rake test` — Run the tests.
-- `bundle exec rake build` — Build the site. Side effect: `bin/convert.rb` rewrites `META.md` in the real wiki repository.
-- `bundle exec rake build:convert` — Convert the wiki to Markdown only. `bundle exec rake build:site` — Build the site from the converted Markdown only.
-- `bundle exec rake server` — Start the preview server over `frontend/out/`, in the foreground.
-- Do not run `bundle exec rake docs` — it would regenerate `docs/` and bloat the diff. Keep diffs concise.
+- Read `README.md`, this file, and the relevant task definitions in `Rakefile` before changing code or running builds.
+- Work on the requested non-`main` branch/worktree. Do not push or create a PR unless Yuuki explicitly asks.
+- Keep reports and questions to Yuuki in Japanese.
+- Review broadly before focusing on a subsystem. Cite the code or source that supports review conclusions.
+- Do not dismiss a concern as a design judgment; explain the tradeoff and consult Yuuki when the intended behavior is unclear.
 
-The standard verification sequence is `bundle exec rake check && bundle exec rake test && bundle exec rake build`. For a change that only touches the frontend, `bundle exec rake check:ts build:site` is enough.
+## Build inputs and commands
 
-Gotchas:
+Do not confuse the site-only build with the complete build:
 
-- Type information lives in `# rbs_inline:` annotations inside `lib/*.rb`, not in separate RBS files; keep them in sync with the code or `rake check` fails.
-- Avoid `untyped` as much as possible.
-- Keep inline type declarations from becoming verbose by defining type aliases in `sig/wikinder.rbs`.
-- Signatures in `sig/` for a library (for example `rugged.rbs`) must match the library's actual API, independently of how this project uses it. Do not narrow a type to what the current call sites happen to need.
-- Hand-written signatures in `sig/` for libraries that are not our own module (for example `gollum-lib.rbs` and `github/markup.rbs`) are kept even when nothing currently uses them. Do not remove them as dead code.
+- `bundle exec rake build` runs `build:convert` followed by `build:site`. It reads the wiki submodule, `translations/`, and `site.json`, regenerates `md/`, then builds `frontend/out/`. Conversion synchronizes `yuukinder.wiki/META.md` and writes `.cache/head`; inspect these source-side effects after the command.
+- `bundle exec rake build:convert` runs only the conversion stage. It does not build HTML.
+- `bundle exec rake build:site` reads only the existing `md/` tree and builds `frontend/out/`. It does not read `translations/` or refresh `md/`. Use it only when the converted Markdown is already current and complete. A missing-translation failure in this task may reflect stale/incomplete `md/`; check the full `bundle exec rake build` path before attributing the failure to missing tracked translation sources.
+- `bundle exec rake server` serves the existing `frontend/out/`; it does not build or convert anything.
+- `bundle exec rake` with no task is the default setup task, not the site build.
 
-## How to Judge Behaviour
+Setup and verification:
 
-In order of precedence:
+- `bundle exec rake setup` installs Ruby dependencies, the RBS collection, and npm dependencies. Run once in a worktree or when dependency files change. Node.js `>=26` is required.
+- `bundle exec rake check` runs Ruby lint/signature/type checks and TypeScript type checking. It regenerates `sig/generated/`; include any relevant generated signature changes with Ruby changes.
+- `bundle exec rake check:ruby` and `bundle exec rake check:ts` run the respective checks.
+- `bundle exec rake test` runs both RSpec and TypeScript tests. `bundle exec rake test:ts` runs only TypeScript tests.
+- Standard full verification: `bundle exec rake check && bundle exec rake test && bundle exec rake build`.
+- Frontend-only verification when `md/` is complete/current: `bundle exec rake check:ts test:ts build:site`.
+- Do not run `bundle exec rake docs` unless requested; it regenerates the tracked `docs/` tree and can create a large diff.
+- Do not use raw `npm run build` as the project-level build command. Use the Rake task so its scope is explicit. The lower-level commands are defined in `package.json` and are invoked by Rake.
 
-1. Behaviour Yuuki has empirically verified on the real GitHub Wiki
-2. Local verification: running the code and reading sources such as the gollum-lib 6.1.0 and gollum-rugged_adapter 3.0 source code, installed locally under `/opt/homebrew/lib/ruby/gems/4.0.0/gems/`
-3. Our own reasonable behaviour, as an exception, where the GitHub Wiki or gollum-lib behaviour appears to be a bug or an edge case
+Do not add or run tests unless Yuuki asks for test/verification or the requested change requires validation. When tests are part of the request, add them at the appropriate layer and use the Rake task.
 
-- Verification is primarily local: reading source code such as gollum-lib and gollum-rugged_adapter and running commands. Verification against the live GitHub Wiki is done by Yuuki, not by agents. A search-engine summary is not evidence.
-- Wiki editors are an uncontrolled general public, so all realistic and reasonable syntax must basically be supported.
-- A test wiki, including `yuukinder.wiki`, is only a test corpus. Never use the presence or absence of a construct in it as grounds for scope or severity.
+## Code and type-checking conventions
 
-Settled questions — do not re-litigate:
+- Frontend source is under `frontend/`; TypeScript type checking uses `frontend/tsconfig.json`. Preserve strictness, including `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; do not weaken compiler options to silence errors.
+- TypeScript tests live in `frontend/tests/` and use Node's built-in test runner. Keep the test command in `package.json` and its Rake entry in sync.
+- Ruby type information lives in `# rbs_inline:` annotations in `lib/*.rb`; keep signatures in sync with implementation.
+- Avoid `untyped` in RBS. Use aliases in `sig/wikinder.rbs` to keep annotations readable.
+- Handwritten dependency signatures in `sig/` must describe the dependency's actual API, not a narrower call-site-specific subset. Keep them even when currently unused.
+- Temporarily ignore only RuboCop Metrics offenses when needed; do not suppress other offenses.
+- Do not parse HTML with regular expressions; use an HTML parser/AST.
+- Judge Markdown-to-Markdown behavior by reparsing the result with the downstream parser, not by inspecting output strings alone.
+- Wiki editors are an uncontrolled public. Support realistic syntax unless evidence or an explicit scope decision says otherwise.
 
-- `bin/convert.rb` is not type-checked, and adding it to a Steep target would not close any gap. RBS describes classes and modules; a top-level script's constants have no declarations (Steep reports them all as unknown constants), and the values the script passes to `Wiki.new` come from `JSON.parse`, whose result is untyped, so Steep cannot check that flow either.
-- Wikilink pipe order is `[[Display|Target]]`; piped images are the reverse (`[[Path|Caption]]`). Verified against gollum-lib's own tests (positional parsing — `reverse_links` applies only to creole/mediawiki, and we support Markdown only) and consistent with live-wiki rendering.
-- Rugged's `a.diff(b)` treats `a` as the old side, so `commit.diff(parent)` is chronologically reversed — the rename-map comment in `wiki.rb` is correct as written.
-- CommonMarker 2.x `source_position` values are 1-based byte columns; `end_column` is the column of the last byte, inclusive.
-- For local tests with gollum-lib, its Markdown renderer must be replaced with commonmarker 2.x. github-markup 4.0.1 (a gollum-lib 6.1.0 dependency) calls `CommonMarker.render_html`, but in commonmarker 2.x the class is `Commonmarker` and the method is `to_html`. Replace the whole `MARKDOWN_GEMS` hash so that no other renderer can be selected by fallback:
+## Evidence and behavior decisions
 
-  ```ruby
-  GitHub::Markup::Markdown::MARKDOWN_GEMS.replace(
-    'commonmarker' => proc { |content, options: {}|
-      Commonmarker.to_html(
-        content,
-        options: {
-          render: { unsafe: true, hardbreaks: false, gfm_quirks: true, escaped_char_spans: false },
-          extension: {
-            math_dollars: true,
-            math_code: true,
-            strikethrough: true,
-            tagfilter: true,
-            table: true,
-            autolink: true,
-            tasklist: true,
-            footnotes: true
-          }
-        },
-        plugins: { syntax_highlighter: nil }
-      )
-    }
-  )
-  ```
+Use evidence in this order:
 
-## Working Principles
+1. Behavior Yuuki has empirically verified on the live GitHub Wiki.
+2. Local experiments and primary sources, including installed Gollum sources and their tests. Ruby gems are vendored under `vendor/bundle/ruby/4.0.0/gems/` in this worktree; do not assume the system gem directory is the active source.
+3. A reasoned project-specific behavior where upstream behavior is demonstrably defective or unsuitable.
 
-- Never parse HTML with regular expressions. Use a parser.
-- For Markdown-to-Markdown conversion, judge the result after re-parsing it downstream, not from the output string alone.
-- Review broadly first, deeply second. Tunnel vision on a single interesting point is the failure mode to guard against.
-- Cite the source of every conclusion.
-- Do not dismiss a point as mere design judgment; raise it as a design problem and consult Yuuki. Design is an important part of this project.
-- When an answer contained an error, skip the apology and reconstruct the correct answer.
-- Commit and push only when Yuuki explicitly instructs it. Until then, leave changes uncommitted so that everything lands in a single commit.
-- Reports and consultation with Yuuki are in Japanese.
+Agents do not verify behavior against the live GitHub Wiki; Yuuki does. Search-engine summaries are not evidence. `yuukinder.wiki/` is a test corpus, not grounds for restricting supported syntax or setting severity.
+
+Settled findings—do not re-litigate without new evidence:
+
+- Markdown wikilink pipe order is `[[Display|Target]]`; piped images use `[[Path|Caption]]`. This follows Gollum's positional parsing; `reverse_links` applies to Creole/MediaWiki, not Markdown, and agrees with live-wiki behavior.
+- Rugged `a.diff(b)` treats `a` as the old side; `commit.diff(parent)` is chronologically reversed. The rename-map comments in `lib/` rely on this behavior.
+- CommonMarker 2.x source positions use 1-based byte columns; `end_column` is the last byte's column, inclusive.
+- When testing Gollum with CommonMarker 2.x, replace the complete `GitHub::Markup::Markdown::MARKDOWN_GEMS` map with the CommonMarker 2.x adapter. `github-markup` 4.0.1 calls the old `CommonMarker.render_html` API, whereas CommonMarker 2.x uses `Commonmarker.to_html`; keeping other renderers in the map permits fallback and invalidates the experiment.
+- `bin/convert.rb` is not type-checked. Adding a top-level script to Steep does not provide meaningful checking for its constants or `JSON.parse` values; do not claim that adding it to the target closes that gap.
+
+## Changes and commits
+
+- Do not alter `main` for work assigned to another branch.
+- Leave changes uncommitted unless Yuuki explicitly authorizes commits. Authorization to commit does not authorize pushing or PR creation.
+- Keep generated files and build side effects only when they are relevant to the requested change; inspect `git status` after Rake tasks.
+- When a previous answer was wrong, state the corrected conclusion directly and continue from the actual evidence.
