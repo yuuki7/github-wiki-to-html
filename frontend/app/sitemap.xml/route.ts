@@ -79,6 +79,7 @@ export async function GET() {
       version.data.modified_date;
     const original = versions.find((version) => !version.data.translation);
     const base = original ?? versions[0];
+    if (!base) throw new Error(`article ${slug} has no language versions`);
     // The versions in the site's language order, the same order
     // the pages' heads list them in.
     const ordered = [...versions].sort(

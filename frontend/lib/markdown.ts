@@ -1,15 +1,21 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Element, ElementContent, Root, Text } from "hast";
+import type { Element, Root, Text } from "hast";
+import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { imageSize } from "image-size";
-import { bundledLanguagesInfo, codeToHast } from "shiki";
+import type { ReactNode } from "react";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import rehypeExpressiveCode, {
+  createRenderer,
+  definePlugin,
+} from "rehype-expressive-code";
+import { bundledLanguagesInfo } from "shiki";
 import { unified } from "unified";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
-import rehypeStringify from "rehype-stringify";
 import { visit } from "unist-util-visit";
 
 // One heading of a rendered article, for the table of contents:
@@ -22,8 +28,8 @@ export interface Heading {
 
 // The display name of each language Shiki knows, by its ID and
 // by each of its aliases: py is an alias of Python, for example.
-// A language Shiki does not know is missing here, and the code
-// block plugin below falls back to the ID itself.
+// A language Shiki does not know is missing here, and the
+// language title plugin below falls back to the ID itself.
 const languageNames = new Map<string, string>();
 for (const info of bundledLanguagesInfo) {
   languageNames.set(info.id, info.name);
@@ -31,14 +37,6 @@ for (const info of bundledLanguagesInfo) {
     languageNames.set(alias, info.name);
   }
 }
-
-// Languages whose blocks are highlighted as another language.
-// LilyPond has no Shiki grammar; aliasing it to plain text
-// highlights its blocks with no warning, while the blocks keep
-// naming LilyPond as their language.
-const languageAliases: Record<string, string> = {
-  lilypond: "txt",
-};
 
 // Smart punctuation: prose is set with typographic marks —
 // quotes curl, an apostrophe is a right single quote, three
@@ -110,159 +108,39 @@ const smartPunctuation = () => (tree: Root) => {
   });
 };
 
-// The raw code of a <code> element: the text of its children.
-const codeText = (code: Element): string =>
-  code.children
-    .map((child) => (child.type === "text" ? child.value : ""))
-    .join("");
-
-// The language a code block names, from its class, or
-// "plaintext" when it names none.
-const blockLanguage = (code: Element): string => {
-  const classes = code.properties?.className;
-  if (Array.isArray(classes)) {
-    for (const name of classes) {
-      if (typeof name === "string" && name.startsWith("language-")) {
-        return name.slice("language-".length);
-      }
-    }
-  }
-  return "plaintext";
-};
-
-// Code blocks: Shiki highlights the code at build time, and the
-// block is framed with its language as its title, in the shape
-// the site's stylesheet styles: a figure with a header, the
-// code, and a copy button whose behaviour the shell's client
-// script provides. A block in a language Shiki does not know is
-// highlighted as plain text and keeps its own language's name.
-const codeBlocks = () => async (tree: Root) => {
-  const blocks: { pre: Element; parent: Root | Element; index: number }[] = [];
-  visit(tree, "element", (node, index, parent) => {
-    if (node.tagName !== "pre" || !parent || index === undefined) return;
-    const code = node.children.find(
-      (child): child is Element =>
-        child.type === "element" && child.tagName === "code",
-    );
-    if (code)
-      blocks.push({ pre: node, parent: parent as Root | Element, index });
-  });
-
-  for (const { pre, parent, index } of blocks) {
-    const code = pre.children.find(
-      (child): child is Element =>
-        child.type === "element" && child.tagName === "code",
-    )!;
-    const text = codeText(code).replace(/\n$/, "");
-    const language = blockLanguage(code);
-    const highlightLanguage = languageAliases[language] ?? language;
-
-    let lines: ElementContent[] = [];
-    try {
-      const highlighted = await codeToHast(text, {
-        lang: highlightLanguage,
-        theme: "github-light",
-      });
-      const highlightedPre = highlighted.children.find(
-        (child): child is Element =>
-          child.type === "element" && child.tagName === "pre",
-      );
-      const highlightedCode = highlightedPre?.children.find(
-        (child): child is Element =>
-          child.type === "element" && child.tagName === "code",
-      );
-      lines = highlightedCode?.children ?? [];
-    } catch {
-      lines = [{ type: "text", value: text } as Text];
-    }
-
-    // Plain text blocks have no language worth showing; every
-    // other block is titled with its language's display name.
-    const title =
-      language === "plaintext"
-        ? undefined
-        : (languageNames.get(language) ?? language);
-
-    const figure: Element = {
-      type: "element",
-      tagName: "figure",
-      properties: { className: title ? ["frame", "has-title"] : ["frame"] },
-      children: [
-        {
-          type: "element",
-          tagName: "figcaption",
-          properties: { className: ["header"] },
-          children: title
-            ? [
-                {
-                  type: "element",
-                  tagName: "span",
-                  properties: { className: ["title"] },
-                  children: [{ type: "text", value: title }],
-                },
-              ]
-            : [],
-        },
-        {
-          type: "element",
-          tagName: "pre",
-          properties: { dataLanguage: language },
-          children: [
-            {
-              type: "element",
-              tagName: "code",
-              properties: {},
-              children: lines,
-            },
-          ],
-        },
-        {
-          type: "element",
-          tagName: "div",
-          properties: { className: ["copy"] },
-          children: [
-            {
-              type: "element",
-              tagName: "div",
-              properties: { "aria-live": "polite" },
-              children: [],
-            },
-            {
-              type: "element",
-              tagName: "button",
-              properties: {
-                title: "Copy to clipboard",
-                dataCopied: "Copied!",
-                dataCode: text,
-              },
-              children: [
-                {
-                  type: "element",
-                  tagName: "div",
-                  properties: {},
-                  children: [],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    parent.children[index] = {
-      type: "element",
-      tagName: "div",
-      properties: { className: ["expressive-code"] },
-      children: [figure],
-    };
-  }
-};
+// An Expressive Code plugin that titles every code block
+// with its language. Expressive Code shows a frame title
+// only when the block itself sets one, so a block without
+// a title would show nothing. Setting the title here, from
+// the language's display name, keeps the language visible
+// on every block through the title display Expressive Code
+// already has.
+const languageTitle = definePlugin({
+  name: "Language title",
+  hooks: {
+    // Runs after the frames plugin has had its chance to
+    // find a title in the block's meta string or a file name
+    // comment, and fills in the language only when neither
+    // gave one.
+    preprocessCode: ({ codeBlock }) => {
+      // Plain text blocks have no language worth showing.
+      if (codeBlock.props.title || !codeBlock.language) return;
+      if (codeBlock.language === "plaintext") return;
+      codeBlock.props.title =
+        languageNames.get(codeBlock.language) ?? codeBlock.language;
+    },
+  },
+});
 
 // Images written with a relative path live beside the article's
 // file and are served as site assets: the build copies them
 // into the output's assets (see scripts/copy-assets.mjs), and
 // the reference is rewritten to that location. The element
 // carries the image's own size, so the page does not move when
-// the image loads.
+// the image loads. An editor can reference an image that is not
+// there, or one no size can be read from; that warns and the
+// page is published as written, instead of failing the whole
+// build over one image.
 const images = (assetDir: string) => (tree: Root) => {
   visit(tree, "element", (node) => {
     if (node.tagName !== "img") return;
@@ -273,16 +151,22 @@ const images = (assetDir: string) => (tree: Root) => {
     node.properties.src = `/assets/${name}`;
     node.properties.loading = "lazy";
     node.properties.decoding = "async";
+    const assetPath = path.join(assetDir, decodeURIComponent(name));
+    let size;
     try {
-      const size = imageSize(
-        fs.readFileSync(path.join(assetDir, decodeURIComponent(name))),
+      size = imageSize(fs.readFileSync(assetPath));
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `cannot resolve local image ${src} from ${assetDir}: ${detail}`,
       );
-      if (size.width !== undefined) node.properties.width = size.width;
-      if (size.height !== undefined) node.properties.height = size.height;
-    } catch {
-      // No readable file: the reference is rewritten anyway,
-      // and the element simply carries no size.
+      return;
     }
+    if (size.width === undefined || size.height === undefined) {
+      console.warn(`image dimensions are unavailable for ${assetPath}`);
+    }
+    if (size.width !== undefined) node.properties.width = size.width;
+    if (size.height !== undefined) node.properties.height = size.height;
   });
 };
 
@@ -325,27 +209,56 @@ const headingText = (node: Element): string =>
     })
     .join("");
 
-// Renders one article's Markdown body to HTML, and collects
-// its headings on the way. The pipeline is the unified one:
-// GFM parsing, heading ids, then the site's own steps — image
-// references, table wrapping, and code block highlighting.
-// Math is left as the $...$ text the authors wrote; MathJax
-// renders it in the reader's browser, as the site has always
-// done.
+// Renders one article's Markdown body as React elements, and
+// collects its headings on the way. The pipeline is the
+// unified one: GFM parsing, heading ids, then the site's own
+// steps — image references and table wrapping — and code
+// blocks rendered by Expressive Code, and the finished tree
+// becomes JSX. Math is left as the $...$ text the authors
+// wrote; MathJax renders it in the reader's browser, as the
+// site has always done.
 export async function renderMarkdown(
   body: string,
   assetDir: string,
-): Promise<{ html: string; headings: Heading[] }> {
+): Promise<{ body: ReactNode; headings: Heading[] }> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(smartPunctuation)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(tableWrap)
+    .use(rehypeExpressiveCode, {
+      themes: ["github-light"],
+      // The code background is GitHub's code block grey instead
+      // of the theme's white, so a block reads as a block on
+      // the page.
+      styleOverrides: {
+        codeBackground: "#f6f8fa",
+        frames: { editorBackground: "#f6f8fa" },
+      },
+      // Code is preserved as written: Expressive Code's own
+      // default replaces tabs with spaces.
+      tabWidth: 0,
+      // A block in a language Shiki does not know falls back
+      // to plain text by design — the wiki's authors write
+      // whatever languages they write — so the warning that
+      // comes with the fallback is not news and is not logged.
+      logger: { warn: () => {} },
+      plugins: [languageTitle],
+      // Expressive Code's own scripts are not emitted. A page
+      // reached by the shell's in-place navigation cannot run
+      // the scripts its document carries, so behaviour that
+      // must work on every page — the copy buttons, keyboard
+      // access to wide blocks — is the shell's, and the scripts
+      // would only duplicate it on pages loaded in full.
+      customCreateRenderer: async (options) => {
+        const renderer = await createRenderer(options);
+        return { ...renderer, jsModules: [] };
+      },
+    })
     .use(rehypeRaw)
     .use(rehypeSlug)
-    .use(images, assetDir)
-    .use(codeBlocks);
+    .use(images, assetDir);
   const tree = (await processor.run(processor.parse(body))) as Root;
 
   const headings: Heading[] = [];
@@ -361,8 +274,6 @@ export async function renderMarkdown(
     });
   });
 
-  const html = unified()
-    .use(rehypeStringify, { allowDangerousHtml: true })
-    .stringify(tree);
-  return { html, headings };
+  const rendered = toJsxRuntime(tree, { Fragment, jsx, jsxs });
+  return { body: rendered, headings };
 }

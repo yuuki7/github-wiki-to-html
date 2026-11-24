@@ -1,17 +1,18 @@
-# AGENTS.md
+# Instructions for coding agents
 
-## Build and Test Commands
+## Build and test commands
 
-- `bundle exec rake` — Install the dependencies. First setup only, or when dependency files change.
-- `bundle exec rake check` — Run the linter and type checks. Also regenerates `sig/generated/` from the inline annotations in `lib/`; commit the regeneration together with the `lib/` change. Temporarily ignore RuboCop Metrics offenses; do not ignore any other offenses.
-- `bundle exec rake check:ruby` — Run the Ruby linter and type checks only. `bundle exec rake check:ts` — Run the TypeScript type check only.
-- `bundle exec rake test` — Run the tests.
-- `bundle exec rake build` — Build the site. Side effect: `bin/convert.rb` rewrites `META.md` in the real wiki repository.
-- `bundle exec rake build:convert` — Convert the wiki to Markdown only. `bundle exec rake build:site` — Build the site from the converted Markdown only.
-- `bundle exec rake server` — Start the preview server over `frontend/out/`, in the foreground.
-- Do not run `bundle exec rake docs` — it would regenerate `docs/` and bloat the diff. Keep diffs concise.
+See `README.md` (Usage) for the commands themselves; this section only adds what the README does not say.
 
-The standard verification sequence is `bundle exec rake check && bundle exec rake test && bundle exec rake build`. For a change that only touches the frontend, `bundle exec rake check:ts build:site` is enough.
+- With no task, `bundle exec rake` runs the default setup task; it is not a build.
+- `bundle exec rake check` also regenerates `sig/generated/` from the inline annotations in `lib/`; commit the regeneration together with the `lib/` change.
+- Temporarily ignore RuboCop Metrics offenses; do not ignore any other offenses.
+- After `bundle exec rake build`, inspect its source-side effects: the wiki's `META.md`, `md/` and `.cache/head`.
+- A missing-translation failure in `bundle exec rake build:site` may reflect a stale or incomplete `md/`; check the full `bundle exec rake build` path before attributing the failure to the tracked translation sources.
+- Do not run `bundle exec rake docs` unless asked; it regenerates the tracked `docs/` tree and bloats the diff. Keep diffs concise.
+- Do not use raw `npm run build` as the project-level build command. Use the Rake task so its scope is explicit.
+
+The standard verification sequence is `bundle exec rake check && bundle exec rake test && bundle exec rake build`.
 
 Gotchas:
 
@@ -20,13 +21,15 @@ Gotchas:
 - Keep inline type declarations from becoming verbose by defining type aliases in `sig/wikinder.rbs`.
 - Signatures in `sig/` for a library (for example `rugged.rbs`) must match the library's actual API, independently of how this project uses it. Do not narrow a type to what the current call sites happen to need.
 - Hand-written signatures in `sig/` for libraries that are not our own module (for example `gollum-lib.rbs` and `github/markup.rbs`) are kept even when nothing currently uses them. Do not remove them as dead code.
+- Frontend source is under `frontend/`; TypeScript type checking uses `frontend/tsconfig.json`. Preserve its strictness, including `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; do not weaken compiler options to silence errors.
+- TypeScript tests live in `frontend/tests/` and use Node's built-in test runner. Keep the test command in `package.json` and its Rake entry in sync.
 
-## How to Judge Behaviour
+## How to judge behaviour
 
 In order of precedence:
 
 1. Behaviour Yuuki has empirically verified on the real GitHub Wiki
-2. Local verification: running the code and reading sources such as the gollum-lib 6.1.0 and gollum-rugged_adapter 3.0 source code, installed locally under `/opt/homebrew/lib/ruby/gems/4.0.0/gems/`
+2. Local verification: running the code and reading sources such as the gollum-lib 6.1.0 and gollum-rugged_adapter 3.0 source code, vendored locally under `vendor/bundle/ruby/4.0.0/gems/` in each worktree
 3. Our own reasonable behaviour, as an exception, where the GitHub Wiki or gollum-lib behaviour appears to be a bug or an edge case
 
 - Verification is primarily local: reading source code such as gollum-lib and gollum-rugged_adapter and running commands. Verification against the live GitHub Wiki is done by Yuuki, not by agents. A search-engine summary is not evidence.
@@ -65,13 +68,15 @@ Settled questions — do not re-litigate:
   )
   ```
 
-## Working Principles
+## Working principles
 
+- Work on the requested branch or worktree. Do not alter `main` for work assigned to another branch.
 - Never parse HTML with regular expressions. Use a parser.
 - For Markdown-to-Markdown conversion, judge the result after re-parsing it downstream, not from the output string alone.
 - Review broadly first, deeply second. Tunnel vision on a single interesting point is the failure mode to guard against.
 - Cite the source of every conclusion.
 - Do not dismiss a point as mere design judgment; raise it as a design problem and consult Yuuki. Design is an important part of this project.
 - When an answer contained an error, skip the apology and reconstruct the correct answer.
-- Commit and push only when Yuuki explicitly instructs it. Until then, leave changes uncommitted so that everything lands in a single commit.
+- Keep generated files and build side effects only when they are relevant to the requested change; inspect `git status` after Rake tasks.
+- Commit and push only when Yuuki explicitly instructs it, and do not create a PR unless Yuuki explicitly asks. Until then, leave changes uncommitted so that everything lands in a single commit.
 - Reports and consultation with Yuuki are in Japanese.

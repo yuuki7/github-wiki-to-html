@@ -113,7 +113,9 @@ const checkCache = async (): Promise<{
   cached: boolean;
 } | null> => {
   try {
-    const webllm = (await import(libraryUrl)) as WebLLM;
+    const webllm = (await import(
+      /* webpackIgnore: true */ libraryUrl
+    )) as WebLLM;
     let cached = false;
     try {
       cached = await webllm.hasModelInCache(modelId);
@@ -236,6 +238,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busyRef.current) return;
+    const previousLog = log;
     const question = draftText.trim() || liveStrings().summarize;
     setDraftText("");
     setLog((previous) => [...previous, { role: "user", content: question }]);
@@ -258,6 +261,10 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     } catch (error) {
       loadHistory().pop();
       saveHistory();
+      // A failed stream may have already rendered its partial
+      // assistant message. Restore the transcript to match the
+      // history that was retained for the next request.
+      setLog(previousLog);
       setStatus(
         error instanceof UnsupportedError
           ? liveStrings().unsupported

@@ -14,10 +14,7 @@ export default async function HomeView({ lang }: { lang: string }) {
         <h1 className="article__title">{site.name}</h1>
       </header>
 
-      <div
-        className="article__main"
-        dangerouslySetInnerHTML={{ __html: data.bodyHtml }}
-      />
+      <div className="article__main">{data.body}</div>
     </article>
   );
 }

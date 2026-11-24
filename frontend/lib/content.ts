@@ -1,9 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { z } from "zod";
-import { missingVersions } from "./i18n";
+import type { ReactNode } from "react";
+import { isLanguageCode, missingVersions } from "./i18n";
 import { renderMarkdown, type Heading } from "./markdown";
+import { parsePageData } from "./page-schema";
 import type { PageEntry } from "./types";
 
 // The content layer: the site's pages are the files under md/,
@@ -24,50 +25,6 @@ const mdDir = path.join(process.cwd(), "md");
 // and is written in the same form, as a Temporal Instant at
 // second precision. The fractional-second check comes first:
 // the Instant's string form would silently truncate them.
-const dateLike = z.union([
-  z.iso.datetime({ offset: false, precision: 0 }),
-  z.date().transform((v, ctx) => {
-    if (v.getUTCMilliseconds() !== 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "a date with fractional seconds has no canonical form",
-      });
-      return z.NEVER;
-    }
-    return v.toTemporalInstant().toString({ smallestUnit: "second" });
-  }),
-]);
-
-const pageSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("article"),
-    title: z.string(),
-    slug: z.string(),
-    author: z.string(),
-    creation_date: dateLike,
-    modified_date: dateLike,
-    language: z.string(),
-    original_language: z.string().optional(),
-    translation: z.boolean().default(false).optional(),
-    listed: z.boolean().default(true).optional(),
-  }),
-  z.object({
-    kind: z.literal("redirect"),
-    title: z.string(),
-    slug: z.string(),
-    target_slug: z.string(),
-    language: z.string(),
-  }),
-  z.object({
-    kind: z.literal("special"),
-    title: z.string(),
-    slug: z.string(),
-    // The converter omits the key when the site has no language;
-    // missingVersions in i18n.ts treats such a page the same way.
-    language: z.string().optional(),
-  }),
-]);
-
 let entriesCache: PageEntry[] | null = null;
 
 // Every content file under md/, validated, in path order.
@@ -83,30 +40,50 @@ export function getEntries(): PageEntry[] {
   };
   walk(mdDir);
 
-  entriesCache = files.map((full) => {
+  const entries = files.map((full) => {
     const filePath = path.relative(mdDir, full);
     const { data, content } = matter(fs.readFileSync(full, "utf8"));
-    const parsed = pageSchema.safeParse(data);
-    if (!parsed.success) {
-      throw new Error(
-        `${filePath}: invalid front matter: ${parsed.error.issues
-          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-          .join("; ")}`,
-      );
-    }
+    const parsed = parsePageData(data, filePath);
     return {
       id: filePath.replace(/\.md$/, ""),
       filePath,
-      data: parsed.data,
+      data: parsed,
       body: content,
     };
   });
-  return entriesCache;
+  entriesCache = entries;
+  return entries;
 }
 
 // Refuse to build while any page lacks a version in some
 // language; missingVersions in i18n.ts states the rule.
 export function assertComplete(entries: PageEntry[]): void {
+  // Language values reach the content from the wiki's
+  // META.md, which any editor can rewrite by hand, so they
+  // cannot be held to the site's declared languages — an
+  // original may be written in any language. A value that is
+  // not a language code at all is still worth naming: it is
+  // almost certainly a mistake in META.md. Warn, do not fail:
+  // one editor's typo must not stop the whole build.
+  for (const entry of entries) {
+    if (entry.data.kind !== "article" && entry.data.kind !== "special") {
+      continue;
+    }
+    if (entry.data.language && !isLanguageCode(entry.data.language)) {
+      console.warn(
+        `${entry.filePath}: language ${entry.data.language} is not an ISO language code`,
+      );
+    }
+    if (
+      entry.data.kind === "article" &&
+      entry.data.original_language &&
+      !isLanguageCode(entry.data.original_language)
+    ) {
+      console.warn(
+        `${entry.filePath}: original language ${entry.data.original_language} is not an ISO language code`,
+      );
+    }
+  }
   const missing = missingVersions(entries);
   if (missing.length > 0) {
     throw new Error(`missing translations: ${missing.join(", ")}`);
@@ -115,14 +92,15 @@ export function assertComplete(entries: PageEntry[]): void {
 
 const renderedCache = new Map<
   string,
-  Promise<{ html: string; headings: Heading[] }>
+  Promise<{ body: ReactNode; headings: Heading[] }>
 >();
 
-// One entry rendered: its body as HTML and its headings. The
-// images a body references live in the entry's own directory.
+// One entry rendered: its body as React elements and its
+// headings. The images a body references live in the entry's
+// own directory.
 export function renderEntry(
   entry: PageEntry,
-): Promise<{ html: string; headings: Heading[] }> {
+): Promise<{ body: ReactNode; headings: Heading[] }> {
   let rendered = renderedCache.get(entry.id);
   if (!rendered) {
     rendered = renderMarkdown(

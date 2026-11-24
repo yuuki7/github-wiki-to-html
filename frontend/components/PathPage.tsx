@@ -13,10 +13,9 @@ import RedirectStub from "./RedirectStub";
 export { pathsForLanguage };
 
 export default async function PathPage({ segments }: { segments: string[] }) {
-  // The segments arrive as URL path segments, still
-  // percent-encoded; the route table is keyed by the raw
-  // segments, so decode before looking the path up.
-  const route = routeFor(segments.map((s) => decodeURIComponent(s)));
+  // The segments are the route params as Next.js delivered
+  // them, still percent-encoded; routeFor decodes them.
+  const route = routeFor(segments);
   if (!route) notFound();
   switch (route.type) {
     case "home":

@@ -1,19 +1,15 @@
-import PathPage, { pathsForLanguage } from "../../../components/PathPage";
-
-// The German pages: every path the route table serves in
-// German, under its /de prefix.
+import LanguageRoutePage, {
+  languageStaticParams,
+} from "../../../components/LanguageRoutePage";
 
 export function generateStaticParams() {
-  return pathsForLanguage("de")
-    .filter((path) => path[0] === "de")
-    .map((path) => ({ path: path.slice(1) }));
+  return languageStaticParams("de", true);
 }
 
-export default async function Page({
+export default function Page({
   params,
 }: {
   params: Promise<{ path?: string[] }>;
 }) {
-  const { path } = await params;
-  return <PathPage segments={["de", ...(path ?? [])]} />;
+  return <LanguageRoutePage language="de" prefixed params={params} />;
 }

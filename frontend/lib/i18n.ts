@@ -39,8 +39,8 @@ export const supportedLanguages: string[] = [...site.languages].sort();
 export interface PageVersion {
   kind: string;
   slug: string;
-  language?: string;
-  translation?: boolean;
+  language?: string | undefined;
+  translation?: boolean | undefined;
 }
 
 // The versions of pages that are missing from the given entries,
@@ -79,7 +79,7 @@ const RTL_BASE_LANGUAGES = new Set(["ar", "fa", "he", "ur"]);
 // The writing direction of a language: right-to-left for Arabic and
 // its RTL peers, left-to-right for everything else.
 export function directionFor(language: string): "rtl" | "ltr" {
-  return RTL_BASE_LANGUAGES.has(language.split("-")[0]) ? "rtl" : "ltr";
+  return RTL_BASE_LANGUAGES.has(language.split("-")[0] ?? "") ? "rtl" : "ltr";
 }
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -90,6 +90,22 @@ const LANGUAGE_NAMES: Record<string, string> = {
   ja: "日本語",
   de: "Deutsch",
 } satisfies Record<SupportedLanguage, string>;
+
+// Whether a value is a language code at all. The platform's
+// language data (Intl.DisplayNames, following ISO 639) is the
+// judge: a value it can only echo back, or cannot parse, is
+// not a code. Language tags built on ISO codes, such as the
+// site's own "zh-hant", pass.
+const languageDisplayNames = new Intl.DisplayNames(["en"], {
+  type: "language",
+});
+export function isLanguageCode(language: string): boolean {
+  try {
+    return languageDisplayNames.of(language) !== language;
+  } catch {
+    return false;
+  }
+}
 
 // A language's own name for itself, for the language switcher.
 export function languageName(language: string): string {
@@ -285,7 +301,10 @@ const UI_STRINGS: Record<string, UiStrings> = {
 // The interface strings in a language, falling back to the default
 // language for languages without their own set.
 export function uiFor(language: string): UiStrings {
-  return UI_STRINGS[language] ?? UI_STRINGS[defaultLanguage] ?? UI_STRINGS.en;
+  // The last term cannot miss: the table satisfies
+  // Record<SupportedLanguage, UiStrings>, so "en" is present
+  // by construction.
+  return UI_STRINGS[language] ?? UI_STRINGS[defaultLanguage] ?? UI_STRINGS.en!;
 }
 
 // The AI assistant's strings, in the vocabulary it uses. One
