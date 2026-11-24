@@ -6,7 +6,7 @@
     "node": ">=26"
   },
   "scripts": {
-    "build": "tsc --project frontend/tsconfig.scripts.json && next build frontend && node scripts/copy-assets.mjs",
+    "build": "tsc --project frontend/tsconfig.scripts.json && next build frontend && node scripts/copy-assets.mjs && node scripts/normalize-export-filenames.mjs",
     "check": "tsc -p frontend/tsconfig.json --noEmit",
     "test": "node --test frontend/tests/*.test.ts",
     "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"frontend/{app,components,lib,scripts}/**/*.{css,js,ts,tsx}\"",
