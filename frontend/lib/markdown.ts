@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Element, ElementContent, Root, Text } from "hast";
 import { imageSize } from "image-size";
-import { bundledLanguagesInfo, codeToHast } from "shiki";
+import { bundledLanguagesInfo, codeToHast, ShikiError } from "shiki";
 import { unified } from "unified";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
@@ -31,14 +31,6 @@ for (const info of bundledLanguagesInfo) {
     languageNames.set(alias, info.name);
   }
 }
-
-// Languages whose blocks are highlighted as another language.
-// LilyPond has no Shiki grammar; aliasing it to plain text
-// highlights its blocks with no warning, while the blocks keep
-// naming LilyPond as their language.
-const languageAliases: Record<string, string> = {
-  lilypond: "txt",
-};
 
 // Smart punctuation: prose is set with typographic marks —
 // quotes curl, an apostrophe is a right single quote, three
@@ -130,6 +122,22 @@ const blockLanguage = (code: Element): string => {
   return "plaintext";
 };
 
+// XXX: whether an error from Shiki is its "no such language"
+// error, judged by the error's full message. Shiki offers no
+// fallback option for a language it does not know, and no way
+// to ask in advance — its grammars load lazily, so the loaded
+// set cannot answer for a name not yet used. The message is
+// not a stable API, and it is not even one message: another
+// entry point into the same library words it differently. If
+// a Shiki upgrade rewords this one, the test stops matching
+// and the error propagates, failing the build loudly rather
+// than misrendering silently. There is no better test the
+// library gives.
+const isUnknownLanguageError = (error: unknown, language: string): boolean =>
+  error instanceof ShikiError &&
+  error.message ===
+    `Language \`${language}\` is not included in this bundle. You may want to load it from external source.`;
+
 // Code blocks: Shiki highlights the code at build time, and the
 // block is framed with its language as its title, in the shape
 // the site's stylesheet styles: a figure with a header, the
@@ -155,24 +163,36 @@ const codeBlocks = () => async (tree: Root) => {
     )!;
     const text = codeText(code).replace(/\n$/, "");
     const language = blockLanguage(code);
-    const highlightLanguage = languageAliases[language] ?? language;
 
-    const highlighted = await codeToHast(text, {
-      lang: highlightLanguage,
-      theme: "github-light",
-    });
-    const highlightedPre = highlighted.children.find(
-      (child): child is Element =>
-        child.type === "element" && child.tagName === "pre",
-    );
-    const highlightedCode = highlightedPre?.children.find(
-      (child): child is Element =>
-        child.type === "element" && child.tagName === "code",
-    );
-    if (!highlightedCode) {
-      throw new Error(`Shiki returned no code node for language ${language}`);
+    // The lines of the block highlighted in the given language.
+    // A result with no code node is a broken highlight, not a
+    // rendering of the block, whichever language produced it.
+    const highlightLines = async (lang: string): Promise<ElementContent[]> => {
+      const highlighted = await codeToHast(text, {
+        lang,
+        theme: "github-light",
+      });
+      const highlightedPre = highlighted.children.find(
+        (child): child is Element =>
+          child.type === "element" && child.tagName === "pre",
+      );
+      const highlightedCode = highlightedPre?.children.find(
+        (child): child is Element =>
+          child.type === "element" && child.tagName === "code",
+      );
+      if (!highlightedCode) {
+        throw new Error(`Shiki returned no code node for language ${language}`);
+      }
+      return highlightedCode.children;
+    };
+
+    let lines: ElementContent[];
+    try {
+      lines = await highlightLines(language);
+    } catch (error) {
+      if (!isUnknownLanguageError(error, language)) throw error;
+      lines = await highlightLines("txt");
     }
-    const lines: ElementContent[] = highlightedCode.children;
 
     // Plain text blocks have no language worth showing; every
     // other block is titled with its language's display name.
