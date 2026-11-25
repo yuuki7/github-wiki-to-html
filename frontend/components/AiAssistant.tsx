@@ -1,158 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  articleTextLimit,
+  checkCache,
+  dropPreviousModel,
+  getEngine,
+  historyLimit,
+  loadHistory,
+  modelId,
+  saveHistory,
+  setEngine,
+  trimHistory,
+  UnsupportedError,
+  type Engine,
+  type Message,
+  type WebLLM,
+} from "../lib/ai-client";
 import type { AiStrings } from "../lib/types";
-
-// The AI box in a page's right sidebar: one question form,
-// answered by a small language model that runs entirely in
-// the reader's browser, through WebLLM. Nothing is sent to a
-// server. The library and the model are loaded when the
-// reader first submits the form. The form is rendered once
-// the component has mounted: without script there is no form,
-// rather than a form that does nothing.
-//
-// The box is part of the app's frame, not of the page: the
-// frame stays mounted while the reader moves between pages,
-// so the box's own state — the question being typed above
-// all — is kept by the box itself staying in place. The
-// engine, once loaded, is kept in this module for the whole
-// session, across in-app navigation, and the conversation is
-// mirrored to session storage, so that even a full page
-// load — one that does not go through the shell's in-app
-// navigation — keeps it.
-
-// The library's own types, for the copy loaded from the CDN
-// below: the two are the same version.
-type WebLLM = typeof import("@mlc-ai/web-llm");
-
-// The engine the library creates.
-type Engine = Awaited<ReturnType<WebLLM["CreateMLCEngine"]>>;
-
-// One message in the conversation.
-type Message = {
-  role: "system" | "user" | "assistant";
-  content: string;
-};
-
-// The model: small, and covered for the site's languages. Its
-// answers are not checked for accuracy; the box is a reading
-// aid, not a source.
-const modelId = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
-
-// Where the box remembers which model it used last time, so
-// that a model the site no longer uses can be dropped from
-// the browser's cache: the cache holds one model, the
-// current one.
-const modelStorageKey = "ai-assistant-model";
-
-// Where the conversation is mirrored, against full page loads.
-const historyStorageKey = "ai-assistant-history";
-
-// WebLLM itself, loaded on first use from the same CDN the site
-// already uses for MathJax. The version is pinned exactly, and
-// package.json pins its @mlc-ai/web-llm devDependency to the
-// same version, so the types describe the code that runs.
-const libraryUrl = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.88/+esm";
-
-// The model reads at most this much of the article: its context
-// window must also hold the conversation and the answer.
-const articleTextLimit = 6000;
-
-// How much of the conversation is kept, in messages. Older
-// exchanges are dropped, so a long chat still fits the window.
-const historyLimit = 12;
-
-// The failure that means this browser cannot run the
-// assistant at all, as a class of its own: the submit handler
-// tells it apart from other failures by type, not by comparing
-// the localized message text.
-class UnsupportedError extends Error {}
-
-// The loaded engine, once there is one, and the conversation
-// so far (without the system message). Both live in the
-// module, not in the component, so they survive even a full
-// page load's new component.
-let engine: Engine | null = null;
-let history: Message[] | null = null;
-
-const loadHistory = (): Message[] => {
-  if (history) return history;
-  try {
-    const stored = sessionStorage.getItem(historyStorageKey);
-    const parsed: unknown = stored ? JSON.parse(stored) : [];
-    history = Array.isArray(parsed)
-      ? parsed.filter(
-          (message): message is Message =>
-            typeof message === "object" &&
-            message !== null &&
-            ((message as Message).role === "user" ||
-              (message as Message).role === "assistant") &&
-            typeof (message as Message).content === "string",
-        )
-      : [];
-  } catch {
-    history = [];
-  }
-  return history;
-};
-
-const saveHistory = (): void => {
-  try {
-    sessionStorage.setItem(historyStorageKey, JSON.stringify(loadHistory()));
-  } catch {
-    // The mirror is not kept; the conversation still lives in
-    // the module for this session.
-  }
-};
-
-// Import the library and ask it whether the model is
-// already in the browser's cache. Null when the library
-// itself cannot be loaded.
-const checkCache = async (): Promise<{
-  webllm: WebLLM;
-  cached: boolean;
-} | null> => {
-  try {
-    const webllm = (await import(
-      /* webpackIgnore: true */ libraryUrl
-    )) as WebLLM;
-    let cached = false;
-    try {
-      cached = await webllm.hasModelInCache(modelId);
-    } catch {
-      cached = false;
-    }
-    return { webllm, cached };
-  } catch {
-    return null;
-  }
-};
-
-// Drop the previous model from the browser's cache, when
-// the site's model has changed since the last visit, and
-// remember the current one. Neither a cache that cannot be
-// deleted nor storage that cannot be used is worth failing
-// the load over: both are simply left as they are.
-const dropPreviousModel = async (webllm: WebLLM): Promise<void> => {
-  let previous: string | null = null;
-  try {
-    previous = localStorage.getItem(modelStorageKey);
-  } catch {
-    previous = null;
-  }
-  if (previous !== null && previous !== modelId) {
-    try {
-      await webllm.deleteModelAllInfoInCache(previous);
-    } catch {
-      // The old cache stays.
-    }
-  }
-  try {
-    localStorage.setItem(modelStorageKey, modelId);
-  } catch {
-    // The record is not kept.
-  }
-};
 
 export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // The messages on display, the status line's text (null
@@ -224,7 +89,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     }
     const conversation = loadHistory();
     conversation.push({ role: "assistant", content: reply });
-    history = conversation.slice(-historyLimit);
+    trimHistory();
     // Keep what is on screen in step with what survives a reload.
     setLog((previous) => previous.slice(-historyLimit));
     saveHistory();
@@ -248,16 +113,18 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     // A retry must not keep an earlier failure's message on screen.
     setStatus(null);
     try {
-      if (!engine) {
+      let activeEngine = getEngine();
+      if (!activeEngine) {
         if (!navigator.gpu)
           throw new UnsupportedError(liveStrings().unsupported);
         const found = await checkCache();
         if (!found) throw new Error(liveStrings().error);
         await dropPreviousModel(found.webllm);
-        engine = await createEngine(found);
+        activeEngine = await createEngine(found);
+        setEngine(activeEngine);
         setStatus(null);
       }
-      await generate(engine);
+      await generate(activeEngine);
     } catch (error) {
       loadHistory().pop();
       saveHistory();
@@ -270,9 +137,10 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
           ? liveStrings().unsupported
           : liveStrings().error,
       );
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
     }
-    busyRef.current = false;
-    setBusy(false);
   };
 
   // The box's texts, read from the section's own data
