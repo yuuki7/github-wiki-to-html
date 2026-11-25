@@ -77,6 +77,7 @@ export default async function RouteShell({
   // stub, which the shell leaves bare, like a stub route.
   if (route.entry.data.kind !== "article") return <>{children}</>;
   const data = await articlePageDataFull(route.entry, route.lang);
+  if (data.isRedirect) return <>{children}</>;
   const ui = data.ui;
   return (
     <>
@@ -86,7 +87,7 @@ export default async function RouteShell({
         alternates={data.articleLinks}
         canonical={data.canonical}
         ogType="article"
-        {...(data.meta ? { meta: data.meta } : {})}
+        meta={data.meta}
       >
         {data.xDefaultHref && (
           <link rel="alternate" hrefLang="x-default" href={data.xDefaultHref} />

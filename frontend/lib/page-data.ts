@@ -111,18 +111,22 @@ async function computeHomePageData(lang: string): Promise<HomePageData> {
   };
 }
 
-export interface ArticlePageDataFull {
-  ui: UiStrings;
-  isRedirect: boolean;
-  articleLinks: AlternateLink[];
-  targetHref: string | undefined;
-  canonical: string;
-  meta: ArticleMetaProps | undefined;
-  xDefaultHref: string | undefined;
-  footer: FooterData;
-  body: ReactNode;
-  headings: Heading[];
-}
+export type ArticlePageDataFull =
+  | {
+      isRedirect: true;
+      targetHref: string;
+    }
+  | {
+      ui: UiStrings;
+      isRedirect: false;
+      articleLinks: AlternateLink[];
+      canonical: string;
+      meta: ArticleMetaProps;
+      xDefaultHref: string | undefined;
+      footer: FooterData;
+      body: ReactNode;
+      headings: Heading[];
+    };
 
 // The language relationships one article entry carries, derived
 // from itself and the whole collection: the original language,
@@ -201,17 +205,21 @@ async function computeArticlePageDataFull(
   const base = articlePageData(entry, entries, lang);
 
   if (base.isRedirect || entry.data.kind !== "article") {
+    // A redirect's entry always names its target — the schema
+    // requires target_slug — so its href is always here, and
+    // the callers turn every other non-article entry away
+    // before asking. Anything else reaching this branch is a
+    // broken entry: fail, rather than invent a destination
+    // for the reader.
+    const targetHref = base.targetHref;
+    if (targetHref === undefined) {
+      throw new Error(
+        `${entry.id}: non-article entry without a redirect target`,
+      );
+    }
     return {
-      ui,
       isRedirect: true,
-      articleLinks: base.articleLinks,
-      targetHref: base.targetHref,
-      canonical: "",
-      meta: undefined,
-      xDefaultHref: undefined,
-      footer: { body: undefined, editHref: "", editLabel: "" },
-      body: undefined,
-      headings: [],
+      targetHref,
     };
   }
 
@@ -229,7 +237,6 @@ async function computeArticlePageDataFull(
     ui,
     isRedirect: false,
     articleLinks: base.articleLinks,
-    targetHref: undefined,
     canonical: absoluteUrl(
       pageHref(lang, entry.data.slug, entry.data.translation ?? false),
     ),

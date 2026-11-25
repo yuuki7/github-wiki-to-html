@@ -47,7 +47,7 @@ for (const info of bundledLanguagesInfo) {
 // code, whose characters are exact, and raw HTML are not
 // text nodes and keep the characters they were written with.
 
-const smartify = (value: string): string => {
+export const smartify = (value: string): string => {
   let out = "";
   let i = 0;
   while (i < value.length) {
