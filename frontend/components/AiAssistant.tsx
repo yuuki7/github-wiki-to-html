@@ -304,30 +304,42 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     window.addEventListener("pointerup", onUp);
   };
 
-  // The handle at the window's bottom right corner resizes
-  // a floating window, within a minimum the form needs.
-  const onResizePointerDown = (event: React.PointerEvent) => {
-    event.preventDefault();
-    const start = {
-      x: event.clientX,
-      y: event.clientY,
-      width: rect.width,
-      height: rect.height,
+  // The handles at the window's top left and bottom right
+  // corners resize a floating window, within a minimum the
+  // form needs. The bottom right handle grows the window
+  // from its place; the top left handle holds the bottom
+  // right corner still and moves the window with its edge.
+  const onResizePointerDown =
+    (corner: "top-left" | "bottom-right") => (event: React.PointerEvent) => {
+      event.preventDefault();
+      const start = { x: event.clientX, y: event.clientY, rect };
+      const onMove = (move: PointerEvent) => {
+        const dx = move.clientX - start.x;
+        const dy = move.clientY - start.y;
+        if (corner === "bottom-right") {
+          setRect({
+            ...start.rect,
+            width: Math.max(260, start.rect.width + dx),
+            height: Math.max(200, start.rect.height + dy),
+          });
+        } else {
+          const width = Math.max(260, start.rect.width - dx);
+          const height = Math.max(200, start.rect.height - dy);
+          setRect({
+            left: start.rect.left + start.rect.width - width,
+            top: start.rect.top + start.rect.height - height,
+            width,
+            height,
+          });
+        }
+      };
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
     };
-    const onMove = (move: PointerEvent) => {
-      setRect((previous) => ({
-        ...previous,
-        width: Math.max(260, start.width + move.clientX - start.x),
-        height: Math.max(200, start.height + move.clientY - start.y),
-      }));
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-  };
 
   const toggleMaximized = () => {
     if (placement === "maximized") {
@@ -392,12 +404,21 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
                   stroke="currentColor"
                   strokeWidth="1.75"
                   strokeLinecap="round"
+                  strokeLinejoin="round"
                   aria-hidden="true"
                 >
                   {placement === "maximized" ? (
-                    <path d="M9 4v5H4M20 15h-5v5M4 9h5V4M15 20v-5h5" />
+                    <>
+                      <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+                      <path d="m21 21-9-9" />
+                      <path d="M21 15v6h-6" />
+                    </>
                   ) : (
-                    <path d="M9 4H4v5M20 9V4h-5M4 15v5h5M15 20h5v-5" />
+                    <>
+                      <path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6" />
+                      <path d="m3 3 9 9" />
+                      <path d="M3 9V3h6" />
+                    </>
                   )}
                 </svg>
               </button>
@@ -465,10 +486,16 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             </form>
           )}
           {placement === "floating" && (
-            <div
-              className="ai-assistant__resize"
-              onPointerDown={onResizePointerDown}
-            />
+            <>
+              <div
+                className="ai-assistant__resize ai-assistant__resize--top-left"
+                onPointerDown={onResizePointerDown("top-left")}
+              />
+              <div
+                className="ai-assistant__resize"
+                onPointerDown={onResizePointerDown("bottom-right")}
+              />
+            </>
           )}
         </div>
       )}
