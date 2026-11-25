@@ -471,21 +471,21 @@ body {
   }
 
   /* The menu's toggle: a hamburger button, bordered like
-     the shell's other buttons, the icon beside the label.
-     The default marker goes — the icon is the indicator:
-     the hamburger while the menu is closed, a cross while
-     it is open. Its line height is the font's own, not the
-     page's prose measure: centring the icon on the label's
-     line box would set it above the glyphs themselves,
-     whose centre the em box's centre matches. */
+     the shell's other buttons, the icon beside the label in
+     the line's own flow. The default marker goes — the icon
+     is the indicator: the hamburger while the menu is
+     closed, a cross while it is open. The icon's vertical
+     alignment (see .left-sidebar__icon) centres it on the
+     label's cap-height band: this serif sets its glyphs
+     high in the em box, so centring on the box, as a flex
+     row would, sets the icon visibly below the glyphs
+     themselves. */
   .left-sidebar > details > summary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4em;
+    display: inline-block;
     line-height: 1;
-    padding: 0.3em 0.55em;
+    padding: 0.5em 0.9em;
     border: 1px solid var(--border-color);
-    border-radius: 0.375em;
+    border-radius: 999px;
     background-color: var(--surface-color);
     list-style: none;
     cursor: pointer;
@@ -495,10 +495,16 @@ body {
     display: none;
   }
 
+  /* The vertical alignment lowers the icon by half the
+     difference between its height and the cap height,
+     which centres it on the cap-height band (see the
+     toggle's rule above), in any font and at any size. */
   .left-sidebar__icon {
-    display: block;
+    display: inline-block;
     width: 1.4em;
     height: 1.4em;
+    margin-inline-end: 0.4em;
+    vertical-align: calc((1cap - 1.4em) / 2);
   }
 
   .left-sidebar__icon--close {
@@ -510,7 +516,7 @@ body {
   }
 
   .left-sidebar > details[open] .left-sidebar__icon--close {
-    display: block;
+    display: inline-block;
   }
 
   /* The menu is a menu here: a closed one hides its
@@ -548,8 +554,15 @@ body {
   background-color: #208638;
   color: #fff;
   font-family:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, sans-serif;
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   font-size: 0.9rem;
   opacity: 0;
   transition: opacity 0.2s;

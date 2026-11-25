@@ -118,22 +118,22 @@ export default function Shell({
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.75"
                   strokeLinecap="round"
                   aria-hidden="true"
                 >
-                  <path d="M4 7h16M4 12h16M4 17h16" />
+                  <path d="M4 7h16M4 12h10M4 17h13" />
                 </svg>
                 <svg
                   className="left-sidebar__icon left-sidebar__icon--close"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.75"
                   strokeLinecap="round"
                   aria-hidden="true"
                 >
-                  <path d="M6 6l12 12M18 6L6 18" />
+                  <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
                 {leftSidebarLabel}
               </summary>
