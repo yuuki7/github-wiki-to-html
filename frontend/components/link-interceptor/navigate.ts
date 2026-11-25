@@ -26,17 +26,33 @@ function rememberScroll(): void {
   }
 }
 
-// The mathematics in the new article, typeset as it would
-// have been had the page loaded in full. MathJax may not
-// have loaded, or may have failed to: the article reads
-// without it, as an untypeset page does.
-async function typesetArticle(): Promise<void> {
+// The mathematics in the article now in place, typeset by
+// the shell: MathJax is configured not to typeset on its
+// own, so a page reached by a full load is typeset from
+// here too, once the framework has hydrated it — typesetting
+// before that would race the hydration and be thrown away
+// with the article it rewrote. MathJax may not have loaded,
+// or may have failed to: the article reads without it, as an
+// untypeset page does.
+export async function typesetArticle(): Promise<void> {
   try {
-    const mathJax = (
-      window as unknown as {
-        MathJax?: { typesetPromise?: (elements: Element[]) => Promise<void> };
-      }
-    ).MathJax;
+    const readMathJax = () =>
+      (
+        window as unknown as {
+          MathJax?: {
+            startup?: { promise?: Promise<void> };
+            typesetPromise?: (elements: Element[]) => Promise<void>;
+          };
+        }
+      ).MathJax;
+    // On a full load this call can come while MathJax is
+    // still starting: its typesetting function is attached
+    // only when the startup completes, which the startup
+    // promise settles with. Wait for that first, then
+    // typeset. On a later navigation the promise has long
+    // settled, and waiting costs nothing.
+    await readMathJax()?.startup?.promise;
+    const mathJax = readMathJax();
     const main = document.querySelector(".main");
     if (mathJax?.typesetPromise && main) {
       await mathJax.typesetPromise([main]);

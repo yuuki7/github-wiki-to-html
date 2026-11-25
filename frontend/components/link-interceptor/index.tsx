@@ -22,7 +22,7 @@ import { useEffect } from "react";
 // or read: the swap is an enhancement of plain navigation,
 // never a prerequisite for it.
 
-import { enhanceCodeBlocks, navigate } from "./navigate";
+import { enhanceCodeBlocks, navigate, typesetArticle } from "./navigate";
 
 export default function LinkInterceptor() {
   useEffect(() => {
@@ -67,9 +67,11 @@ export default function LinkInterceptor() {
     document.addEventListener("click", onClick);
     window.addEventListener("popstate", onPopState);
     // The page first loaded is enhanced as a swapped-in page
-    // is; a change of window size can make a block begin or
-    // cease to overflow, so the check runs again then.
+    // is, and its mathematics typeset likewise; a change of
+    // window size can make a block begin or cease to
+    // overflow, so the check runs again then.
     enhanceCodeBlocks();
+    void typesetArticle();
     window.addEventListener("resize", enhanceCodeBlocks);
     return () => {
       document.removeEventListener("click", onClick);

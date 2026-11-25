@@ -23,6 +23,7 @@ interface MathDocument {
 // The configuration itself, as MathJax reads it from
 // window.MathJax.
 interface MathJaxConfig {
+  startup: { typeset: boolean };
   loader: { load: string[] };
   tex: { inlineMath: [string, string][] };
   output: { fontExtensions: string[] };
@@ -38,6 +39,19 @@ interface Window {
 }
 
 window.MathJax = {
+  startup: {
+    // MathJax does not typeset on its own. On a full load its
+    // typesetting races the framework's hydration of the same
+    // article: when MathJax finishes first — the warm-cache
+    // case, where its scripts and components come from the
+    // cache — hydration finds the article rewritten under it,
+    // throws it away, and the typeset mathematics goes with
+    // it. So the shell typesets every page itself, once the
+    // page is in place, as it already does for a page swapped
+    // in by navigation.
+    typeset: false,
+  },
+
   loader: {
     load: ["input/tex", "output/chtml"],
   },

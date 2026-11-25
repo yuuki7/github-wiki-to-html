@@ -433,21 +433,21 @@ body {
    this width the main column — half the viewport in the
    three-column grid — falls under about fifty characters and
    the side columns squeeze it further, so the columns stack
-   at full width instead, in reading order: header, the left
-   sidebar, the article, the right sidebar, footer. The left
-   sidebar's row goes before the article's, not after it —
-   above the title as well, so the main column's span needs
-   no third row and the two never overlap. The left sidebar
-   stops sticking, and as a <details> it is a collapsible
-   menu here: its summary, hidden on wide screens, is the
-   toggle, and the menu starts closed, so the article is
-   what the reader meets first. The right sidebar keeps its
-   place below the article, as it is. */
+   at full width instead, in reading order: header, the
+   article, the right sidebar, footer. The left sidebar
+   leaves the flow: as a <details> it is a collapsible menu
+   here, its summary — hidden on wide screens — floats at
+   the page's bottom left as the toggle, and its content
+   opens as a panel over the page, so the menu takes no
+   row of its own and the rows that remain keep the wide
+   layout's gaps. The menu starts closed, so the article
+   is what the reader meets first. The right sidebar keeps
+   its place below the article, as it is. */
 @media (max-width: 60rem) {
   body {
     grid-template-columns: 1fr;
     grid-template-rows:
-      [header] auto [left-sidebar] auto [article-header] auto
+      [header] auto [article-header] auto
       [article-main] auto [right-sidebar] auto [footer] auto;
   }
 
@@ -465,9 +465,17 @@ body {
     max-width: none;
   }
 
+  /* Out of the flow, like its toggle and its panel: the
+     aside is their container, and nothing of it is laid
+     out in the page. Its z-index is the panel's own, one
+     level up: as a fixed box the aside is a stacking
+     context, so a z-index on the panel would order the
+     panel only within the aside, and the article's
+     positioned pieces — a formula's fractions and roots
+     above all — would paint over both. */
   .left-sidebar {
-    grid-row: left-sidebar;
-    position: static;
+    position: fixed;
+    z-index: 40;
   }
 
   /* The menu's toggle: a pill button that floats at the
