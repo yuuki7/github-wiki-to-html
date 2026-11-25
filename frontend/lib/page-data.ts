@@ -205,9 +205,21 @@ async function computeArticlePageDataFull(
   const base = articlePageData(entry, entries, lang);
 
   if (base.isRedirect || entry.data.kind !== "article") {
+    // A redirect's entry always names its target — the schema
+    // requires target_slug — so its href is always here, and
+    // the callers turn every other non-article entry away
+    // before asking. Anything else reaching this branch is a
+    // broken entry: fail, rather than invent a destination
+    // for the reader.
+    const targetHref = base.targetHref;
+    if (targetHref === undefined) {
+      throw new Error(
+        `${entry.id}: non-article entry without a redirect target`,
+      );
+    }
     return {
       isRedirect: true,
-      targetHref: base.targetHref ?? homeHref(lang),
+      targetHref,
     };
   }
 

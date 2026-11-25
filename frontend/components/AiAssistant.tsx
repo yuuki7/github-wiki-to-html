@@ -19,6 +19,20 @@ import {
 } from "../lib/ai-client";
 import type { AiStrings } from "../lib/types";
 
+// The AI box in a page's right sidebar: one question form,
+// answered by a small language model that runs entirely in
+// the reader's browser, through WebLLM. Nothing is sent to a
+// server. The library and the model are loaded when the
+// reader first submits the form. The form is rendered once
+// the component has mounted: without script there is no form,
+// rather than a form that does nothing.
+//
+// The box is part of the app's frame, not of the page: the
+// frame stays mounted while the reader moves between pages,
+// so the box's own state — the question being typed above
+// all — is kept by the box itself staying in place. The
+// engine and the conversation live in lib/ai-client.ts.
+
 export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // The messages on display, the status line's text (null
   // hides it), and whether the model is busy. The form exists
@@ -37,7 +51,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   }, []);
 
   // The article's text, as the reader sees it, cut to the
-  // limit above.
+  // limit the model can read (lib/ai-client.ts).
   const articleText = (): string =>
     (
       document.querySelector<HTMLElement>(".article__main")?.innerText ?? ""
