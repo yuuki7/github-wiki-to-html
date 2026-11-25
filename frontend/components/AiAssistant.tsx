@@ -33,11 +33,12 @@ import type { AiStrings } from "../lib/types";
 // out of that corner; its default place is the bottom
 // right, with a margin from the page's edges. The reader
 // can drag the window by its heading and put it anywhere on
-// the screen, resize it, or maximize it; minimizing it back
-// to the button forgets where it was, so opening it again
-// is also how it is returned to its default place. The
-// article never moves for it: the window floats over the
-// page, and only the window moves.
+// the screen, resize it from any edge or corner, and centre
+// it from the heading; minimizing it back to the button
+// keeps where it was, so it opens again where it left off,
+// and the default place is where a freshly loaded page
+// puts it. The article never moves for it: the window
+// floats over the page, and only the window moves.
 //
 // The box is part of the app's frame, not of the page: the
 // frame stays mounted while the reader moves between pages,
@@ -205,8 +206,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   };
 
   // The window's placement: minimized to its launcher
-  // button, floating where the reader has put it, or
-  // maximized. The placement is the box's own state, so it
+  // button, or floating where the reader has put it.
+  // The placement is the box's own state, so it
   // is kept like the rest of the box's state while the
   // reader moves between pages. The rectangle is in
   // viewport coordinates. The box's element itself stays
@@ -219,9 +220,9 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     width: number;
     height: number;
   }
-  const [placement, setPlacement] = useState<
-    "minimized" | "floating" | "maximized"
-  >("minimized");
+  const [placement, setPlacement] = useState<"minimized" | "floating">(
+    "minimized",
+  );
   const [rect, setRect] = useState<WindowRect>({
     left: 0,
     top: 0,
@@ -257,25 +258,25 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
   };
 
-  // The launcher's click: the window opens at its default
-  // place. A rectangle is present only while the window is
-  // open, so an opening always starts from the default.
+  // The launcher's click: the window opens where it last
+  // was. Its rectangle survives minimizing, so only an
+  // opening on a freshly loaded page — no rectangle yet —
+  // starts from the default place.
   const openWindow = () => {
     if (rect.width === 0) setRect(homeRect());
     setPlacement("floating");
   };
 
-  // Minimizing forgets the window's place and size. That
-  // is also how the window is returned to its default
-  // place: minimize it, and open it again.
+  // Minimizing keeps the window's place and size: the
+  // reader's arrangement is worth more than the default
+  // place, and the default is still there — it is where
+  // a freshly loaded page opens the window.
   const minimizeWindow = () => {
-    setRect({ left: 0, top: 0, width: 0, height: 0 });
     setPlacement("minimized");
   };
 
-  // Dragging the heading moves the window, maximized as
-  // well as floating. The window is kept partly on screen
-  // however far it is dragged.
+  // Dragging the heading moves the window. The window is
+  // kept partly on screen however far it is dragged.
   const onHeadingPointerDown = (event: React.PointerEvent) => {
     if ((event.target as Element).closest("button")) return;
     const box = windowRef.current?.getBoundingClientRect();
@@ -304,31 +305,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     window.addEventListener("pointerup", onUp);
   };
 
-  // The maximized window's place: over the page's central
-  // column, a margin in from the screen's top and bottom.
-  // The column is where the reading happens; the window
-  // covers it, and no more of the page than that.
-  const columnRect = (): WindowRect => {
-    const margin = 24;
-    const main = document.querySelector(".main")?.getBoundingClientRect();
-    if (!main) {
-      return {
-        left: margin,
-        top: margin,
-        width: window.innerWidth - margin * 2,
-        height: window.innerHeight - margin * 2,
-      };
-    }
-    return {
-      left: main.left,
-      top: margin,
-      width: main.width,
-      height: window.innerHeight - margin * 2,
-    };
-  };
-
   // The handles on the window's edges and corners resize
-  // it, maximized as well as floating. A handle moves its
+  // it. A handle moves its
   // own edge and holds the opposite one still. A size
   // keeps a minimum the form needs, and growth stops at
   // the screen's edge: a window is never enlarged past
@@ -396,15 +374,38 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       window.addEventListener("pointerup", onUp);
     };
 
-  // Maximizing is one way: the maximized window offers
-  // no road back to the rectangle it came from, only the
-  // minimize button — a second shrinking button beside it
-  // would read as the same act and confuse the two. The
-  // way home is the one already established: minimize,
-  // and open again at the default place.
-  const maximizeWindow = () => {
+  // The centred window's place and size: over the page's
+  // central column, a margin in from the screen's top and
+  // bottom. The column is where the reading happens; the
+  // window covers it, centred, and no more of the page
+  // than that.
+  const columnRect = (): WindowRect => {
+    const margin = 24;
+    const main = document.querySelector(".main")?.getBoundingClientRect();
+    if (!main) {
+      return {
+        left: margin,
+        top: margin,
+        width: window.innerWidth - margin * 2,
+        height: window.innerHeight - margin * 2,
+      };
+    }
+    return {
+      left: main.left,
+      top: margin,
+      width: main.width,
+      height: window.innerHeight - margin * 2,
+    };
+  };
+
+  // The heading's other button takes the window to that
+  // fixed size and centres it there: larger than the
+  // default size, and the same whatever size the reader
+  // had given the window. It is always there, beside the
+  // minimize button: the window has no modes for it to
+  // change with.
+  const centerWindow = () => {
     setRect(columnRect());
-    setPlacement("maximized");
   };
 
   return (
@@ -430,7 +431,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       ) : (
         <div
           ref={windowRef}
-          className={`ai-assistant__window ai-assistant__window--${placement}`}
+          className="ai-assistant__window"
           style={{
             left: rect.left,
             top: rect.top,
@@ -444,28 +445,29 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
           >
             <h2 className="ai-assistant__title">🧸</h2>
             <div className="ai-assistant__controls">
-              {placement === "floating" && (
-                <button
-                  type="button"
-                  className="ai-assistant__control"
-                  aria-label="Maximize"
-                  onClick={maximizeWindow}
+              <button
+                type="button"
+                className="ai-assistant__control"
+                aria-label="Center"
+                onClick={centerWindow}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6" />
-                    <path d="m3 3 9 9" />
-                    <path d="M3 9V3h6" />
-                  </svg>
-                </button>
-              )}
+                  <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" />
+                  <path
+                    d="M11 11h2v2h-2v-2"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                </svg>
+              </button>
               <button
                 type="button"
                 className="ai-assistant__control"

@@ -368,10 +368,10 @@ body {
    the bottom left. The button opens the window at its
    default place, the same corner; from there the window
    can be dragged anywhere by its heading, resized at any
-   edge or corner, or maximized over the page's central
-   column; minimizing it back to the button forgets where
-   it was, so opening it again returns it to its default
-   place. The
+   edge or corner, and centred from its heading; minimizing
+   it back to the button keeps where it was, so it opens
+   again where it left off, and the default place is where
+   a freshly loaded page puts it. The
    article never moves for it. The window is a column: the
    heading, the conversation scrolling between, and the
    form at the bottom, and it grows out of its own bottom
