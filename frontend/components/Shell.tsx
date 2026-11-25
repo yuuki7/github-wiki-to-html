@@ -6,6 +6,7 @@ import type { AiStrings, AlternateLink } from "../lib/types";
 import AiAssistant from "./AiAssistant";
 import CodeCopy from "./CodeCopy";
 import LinkInterceptor from "./link-interceptor";
+import MenuDismiss from "./MenuDismiss";
 
 // The shell of the app: everything around the article — the
 // scripts, the header with the language switcher, the two
@@ -156,6 +157,7 @@ export default function Shell({
 
       <LinkInterceptor />
       <CodeCopy />
+      <MenuDismiss />
     </>
   );
 }

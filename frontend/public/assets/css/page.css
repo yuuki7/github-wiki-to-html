@@ -470,23 +470,29 @@ body {
     position: static;
   }
 
-  /* The menu's toggle: a hamburger button, bordered like
-     the shell's other buttons, the icon beside the label in
-     the line's own flow. The default marker goes — the icon
-     is the indicator: the hamburger while the menu is
-     closed, a cross while it is open. The icon's vertical
-     alignment (see .left-sidebar__icon) centres it on the
-     label's cap-height band: this serif sets its glyphs
-     high in the em box, so centring on the box, as a flex
-     row would, sets the icon visibly below the glyphs
-     themselves. */
+  /* The menu's toggle: a pill button that floats at the
+     page's bottom left, always on screen, bordered like
+     the shell's other buttons, the icon beside the label
+     in the line's own flow. The default marker goes —
+     the icon is the indicator: the lines while the menu
+     is closed, a cross while it is open. The icon's
+     vertical alignment (see .left-sidebar__icon) centres
+     it on the label's cap-height band: this serif sets
+     its glyphs high in the em box, so centring on the
+     box, as a flex row would, sets the icon visibly
+     below the glyphs themselves. */
   .left-sidebar > details > summary {
     display: inline-block;
+    position: fixed;
+    inset-block-end: max(1rem, env(safe-area-inset-bottom));
+    inset-inline-start: var(--body-margin-horizontal);
+    z-index: 41;
     line-height: 1;
     padding: 0.5em 0.9em;
     border: 1px solid var(--border-color);
     border-radius: 999px;
     background-color: var(--surface-color);
+    box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
     list-style: none;
     cursor: pointer;
   }
@@ -525,6 +531,47 @@ body {
      its content under that same rule. */
   .left-sidebar > details:not([open])::details-content {
     content-visibility: hidden;
+  }
+
+  /* An open menu floats over the page: a panel in from
+     the left, 85% of the page wide and the full height
+     of the screen, so the article beneath stays where
+     it was instead of being pushed down. The toggle
+     floats above the panel's bottom left corner, as
+     the panel's own close button, and the page behind
+     does not scroll while the menu is open. The
+     panel's bottom padding keeps its last entries
+     clear of the toggle. */
+  .left-sidebar > details[open]::details-content {
+    position: fixed;
+    inset: 0 auto 0 0;
+    box-sizing: border-box;
+    width: 85vw;
+    overflow-y: auto;
+    padding: 1rem 1rem 4.5rem;
+    background-color: var(--surface-color);
+    box-shadow: 0.5rem 0 1.5rem rgb(0 0 0 / 0.18);
+    z-index: 40;
+  }
+
+  body:has(.left-sidebar > details[open]) {
+    overflow: hidden;
+  }
+
+  /* The menu's entries — the table of contents on an
+     article, the article list on the home page — are
+     tap targets in the panel: roomier rows than the
+     sidebar's, so a finger finds one entry at a time,
+     and the same rows on both pages. */
+  .left-sidebar li {
+    padding-block: 0.35em;
+  }
+
+  /* The floating toggle overlays the page's bottom
+     left corner; the footer's bottom padding lets
+     the end of the page scroll clear of it. */
+  .footer {
+    padding-bottom: 5rem;
   }
 
   .right-sidebar {
