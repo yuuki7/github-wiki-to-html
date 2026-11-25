@@ -213,6 +213,7 @@ export interface UiStrings {
   aiSend: string;
   aiUnsupported: string;
   aiError: string;
+  aiMessage: string;
 }
 
 const UI_STRINGS: Record<string, UiStrings> = {
@@ -230,6 +231,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiUnsupported:
       "This browser does not support WebGPU, so the assistant cannot run.",
     aiError: "Something went wrong. Please try again.",
+    aiMessage: "Message",
   },
   ja: {
     editPage: "このページを編集",
@@ -245,6 +247,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiUnsupported:
       "このブラウザはWebGPUに対応していないため、AIアシスタントは動作しません。",
     aiError: "問題が発生しました。もう一度お試しください。",
+    aiMessage: "メッセージ",
   },
   de: {
     editPage: "Diese Seite bearbeiten",
@@ -260,6 +263,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiUnsupported:
       "Dieser Browser unterstützt kein WebGPU, daher kann der Assistent nicht laufen.",
     aiError: "Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.",
+    aiMessage: "Nachricht",
   },
   zh: {
     editPage: "编辑此页",
@@ -274,6 +278,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiSend: "发送",
     aiUnsupported: "此浏览器不支持 WebGPU，因此助手无法运行。",
     aiError: "出现问题。请再试一次。",
+    aiMessage: "消息",
   },
   "zh-hant": {
     editPage: "編輯此頁",
@@ -288,6 +293,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiSend: "傳送",
     aiUnsupported: "此瀏覽器不支援 WebGPU，因此助手無法運行。",
     aiError: "出現問題。請再試一次。",
+    aiMessage: "訊息",
   },
   ar: {
     editPage: "حرر هذه الصفحة",
@@ -302,6 +308,7 @@ const UI_STRINGS: Record<string, UiStrings> = {
     aiSend: "إرسال",
     aiUnsupported: "هذا المتصفح لا يدعم WebGPU، لذا لا يمكن للمساعد أن يعمل.",
     aiError: "حدث خطأ ما. حاول مرة أخرى.",
+    aiMessage: "رسالة",
   },
 } satisfies Record<SupportedLanguage, UiStrings>;
 
@@ -324,6 +331,7 @@ export function aiStringsFor(ui: UiStrings): AiStrings {
     send: ui.aiSend,
     unsupported: ui.aiUnsupported,
     error: ui.aiError,
+    message: ui.aiMessage,
   };
 }
 

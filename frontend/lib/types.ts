@@ -83,6 +83,7 @@ export interface AiStrings {
   send: string;
   unsupported: string;
   error: string;
+  message: string;
 }
 
 // The one redirect stub: its title, the language its link is

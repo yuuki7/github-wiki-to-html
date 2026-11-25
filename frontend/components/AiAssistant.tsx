@@ -186,17 +186,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       send: data?.send ?? strings.send,
       unsupported: data?.unsupported ?? strings.unsupported,
       error: data?.error ?? strings.error,
+      message: data?.message ?? strings.message,
     };
   };
 
-  // The conversation's end stays in view as it grows: the
-  // log scrolls within the window, and a new message — the
-  // reader's own above all — is no use below the fold.
   const logRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = logRef.current;
-    if (element) element.scrollTop = element.scrollHeight;
-  }, [log]);
 
   // Enter sends; Shift+Enter makes a new line, and an Enter
   // that only confirms a conversion of the reader's input
@@ -214,13 +208,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // button, floating where the reader has put it, or
   // maximized. The placement is the box's own state, so it
   // is kept like the rest of the box's state while the
-  // reader moves between pages. The floating rectangle is
-  // in viewport coordinates; the restore entry remembers
-  // the rectangle a maximized window came from. The box's
-  // element itself stays where the layout puts it and takes
-  // no room: the button and the window both float over the
-  // page, so the right sidebar the element sits in is left
-  // blank.
+  // reader moves between pages. The rectangle is in
+  // viewport coordinates. The box's element itself stays
+  // where the layout puts it and takes no room: the button
+  // and the window both float over the page, so the right
+  // sidebar the element sits in is left blank.
   interface WindowRect {
     left: number;
     top: number;
@@ -236,8 +228,17 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     width: 0,
     height: 0,
   });
-  const restoreRef = useRef<WindowRect | null>(null);
   const windowRef = useRef<HTMLDivElement>(null);
+
+  // The conversation's end stays in view: the log scrolls
+  // within the window, a new message — the reader's own
+  // above all — is no use below the fold, and a window
+  // opened on an earlier conversation starts at its end,
+  // where the latest message is.
+  useEffect(() => {
+    const element = logRef.current;
+    if (element) element.scrollTop = element.scrollHeight;
+  }, [log, placement]);
 
   // The window's default place: the screen's bottom right
   // corner — the bottom left in a right-to-left language —
@@ -268,15 +269,14 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // is also how the window is returned to its default
   // place: minimize it, and open it again.
   const minimizeWindow = () => {
-    restoreRef.current = null;
     setRect({ left: 0, top: 0, width: 0, height: 0 });
     setPlacement("minimized");
   };
 
-  // Dragging the heading moves the window. The window is
-  // kept partly on screen however far it is dragged.
+  // Dragging the heading moves the window, maximized as
+  // well as floating. The window is kept partly on screen
+  // however far it is dragged.
   const onHeadingPointerDown = (event: React.PointerEvent) => {
-    if (placement === "maximized") return;
     if ((event.target as Element).closest("button")) return;
     const box = windowRef.current?.getBoundingClientRect();
     if (!box) return;
@@ -304,34 +304,89 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     window.addEventListener("pointerup", onUp);
   };
 
-  // The handles at the window's top left and bottom right
-  // corners resize a floating window, within a minimum the
-  // form needs. The bottom right handle grows the window
-  // from its place; the top left handle holds the bottom
-  // right corner still and moves the window with its edge.
+  // The maximized window's place: over the page's central
+  // column, a margin in from the screen's top and bottom.
+  // The column is where the reading happens; the window
+  // covers it, and no more of the page than that.
+  const columnRect = (): WindowRect => {
+    const margin = 24;
+    const main = document.querySelector(".main")?.getBoundingClientRect();
+    if (!main) {
+      return {
+        left: margin,
+        top: margin,
+        width: window.innerWidth - margin * 2,
+        height: window.innerHeight - margin * 2,
+      };
+    }
+    return {
+      left: main.left,
+      top: margin,
+      width: main.width,
+      height: window.innerHeight - margin * 2,
+    };
+  };
+
+  // The handles on the window's edges and corners resize
+  // it, maximized as well as floating. A handle moves its
+  // own edge and holds the opposite one still. A size
+  // keeps a minimum the form needs, and growth stops at
+  // the screen's edge: a window is never enlarged past
+  // the page, however far its handle is dragged. Moving
+  // the window itself is freer — the heading's drag keeps
+  // only a part of it on screen.
+  type ResizeHandle =
+    | "top-left"
+    | "top"
+    | "top-right"
+    | "right"
+    | "bottom-right"
+    | "bottom"
+    | "bottom-left"
+    | "left";
+  const resizeHandles: ResizeHandle[] = [
+    "top-left",
+    "top",
+    "top-right",
+    "right",
+    "bottom-right",
+    "bottom",
+    "bottom-left",
+    "left",
+  ];
   const onResizePointerDown =
-    (corner: "top-left" | "bottom-right") => (event: React.PointerEvent) => {
+    (handle: ResizeHandle) => (event: React.PointerEvent) => {
       event.preventDefault();
       const start = { x: event.clientX, y: event.clientY, rect };
+      const right = start.rect.left + start.rect.width;
+      const bottom = start.rect.top + start.rect.height;
+      const clampSize = (value: number, min: number, max: number) =>
+        Math.max(min, Math.min(value, Math.max(min, max)));
       const onMove = (move: PointerEvent) => {
         const dx = move.clientX - start.x;
         const dy = move.clientY - start.y;
-        if (corner === "bottom-right") {
-          setRect({
-            ...start.rect,
-            width: Math.max(260, start.rect.width + dx),
-            height: Math.max(200, start.rect.height + dy),
-          });
-        } else {
-          const width = Math.max(260, start.rect.width - dx);
-          const height = Math.max(200, start.rect.height - dy);
-          setRect({
-            left: start.rect.left + start.rect.width - width,
-            top: start.rect.top + start.rect.height - height,
-            width,
-            height,
-          });
+        let { left, top, width, height } = start.rect;
+        if (handle.includes("left")) {
+          width = clampSize(start.rect.width - dx, 260, right);
+          left = right - width;
+        } else if (handle.includes("right")) {
+          width = clampSize(
+            start.rect.width + dx,
+            260,
+            Math.min(window.innerWidth - start.rect.left, window.innerWidth),
+          );
         }
+        if (handle.includes("top")) {
+          height = clampSize(start.rect.height - dy, 200, bottom);
+          top = bottom - height;
+        } else if (handle.includes("bottom")) {
+          height = clampSize(
+            start.rect.height + dy,
+            200,
+            Math.min(window.innerHeight - start.rect.top, window.innerHeight),
+          );
+        }
+        setRect({ left, top, width, height });
       };
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
@@ -341,14 +396,14 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       window.addEventListener("pointerup", onUp);
     };
 
-  const toggleMaximized = () => {
-    if (placement === "maximized") {
-      if (restoreRef.current) setRect(restoreRef.current);
-      restoreRef.current = null;
-      setPlacement("floating");
-      return;
-    }
-    restoreRef.current = rect;
+  // Maximizing is one way: the maximized window offers
+  // no road back to the rectangle it came from, only the
+  // minimize button — a second shrinking button beside it
+  // would read as the same act and confuse the two. The
+  // way home is the one already established: minimize,
+  // and open again at the default place.
+  const maximizeWindow = () => {
+    setRect(columnRect());
     setPlacement("maximized");
   };
 
@@ -361,6 +416,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       data-send={strings.send}
       data-unsupported={strings.unsupported}
       data-error={strings.error}
+      data-message={strings.message}
     >
       {placement === "minimized" ? (
         <button
@@ -375,16 +431,12 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
         <div
           ref={windowRef}
           className={`ai-assistant__window ai-assistant__window--${placement}`}
-          style={
-            placement === "floating"
-              ? {
-                  left: rect.left,
-                  top: rect.top,
-                  width: rect.width,
-                  height: rect.height,
-                }
-              : undefined
-          }
+          style={{
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+          }}
         >
           <div
             className="ai-assistant__heading"
@@ -392,36 +444,28 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
           >
             <h2 className="ai-assistant__title">🧸</h2>
             <div className="ai-assistant__controls">
-              <button
-                type="button"
-                className="ai-assistant__control"
-                aria-label={placement === "maximized" ? "Restore" : "Maximize"}
-                onClick={toggleMaximized}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+              {placement === "floating" && (
+                <button
+                  type="button"
+                  className="ai-assistant__control"
+                  aria-label="Maximize"
+                  onClick={maximizeWindow}
                 >
-                  {placement === "maximized" ? (
-                    <>
-                      <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
-                      <path d="m21 21-9-9" />
-                      <path d="M21 15v6h-6" />
-                    </>
-                  ) : (
-                    <>
-                      <path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6" />
-                      <path d="m3 3 9 9" />
-                      <path d="M3 9V3h6" />
-                    </>
-                  )}
-                </svg>
-              </button>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6" />
+                    <path d="m3 3 9 9" />
+                    <path d="M3 9V3h6" />
+                  </svg>
+                </button>
+              )}
               <button
                 type="button"
                 className="ai-assistant__control"
@@ -459,7 +503,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             <form className="ai-assistant__form" onSubmit={onSubmit}>
               <textarea
                 className="ai-assistant__input"
-                placeholder="Message"
+                placeholder={strings.message}
                 rows={1}
                 value={draftText}
                 onChange={(event) => setDraftText(event.target.value)}
@@ -485,18 +529,13 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
               </button>
             </form>
           )}
-          {placement === "floating" && (
-            <>
-              <div
-                className="ai-assistant__resize ai-assistant__resize--top-left"
-                onPointerDown={onResizePointerDown("top-left")}
-              />
-              <div
-                className="ai-assistant__resize"
-                onPointerDown={onResizePointerDown("bottom-right")}
-              />
-            </>
-          )}
+          {resizeHandles.map((handle) => (
+            <div
+              key={handle}
+              className={`ai-assistant__resize ai-assistant__resize--${handle}`}
+              onPointerDown={onResizePointerDown(handle)}
+            />
+          ))}
         </div>
       )}
     </section>

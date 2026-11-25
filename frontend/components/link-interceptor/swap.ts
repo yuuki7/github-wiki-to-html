@@ -186,17 +186,28 @@ function swapFooter(newDocument: Document): void {
 // touched — its state is the reader's — but its texts are
 // the page's language's, so they are updated in place: the
 // section's data attributes, which the box reads its texts
-// from when it acts, and the send button's accessible name.
-// The input's placeholder is a constant, not a text of the
-// page's, and the button's face is an arrow, not a word, so
-// neither is swapped.
+// from when it acts, the input's placeholder, and the send
+// button's accessible name. The button's face is an arrow,
+// not a word, so the face itself needs no swap.
 function swapRightAside(newDocument: Document): void {
   const section = document.querySelector(".ai-assistant");
   const newSection = newDocument.querySelector(".ai-assistant");
   if (!section || !newSection) return;
-  for (const name of ["summarize", "loading", "send", "unsupported", "error"]) {
+  for (const name of [
+    "summarize",
+    "loading",
+    "send",
+    "unsupported",
+    "error",
+    "message",
+  ]) {
     const value = newSection.getAttribute(`data-${name}`);
     if (value !== null) section.setAttribute(`data-${name}`, value);
+  }
+  const input = section.querySelector(".ai-assistant__input");
+  const placeholder = newSection.getAttribute("data-message");
+  if (input && placeholder !== null) {
+    input.setAttribute("placeholder", placeholder);
   }
   const send = section.querySelector(".ai-assistant__send");
   const sendText = newSection.getAttribute("data-send");
