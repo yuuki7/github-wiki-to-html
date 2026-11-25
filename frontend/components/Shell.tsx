@@ -135,7 +135,7 @@ export default function Shell({
                 >
                   <path d="M6 6l12 12M18 6L6 18" />
                 </svg>
-                <span className="visually-hidden">{leftSidebarLabel}</span>
+                {leftSidebarLabel}
               </summary>
               {leftSidebar}
             </details>

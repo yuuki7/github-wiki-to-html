@@ -44,20 +44,6 @@ body {
   margin: 0 var(--body-margin-horizontal);
 }
 
-/* Not displayed, but read by assistive technology: the
-   label of a control whose visible form is an icon. */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
 /* Header */
 .header {
   grid-column: 2;
@@ -485,13 +471,18 @@ body {
   }
 
   /* The menu's toggle: a hamburger button, bordered like
-     the shell's other buttons, its label read by assistive
-     technology from the visually hidden text inside it. The
-     default marker goes — the icon is the indicator: the
-     hamburger while the menu is closed, a cross while it
-     is open. */
+     the shell's other buttons, the icon beside the label.
+     The default marker goes — the icon is the indicator:
+     the hamburger while the menu is closed, a cross while
+     it is open. Its line height is the font's own, not the
+     page's prose measure: centring the icon on the label's
+     line box would set it above the glyphs themselves,
+     whose centre the em box's centre matches. */
   .left-sidebar > details > summary {
     display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    line-height: 1;
     padding: 0.3em 0.55em;
     border: 1px solid var(--border-color);
     border-radius: 0.375em;

@@ -229,21 +229,27 @@ export function swapPage(newDocument: Document): void {
 
   swapHeader(newDocument);
 
+  // The language menu is the frame's one popover, and the
+  // header swap above leaves the element itself in place:
+  // a menu the reader chose a language from would otherwise
+  // stay open over the page they arrive at. A full load
+  // dismisses a popover; the swap does the same.
+  const languageMenu = document.querySelector("#language-switcher");
+  if (languageMenu?.matches(":popover-open")) {
+    (languageMenu as HTMLElement).hidePopover();
+  }
+
   // The left sidebar is an <aside> on every page; the menu
   // inside it — a <details> — is present only on pages that
   // have one: a page without a table of contents has none.
-  // When both pages have a menu, only its children are
-  // replaced, so whether the reader has it open on a narrow
-  // screen — a state of the element itself — survives the
-  // move; otherwise the aside's children are replaced whole.
+  // The aside's children are replaced whole, so the new
+  // page's menu arrives as the page itself has it: closed.
+  // A menu the reader opened belongs to the page they are
+  // leaving; the page they arrive at starts with its own
+  // menu closed, as a fresh load would leave it.
   const left = document.querySelector(".left-sidebar");
   const newLeft = newDocument.querySelector(".left-sidebar");
-  if (left && newLeft) {
-    const menu = left.querySelector(":scope > details");
-    const newMenu = newLeft.querySelector(":scope > details");
-    if (menu && newMenu) replaceChildrenFrom(menu, newMenu);
-    else replaceChildrenFrom(left, newLeft);
-  }
+  if (left && newLeft) replaceChildrenFrom(left, newLeft);
 
   const main = document.querySelector(".main");
   const newMain = newDocument.querySelector(".main");
