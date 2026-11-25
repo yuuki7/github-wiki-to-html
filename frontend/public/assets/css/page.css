@@ -44,6 +44,20 @@ body {
   margin: 0 var(--body-margin-horizontal);
 }
 
+/* Not displayed, but read by assistive technology: the
+   label of a control whose visible form is an icon. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Header */
 .header {
   grid-column: 2;
@@ -229,6 +243,30 @@ body {
   margin-top: 0;
 }
 
+/* The left sidebar's menu is a <details> inside the aside
+   (see Shell.tsx). On wide screens the menu is a plain
+   sidebar: its summary is not shown, and the content box a
+   closed <details> hides — ::details-content, which the
+   browser holds at content-visibility: hidden while the
+   element is closed — is stated visible, so the content
+   shows in full, open or not. The narrow layout below
+   states it hidden again, for the menu there. */
+.left-sidebar > details > summary {
+  display: none;
+}
+
+.left-sidebar > details::details-content {
+  content-visibility: visible;
+}
+
+/* The summary is the menu's first child, so the content
+   after it is no longer a :first-child: keep its top
+   margin at zero, as the rule above did when the content
+   came first. */
+.left-sidebar > details > summary + * {
+  margin-top: 0;
+}
+
 /* The lists in the left sidebar — the article list and the
    table of contents — are navigation, not bulleted content:
    no markers, and no marker indent either. */
@@ -408,18 +446,23 @@ body {
 /* Narrow viewports: the three columns stack into one. Below
    this width the main column — half the viewport in the
    three-column grid — falls under about fifty characters and
-   the side columns squeeze it further, so the sidebars move
-   below the article at full width instead, in reading order:
-   header, article, left sidebar, right sidebar, footer. The
-   left sidebar stops sticking. Turning the stacked sidebars
-   into collapsible menus is a further step, not part of this
-   stacking. */
+   the side columns squeeze it further, so the columns stack
+   at full width instead, in reading order: header, the left
+   sidebar, the article, the right sidebar, footer. The left
+   sidebar's row goes before the article's, not after it —
+   above the title as well, so the main column's span needs
+   no third row and the two never overlap. The left sidebar
+   stops sticking, and as a <details> it is a collapsible
+   menu here: its summary, hidden on wide screens, is the
+   toggle, and the menu starts closed, so the article is
+   what the reader meets first. The right sidebar keeps its
+   place below the article, as it is. */
 @media (max-width: 60rem) {
   body {
     grid-template-columns: 1fr;
     grid-template-rows:
-      [header] auto [article-header] auto [article-main] auto
-      [left-sidebar] auto [right-sidebar] auto [footer] auto;
+      [header] auto [left-sidebar] auto [article-header] auto
+      [article-main] auto [right-sidebar] auto [footer] auto;
   }
 
   .header,
@@ -439,6 +482,52 @@ body {
   .left-sidebar {
     grid-row: left-sidebar;
     position: static;
+  }
+
+  /* The menu's toggle: a hamburger button, bordered like
+     the shell's other buttons, its label read by assistive
+     technology from the visually hidden text inside it. The
+     default marker goes — the icon is the indicator: the
+     hamburger while the menu is closed, a cross while it
+     is open. */
+  .left-sidebar > details > summary {
+    display: inline-flex;
+    padding: 0.3em 0.55em;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375em;
+    background-color: var(--surface-color);
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .left-sidebar > details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .left-sidebar__icon {
+    display: block;
+    width: 1.4em;
+    height: 1.4em;
+  }
+
+  .left-sidebar__icon--close {
+    display: none;
+  }
+
+  .left-sidebar > details[open] .left-sidebar__icon--menu {
+    display: none;
+  }
+
+  .left-sidebar > details[open] .left-sidebar__icon--close {
+    display: block;
+  }
+
+  /* The menu is a menu here: a closed one hides its
+     content, against the wide screens' rule above. The
+     rule is for the closed state only — an open menu shows
+     its content under that same rule. */
+  .left-sidebar > details:not([open])::details-content {
+    content-visibility: hidden;
   }
 
   .right-sidebar {

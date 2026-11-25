@@ -5,7 +5,7 @@ import { articlePageDataFull, homePageData } from "../lib/page-data";
 import { routeFor } from "../lib/routes";
 import BaseHead from "./BaseHead";
 import Shell from "./Shell";
-import Toc from "./Toc";
+import Toc, { tocItems } from "./Toc";
 
 // The head and the shell for one route, rendered by the
 // layouts: a layout knows its route's segments, so it asks
@@ -48,22 +48,25 @@ export default async function RouteShell({
           isHome
           className="home"
           aiStrings={aiStringsFor(ui)}
+          leftSidebarLabel={ui.contents}
           leftSidebar={
-            <ul>
-              {data.listedEntries.map((entry) => (
-                <li key={entry.id}>
-                  <a
-                    href={pageHref(
-                      route.lang,
-                      entry.data.slug,
-                      entry.data.translation ?? false,
-                    )}
-                  >
-                    {entry.data.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            data.listedEntries.length > 0 ? (
+              <ul>
+                {data.listedEntries.map((entry) => (
+                  <li key={entry.id}>
+                    <a
+                      href={pageHref(
+                        route.lang,
+                        entry.data.slug,
+                        entry.data.translation ?? false,
+                      )}
+                    >
+                      {entry.data.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : undefined
           }
           footer={data.footer}
         >
@@ -97,7 +100,12 @@ export default async function RouteShell({
         language={route.entry.data.language}
         languageLinks={data.articleLinks}
         aiStrings={aiStringsFor(ui)}
-        leftSidebar={<Toc headings={data.headings} />}
+        leftSidebarLabel={ui.contents}
+        leftSidebar={
+          tocItems(data.headings).length > 0 ? (
+            <Toc headings={data.headings} />
+          ) : undefined
+        }
         footer={data.footer}
       >
         {children}

@@ -23,6 +23,17 @@ import LinkInterceptor from "./link-interceptor";
 // column, and the footer, and the wrapper only carries the
 // page's class, which the document's <body> cannot be given
 // per page in this framework.
+//
+// The left sidebar is an <aside> — the page's complementary
+// region, at every width — holding a <details>: on a narrow
+// screen the menu's summary is its one control, and the
+// menu sits before the article, closed; on a wide screen
+// the stylesheet shows no summary and keeps the content
+// always visible, so the menu is a plain sidebar there. A
+// page whose sidebar would be empty — an article with no
+// headings for its table of contents — passes no content,
+// and the aside stays empty, rather than holding a menu
+// that opens onto nothing.
 
 type Props = {
   language: string;
@@ -31,6 +42,7 @@ type Props = {
   className?: string;
   aiStrings: AiStrings;
   leftSidebar?: ReactNode;
+  leftSidebarLabel?: string;
   footer: FooterData;
   children: ReactNode;
 };
@@ -42,6 +54,7 @@ export default function Shell({
   className,
   aiStrings,
   leftSidebar,
+  leftSidebarLabel,
   footer,
   children,
 }: Props) {
@@ -96,7 +109,38 @@ export default function Shell({
           </nav>
         </header>
 
-        <aside className="left-sidebar">{leftSidebar}</aside>
+        <aside className="left-sidebar">
+          {leftSidebar && (
+            <details>
+              <summary>
+                <svg
+                  className="left-sidebar__icon left-sidebar__icon--menu"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+                <svg
+                  className="left-sidebar__icon left-sidebar__icon--close"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+                <span className="visually-hidden">{leftSidebarLabel}</span>
+              </summary>
+              {leftSidebar}
+            </details>
+          )}
+        </aside>
 
         <main className="main">{children}</main>
 

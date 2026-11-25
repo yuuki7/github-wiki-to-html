@@ -229,9 +229,21 @@ export function swapPage(newDocument: Document): void {
 
   swapHeader(newDocument);
 
+  // The left sidebar is an <aside> on every page; the menu
+  // inside it — a <details> — is present only on pages that
+  // have one: a page without a table of contents has none.
+  // When both pages have a menu, only its children are
+  // replaced, so whether the reader has it open on a narrow
+  // screen — a state of the element itself — survives the
+  // move; otherwise the aside's children are replaced whole.
   const left = document.querySelector(".left-sidebar");
   const newLeft = newDocument.querySelector(".left-sidebar");
-  if (left && newLeft) replaceChildrenFrom(left, newLeft);
+  if (left && newLeft) {
+    const menu = left.querySelector(":scope > details");
+    const newMenu = newLeft.querySelector(":scope > details");
+    if (menu && newMenu) replaceChildrenFrom(menu, newMenu);
+    else replaceChildrenFrom(left, newLeft);
+  }
 
   const main = document.querySelector(".main");
   const newMain = newDocument.querySelector(".main");
