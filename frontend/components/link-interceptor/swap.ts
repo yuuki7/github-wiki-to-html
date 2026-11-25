@@ -186,8 +186,10 @@ function swapFooter(newDocument: Document): void {
 // touched — its state is the reader's — but its texts are
 // the page's language's, so they are updated in place: the
 // section's data attributes, which the box reads its texts
-// from when it acts, the input's placeholder, and the send
-// button's label.
+// from when it acts, and the send button's accessible name.
+// The input's placeholder is a constant, not a text of the
+// page's, and the button's face is an arrow, not a word, so
+// neither is swapped.
 function swapRightAside(newDocument: Document): void {
   const section = document.querySelector(".ai-assistant");
   const newSection = newDocument.querySelector(".ai-assistant");
@@ -196,18 +198,9 @@ function swapRightAside(newDocument: Document): void {
     const value = newSection.getAttribute(`data-${name}`);
     if (value !== null) section.setAttribute(`data-${name}`, value);
   }
-  // The fetched document's box is its unmounted form — a
-  // heading only — so the visible labels are taken from the
-  // data attributes: the placeholder is the summarize text,
-  // and the button's label is the send text.
-  const input = section.querySelector(".ai-assistant__input");
-  const placeholder = newSection.getAttribute("data-summarize");
-  if (input && placeholder !== null) {
-    input.setAttribute("placeholder", placeholder);
-  }
   const send = section.querySelector(".ai-assistant__send");
   const sendText = newSection.getAttribute("data-send");
-  if (send && sendText !== null) setText(send, sendText);
+  if (send && sendText !== null) send.setAttribute("aria-label", sendText);
 }
 
 // Replace the page's own regions with the new document's,

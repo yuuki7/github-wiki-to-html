@@ -359,22 +359,120 @@ body {
   inset-inline-start: anchor(--language-menu-button start);
 }
 
-/* The AI box in an article's right sidebar. The box is a
-   heading until the script in public/ai-assistant.js adds its
-   form; the log's messages stack with a gap, and the reader's
-   own messages sit in a tinted block so the two sides of the
-   conversation read apart. */
-.ai-assistant__title {
-  font-size: 100%;
+/* The AI assistant: a launcher button and a window, both
+   floating over the page — the box's own element takes no
+   room in the layout, so the right sidebar it sits in is
+   left blank. Minimized, only the button shows, framed at
+   the page's bottom right corner with a margin from the
+   edges, mirroring the narrow screen's Contents button at
+   the bottom left. The button opens the window at its
+   default place, the same corner; from there the window
+   can be dragged anywhere by its heading, resized, or
+   maximized to cover nearly the whole screen; minimizing
+   it back to the button forgets where it was, so opening
+   it again returns it to its default place. The
+   article never moves for it. The window is a column: the
+   heading, the conversation scrolling between, and the
+   form at the bottom, and it grows out of its own bottom
+   corner as it opens. The form is rendered once the box's
+   script has mounted: without script there is no form,
+   rather than a form that does nothing. The log's messages
+   stack with a gap, and the reader's own messages sit in a
+   tinted block so the two sides of the conversation read
+   apart. */
+.ai-assistant__launcher {
+  position: fixed;
+  inset-inline-end: var(--body-margin-horizontal);
+  inset-block-end: max(1rem, env(safe-area-inset-bottom));
+  z-index: 50;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background-color: var(--surface-color);
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
+  line-height: 1;
+  cursor: pointer;
 }
 
-.ai-assistant__send {
-  padding: 0.25em 0.75em;
+/* The mark is sized on the span, not the button, so the
+   button's own font — the measure its ch-based inset is
+   taken in — stays the page's, and the inset lands where
+   the Contents button's does. */
+.ai-assistant__launcher span {
+  font-size: 1.5rem;
+}
+
+@keyframes ai-assistant-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.ai-assistant__window {
+  position: fixed;
+  z-index: 50;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
+  border-radius: 1rem;
   background-color: var(--surface-color);
-  font: inherit;
-  font-size: 85%;
+  box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 0.25);
+  transform-origin: 100% 100%;
+  animation: ai-assistant-grow 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-assistant__window {
+    animation: none;
+  }
+}
+
+.ai-assistant__window--maximized {
+  inset: 1rem;
+  width: auto;
+  height: auto;
+}
+
+.ai-assistant__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.ai-assistant__window--maximized .ai-assistant__heading {
+  cursor: default;
+}
+
+.ai-assistant__title {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.ai-assistant__controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.ai-assistant__control {
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  color: inherit;
   cursor: pointer;
+}
+
+.ai-assistant__control svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
 }
 
 .ai-assistant__status {
@@ -385,6 +483,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5em;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .ai-assistant__log:empty {
@@ -402,19 +503,72 @@ body {
   background-color: var(--muted-surface-color);
 }
 
+/* The form: one rounded field, the text area growing with
+   what is typed, and the send button a circle inside the
+   field's own corner — the standard shape of a chat input.
+   The button is the field's dark disc with an arrow while
+   there is something to send, and a faint one while there
+   is not. */
 .ai-assistant__form {
   display: flex;
-  gap: 0.5em;
-  margin-top: 0.5em;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 1.5rem;
 }
 
 .ai-assistant__input {
   flex: 1;
   min-width: 0;
-  padding: 0.25em 0.5em;
-  border: 1px solid var(--border-color);
+  padding: 0.35em 0;
+  border: none;
+  outline: none;
+  resize: none;
+  background: none;
   font: inherit;
   font-size: 90%;
+  field-sizing: content;
+  max-height: 8lh;
+  overflow-y: auto;
+}
+
+.ai-assistant__send {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgb(0 0 0 / 0.85);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ai-assistant__send svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  margin: auto;
+}
+
+.ai-assistant__send:disabled {
+  background-color: var(--muted-surface-color);
+  color: rgb(0 0 0 / 0.3);
+  cursor: default;
+}
+
+/* The resize handle: the window's bottom right corner,
+   an invisible square that only its cursor names. */
+.ai-assistant__resize {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: nwse-resize;
+  touch-action: none;
 }
 
 /* Table of contents: each depth steps the item in with a

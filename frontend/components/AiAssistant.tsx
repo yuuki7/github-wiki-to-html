@@ -19,13 +19,25 @@ import {
 } from "../lib/ai-client";
 import type { AiStrings } from "../lib/types";
 
-// The AI box in a page's right sidebar: one question form,
-// answered by a small language model that runs entirely in
-// the reader's browser, through WebLLM. Nothing is sent to a
-// server. The library and the model are loaded when the
-// reader first submits the form. The form is rendered once
-// the component has mounted: without script there is no form,
-// rather than a form that does nothing.
+// The AI box: one question form, answered by a small
+// language model that runs entirely in the reader's browser,
+// through WebLLM. Nothing is sent to a server. The library
+// and the model are loaded when the reader first submits the
+// form. The form is rendered once the component has mounted:
+// without script there is no form, rather than a form that
+// does nothing.
+//
+// The box starts minimized: a launcher button framed at a
+// page's bottom right corner, and nothing else. The button
+// opens the conversation as a floating window that grows
+// out of that corner; its default place is the bottom
+// right, with a margin from the page's edges. The reader
+// can drag the window by its heading and put it anywhere on
+// the screen, resize it, or maximize it; minimizing it back
+// to the button forgets where it was, so opening it again
+// is also how it is returned to its default place. The
+// article never moves for it: the window floats over the
+// page, and only the window moves.
 //
 // The box is part of the app's frame, not of the page: the
 // frame stays mounted while the reader moves between pages,
@@ -109,16 +121,16 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     saveHistory();
   };
 
-  // The form's submit: an empty input asks for the summary, as
-  // the placeholder says; anything typed asks that instead. The
-  // first submit loads the model. A failure shows the error
-  // text and leaves the form usable, so the reader can try
-  // again.
+  // The form's submit: the typed question is asked; an empty
+  // input sends nothing. The first submit loads the model. A
+  // failure shows the error text and leaves the form usable,
+  // so the reader can try again.
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busyRef.current) return;
+    const question = draftText.trim();
+    if (question === "") return;
     const previousLog = log;
-    const question = draftText.trim() || liveStrings().summarize;
     setDraftText("");
     setLog((previous) => [...previous, { role: "user", content: question }]);
     loadHistory().push({ role: "user", content: question });
@@ -177,6 +189,157 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
   };
 
+  // The conversation's end stays in view as it grows: the
+  // log scrolls within the window, and a new message — the
+  // reader's own above all — is no use below the fold.
+  const logRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = logRef.current;
+    if (element) element.scrollTop = element.scrollHeight;
+  }, [log]);
+
+  // Enter sends; Shift+Enter makes a new line, and an Enter
+  // that only confirms a conversion of the reader's input
+  // method sends nothing.
+  const onInputKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    if (event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    if (!busyRef.current && draftText.trim() !== "") {
+      event.currentTarget.form?.requestSubmit();
+    }
+  };
+
+  // The window's placement: minimized to its launcher
+  // button, floating where the reader has put it, or
+  // maximized. The placement is the box's own state, so it
+  // is kept like the rest of the box's state while the
+  // reader moves between pages. The floating rectangle is
+  // in viewport coordinates; the restore entry remembers
+  // the rectangle a maximized window came from. The box's
+  // element itself stays where the layout puts it and takes
+  // no room: the button and the window both float over the
+  // page, so the right sidebar the element sits in is left
+  // blank.
+  interface WindowRect {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }
+  const [placement, setPlacement] = useState<
+    "minimized" | "floating" | "maximized"
+  >("minimized");
+  const [rect, setRect] = useState<WindowRect>({
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+  });
+  const restoreRef = useRef<WindowRect | null>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+
+  // The window's default place: the screen's bottom right
+  // corner — the bottom left in a right-to-left language —
+  // a margin in from the edges, at a size a conversation
+  // can start in, cut down to fit a smaller screen.
+  const homeRect = (): WindowRect => {
+    const margin = 24;
+    const width = Math.min(384, window.innerWidth - margin * 2);
+    const height = Math.min(512, window.innerHeight - margin * 2);
+    const rtl = document.documentElement.dir === "rtl";
+    return {
+      left: rtl ? margin : window.innerWidth - width - margin,
+      top: window.innerHeight - height - margin,
+      width,
+      height,
+    };
+  };
+
+  // The launcher's click: the window opens at its default
+  // place. A rectangle is present only while the window is
+  // open, so an opening always starts from the default.
+  const openWindow = () => {
+    if (rect.width === 0) setRect(homeRect());
+    setPlacement("floating");
+  };
+
+  // Minimizing forgets the window's place and size. That
+  // is also how the window is returned to its default
+  // place: minimize it, and open it again.
+  const minimizeWindow = () => {
+    restoreRef.current = null;
+    setRect({ left: 0, top: 0, width: 0, height: 0 });
+    setPlacement("minimized");
+  };
+
+  // Dragging the heading moves the window. The window is
+  // kept partly on screen however far it is dragged.
+  const onHeadingPointerDown = (event: React.PointerEvent) => {
+    if (placement === "maximized") return;
+    if ((event.target as Element).closest("button")) return;
+    const box = windowRef.current?.getBoundingClientRect();
+    if (!box) return;
+    const offset = { x: event.clientX - box.left, y: event.clientY - box.top };
+    const onMove = (move: PointerEvent) => {
+      setRect((previous) => ({
+        ...previous,
+        width: box.width,
+        height: box.height,
+        left: Math.min(
+          Math.max(move.clientX - offset.x, 80 - box.width),
+          window.innerWidth - 80,
+        ),
+        top: Math.min(
+          Math.max(move.clientY - offset.y, 0),
+          window.innerHeight - 40,
+        ),
+      }));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // The handle at the window's bottom right corner resizes
+  // a floating window, within a minimum the form needs.
+  const onResizePointerDown = (event: React.PointerEvent) => {
+    event.preventDefault();
+    const start = {
+      x: event.clientX,
+      y: event.clientY,
+      width: rect.width,
+      height: rect.height,
+    };
+    const onMove = (move: PointerEvent) => {
+      setRect((previous) => ({
+        ...previous,
+        width: Math.max(260, start.width + move.clientX - start.x),
+        height: Math.max(200, start.height + move.clientY - start.y),
+      }));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  const toggleMaximized = () => {
+    if (placement === "maximized") {
+      if (restoreRef.current) setRect(restoreRef.current);
+      restoreRef.current = null;
+      setPlacement("floating");
+      return;
+    }
+    restoreRef.current = rect;
+    setPlacement("maximized");
+  };
+
   return (
     <section
       ref={sectionRef}
@@ -187,34 +350,127 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       data-unsupported={strings.unsupported}
       data-error={strings.error}
     >
-      <h2 className="ai-assistant__title">AI</h2>
-      <div className="ai-assistant__log">
-        {log.map((message, index) => (
-          <p
-            key={index}
-            className={`ai-assistant__message ai-assistant__message--${message.role}`}
+      {placement === "minimized" ? (
+        <button
+          type="button"
+          className="ai-assistant__launcher"
+          aria-label="AI"
+          onClick={openWindow}
+        >
+          <span aria-hidden="true">🧸</span>
+        </button>
+      ) : (
+        <div
+          ref={windowRef}
+          className={`ai-assistant__window ai-assistant__window--${placement}`}
+          style={
+            placement === "floating"
+              ? {
+                  left: rect.left,
+                  top: rect.top,
+                  width: rect.width,
+                  height: rect.height,
+                }
+              : undefined
+          }
+        >
+          <div
+            className="ai-assistant__heading"
+            onPointerDown={onHeadingPointerDown}
           >
-            {message.content}
+            <h2 className="ai-assistant__title">🧸</h2>
+            <div className="ai-assistant__controls">
+              <button
+                type="button"
+                className="ai-assistant__control"
+                aria-label={placement === "maximized" ? "Restore" : "Maximize"}
+                onClick={toggleMaximized}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  {placement === "maximized" ? (
+                    <path d="M9 4v5H4M20 15h-5v5M4 9h5V4M15 20v-5h5" />
+                  ) : (
+                    <path d="M9 4H4v5M20 9V4h-5M4 15v5h5M15 20h5v-5" />
+                  )}
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="ai-assistant__control"
+                aria-label="Minimize"
+                onClick={minimizeWindow}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="ai-assistant__log" ref={logRef}>
+            {log.map((message, index) => (
+              <p
+                key={index}
+                className={`ai-assistant__message ai-assistant__message--${message.role}`}
+              >
+                {message.content}
+              </p>
+            ))}
+          </div>
+          <p className="ai-assistant__status" hidden={status === null}>
+            {status}
           </p>
-        ))}
-      </div>
-      <p className="ai-assistant__status" hidden={status === null}>
-        {status}
-      </p>
-      {mounted && (
-        <form className="ai-assistant__form" onSubmit={onSubmit}>
-          <input
-            className="ai-assistant__input"
-            type="text"
-            placeholder={strings.summarize}
-            value={draftText}
-            onChange={(event) => setDraftText(event.target.value)}
-            disabled={busy}
-          />
-          <button className="ai-assistant__send" type="submit" disabled={busy}>
-            {strings.send}
-          </button>
-        </form>
+          {mounted && (
+            <form className="ai-assistant__form" onSubmit={onSubmit}>
+              <textarea
+                className="ai-assistant__input"
+                placeholder="Message"
+                rows={1}
+                value={draftText}
+                onChange={(event) => setDraftText(event.target.value)}
+                onKeyDown={onInputKeyDown}
+              />
+              <button
+                className="ai-assistant__send"
+                type="submit"
+                disabled={busy || draftText.trim() === ""}
+                aria-label={strings.send}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+              </button>
+            </form>
+          )}
+          {placement === "floating" && (
+            <div
+              className="ai-assistant__resize"
+              onPointerDown={onResizePointerDown}
+            />
+          )}
+        </div>
       )}
     </section>
   );
