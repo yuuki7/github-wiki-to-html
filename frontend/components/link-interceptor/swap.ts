@@ -24,6 +24,23 @@ function setText(element: Element, text: string): void {
   }
 }
 
+function copyAttributes(
+  target: Element,
+  source: Element,
+  names: readonly string[],
+): void {
+  for (const name of names) {
+    const value = source.getAttribute(name);
+    if (value !== null) target.setAttribute(name, value);
+  }
+}
+
+function replaceChildrenFrom(target: Element, source: Element): void {
+  target.replaceChildren(
+    ...[...source.childNodes].map((node) => document.importNode(node, true)),
+  );
+}
+
 // The head: drop this page's own elements and take the new
 // page's, in the new head's own order.
 function swapHead(newDocument: Document): void {
@@ -108,12 +125,7 @@ function swapHeader(newDocument: Document): void {
             current instanceof HTMLAnchorElement &&
             next instanceof HTMLAnchorElement
           ) {
-            const href = next.getAttribute("href");
-            if (href) current.setAttribute("href", href);
-            const hrefLang = next.getAttribute("hrefLang");
-            if (hrefLang) current.setAttribute("hrefLang", hrefLang);
-            const lang = next.getAttribute("lang");
-            if (lang) current.setAttribute("lang", lang);
+            copyAttributes(current, next, ["href", "hreflang", "lang"]);
           }
         } else if (next) {
           item.replaceChildren(document.importNode(next, true));
@@ -219,11 +231,11 @@ export function swapPage(newDocument: Document): void {
 
   const left = document.querySelector(".left-sidebar");
   const newLeft = newDocument.querySelector(".left-sidebar");
-  if (left && newLeft) left.innerHTML = newLeft.innerHTML;
+  if (left && newLeft) replaceChildrenFrom(left, newLeft);
 
   const main = document.querySelector(".main");
   const newMain = newDocument.querySelector(".main");
-  if (main && newMain) main.innerHTML = newMain.innerHTML;
+  if (main && newMain) replaceChildrenFrom(main, newMain);
 
   swapRightAside(newDocument);
   swapFooter(newDocument);

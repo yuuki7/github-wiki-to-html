@@ -31,7 +31,7 @@ export default async function ArticleView({
       <RedirectStub
         title={entry.data.title}
         language={lang}
-        targetHref={data.targetHref!}
+        targetHref={data.targetHref}
       />
     );
   }
@@ -40,7 +40,7 @@ export default async function ArticleView({
     <article className="article">
       <header className="article__header">
         <h1 className="article__title">{entry.data.title}</h1>
-        {data.meta && <ArticleMeta {...data.meta} />}
+        <ArticleMeta {...data.meta} />
       </header>
 
       <div className="article__main">{data.body}</div>

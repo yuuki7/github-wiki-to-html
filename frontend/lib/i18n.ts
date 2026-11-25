@@ -1,4 +1,4 @@
-import site from "../../site.json";
+import site from "../../site.json" with { type: "json" };
 import type { AiStrings } from "./types";
 
 // The languages the site is published in, as a type. This is the

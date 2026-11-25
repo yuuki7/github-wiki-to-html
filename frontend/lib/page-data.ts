@@ -111,18 +111,22 @@ async function computeHomePageData(lang: string): Promise<HomePageData> {
   };
 }
 
-export interface ArticlePageDataFull {
-  ui: UiStrings;
-  isRedirect: boolean;
-  articleLinks: AlternateLink[];
-  targetHref: string | undefined;
-  canonical: string;
-  meta: ArticleMetaProps | undefined;
-  xDefaultHref: string | undefined;
-  footer: FooterData;
-  body: ReactNode;
-  headings: Heading[];
-}
+export type ArticlePageDataFull =
+  | {
+      isRedirect: true;
+      targetHref: string;
+    }
+  | {
+      ui: UiStrings;
+      isRedirect: false;
+      articleLinks: AlternateLink[];
+      canonical: string;
+      meta: ArticleMetaProps;
+      xDefaultHref: string | undefined;
+      footer: FooterData;
+      body: ReactNode;
+      headings: Heading[];
+    };
 
 // The language relationships one article entry carries, derived
 // from itself and the whole collection: the original language,
@@ -202,16 +206,8 @@ async function computeArticlePageDataFull(
 
   if (base.isRedirect || entry.data.kind !== "article") {
     return {
-      ui,
       isRedirect: true,
-      articleLinks: base.articleLinks,
-      targetHref: base.targetHref,
-      canonical: "",
-      meta: undefined,
-      xDefaultHref: undefined,
-      footer: { body: undefined, editHref: "", editLabel: "" },
-      body: undefined,
-      headings: [],
+      targetHref: base.targetHref ?? homeHref(lang),
     };
   }
 
@@ -229,7 +225,6 @@ async function computeArticlePageDataFull(
     ui,
     isRedirect: false,
     articleLinks: base.articleLinks,
-    targetHref: undefined,
     canonical: absoluteUrl(
       pageHref(lang, entry.data.slug, entry.data.translation ?? false),
     ),
