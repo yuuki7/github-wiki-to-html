@@ -321,13 +321,22 @@ body {
 
 /* While closed, the browser keeps a popover out of view; the
    flex layout therefore applies only in the open state, or it
-   would override the hidden state. The placement anchors the
-   panel to the button; the fixed values before the anchor()
-   lines are the fallback for browsers without anchor
-   positioning. The inset reset comes first: a popover's
-   built-in style pins all four edges to 0, and an edge left
-   pinned over-constrains the panel against the opposite one. */
+   would override the hidden state. The panel is positioned
+   absolutely, against the popover's built-in fixed: a fixed
+   panel is pinned to the viewport at the place it opened,
+   and on a phone the viewport itself changes as the
+   browser's own bars come and go, so a pinned panel drifts,
+   clips at the screen's top, and vanishes while the page
+   scrolls. Absolute puts the panel in the page, and the
+   placement anchors it to the button, so the two travel
+   together as the page scrolls. The fixed values before the
+   anchor() lines are the fallback for browsers without
+   anchor positioning. The inset reset comes first: a
+   popover's built-in style pins all four edges to 0, and an
+   edge left pinned over-constrains the panel against the
+   opposite one. */
 .language-menu__panel {
+  position: absolute;
   inset: auto;
   margin: 0;
   margin-top: 0.25em;
@@ -801,9 +810,11 @@ body {
      of the screen, so the article beneath stays where
      it was instead of being pushed down. The bottom bar
      stands above the panel's foot, its Contents button
-     the panel's own close control, and the page behind
-     does not scroll while the menu is open. The
-     panel's bottom padding keeps its last entries
+     the panel's own close control. The panel is a layer
+     over the article, not a mode that freezes it: the
+     article behind keeps its own scrolling, by swipe
+     and by scrollbar alike, while the panel is open.
+     The panel's bottom padding keeps its last entries
      clear of the bar. */
   .left-sidebar > details[open]::details-content {
     position: fixed;
@@ -815,10 +826,6 @@ body {
     background-color: var(--surface-color);
     box-shadow: 0.5rem 0 1.5rem rgb(0 0 0 / 0.18);
     z-index: 40;
-  }
-
-  body:has(.left-sidebar > details[open]) {
-    overflow: hidden;
   }
 
   /* The bottom bar: one bar across the page's foot,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { noteLayerOpened } from "../lib/layers";
 
 // The bar's fade, in the scroll's own terms. Fading is
 // proportional: the distance below takes the bar from
@@ -118,6 +119,7 @@ export default function BottomBar({
         details.closest(".left-sidebar")
       ) {
         setMenuOpen(details.open);
+        if (details.open) noteLayerOpened("menu");
       }
     };
     document.addEventListener("toggle", onToggle, true);
@@ -156,6 +158,19 @@ export default function BottomBar({
   // - A leap: one movement of more than a screenful is a
   //   jump to somewhere — the bar takes the new position
   //   as its starting point and keeps its opacity.
+  //
+  // A press on the bar itself restores it outright,
+  // whatever its faded state: a reader reaching for one
+  // of its buttons gets the bar solid under the finger,
+  // and the fading starts again from there. The Contents
+  // button is the one exception: its press is not the
+  // restore, its opening of the menu is. The menu's
+  // toggle event reaches this effect after the open
+  // state has been painted — the button's icon already
+  // the close mark, the panel already standing — and
+  // only then does the bar turn opaque, so the reader
+  // never sees a solid bar still wearing the menu icon,
+  // nor a faded close mark waiting on the bar.
   useEffect(() => {
     const bar = barRef.current;
     if (!bar) return;
@@ -179,6 +194,19 @@ export default function BottomBar({
       if (!armed) {
         previous = y;
         settle();
+        return;
+      }
+      if (
+        document.querySelector<HTMLDetailsElement>(".left-sidebar > details")
+          ?.open
+      ) {
+        // While the menu stands, the fading is off
+        // entirely: the reader is working with the menu
+        // and the bar that controls it, and the article's
+        // scrolling behind the panel is not a signal to
+        // fade the bar. The position still tracks, so the
+        // fading resumes from here when the menu closes.
+        previous = y;
         return;
       }
       const step = y - previous;
@@ -213,11 +241,38 @@ export default function BottomBar({
       apply();
       settle();
     };
+    const onPress = (event: PointerEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".bottom-bar__button--contents")
+      ) {
+        return;
+      }
+      opacity = 1;
+      upTravel = 0;
+      apply();
+    };
+    const onMenuToggle = (event: Event) => {
+      const details = event.target;
+      if (
+        details instanceof HTMLDetailsElement &&
+        details.closest(".left-sidebar") &&
+        details.open
+      ) {
+        opacity = 1;
+        upTravel = 0;
+        apply();
+      }
+    };
     settle();
+    bar.addEventListener("pointerdown", onPress);
+    document.addEventListener("toggle", onMenuToggle, true);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("frame:navigated", onNavigated);
     return () => {
       window.clearTimeout(timer);
+      bar.removeEventListener("pointerdown", onPress);
+      document.removeEventListener("toggle", onMenuToggle, true);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("frame:navigated", onNavigated);
     };

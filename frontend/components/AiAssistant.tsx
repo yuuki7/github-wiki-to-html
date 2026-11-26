@@ -17,6 +17,7 @@ import {
   type Message,
   type WebLLM,
 } from "../lib/ai-client";
+import { mostRecentLayer, noteLayerOpened } from "../lib/layers";
 import type { AiStrings } from "../lib/types";
 
 // The AI box: one question form, answered by a small
@@ -293,6 +294,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const openWindow = () => {
     if (rect.width === 0) setRect(homeRect());
     setPlacement("floating");
+    noteLayerOpened("ai");
   };
 
   // Minimizing keeps the window's place and size: the
@@ -334,13 +336,17 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // puts the window away: the reader has turned back to
   // the article, and the window's own minimize button is
   // not the only way to dismiss it. The dismissal belongs
-  // to the article alone — the frame around it (the
-  // header, the sidebars, the footer, the bottom bar)
-  // never dismisses, nor does a tap on something that
-  // acts — a link above all, a button, a field — which
-  // is that thing's business, not a dismissal: following
-  // a link carries the window along, as a navigation
-  // should. A tap is a press that ends where it began,
+  // to the article and to the site header's empty ground
+  // — the header stands at the article's head, and a tap
+  // on its bare part is the same turning back. The rest
+  // of the frame (the sidebars, the footer, the bottom
+  // bar) never dismisses, nor does a tap on something
+  // that acts — a link above all, a button, a field,
+  // the header's own home link and language button among
+  // them — which is that thing's business, not a
+  // dismissal: following a link carries the window
+  // along, as a navigation should. A tap is a press that
+  // ends where it began,
   // soon after it began, with the page unmoved: a swipe
   // that scrolls the page begins with a press too, but
   // it is a scroll, not a tap, and leaves the window
@@ -348,13 +354,15 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // it, not turning away from the window. (A scrollbar
   // drag gives the page no press at all, and leaves it
   // standing likewise.) Two layers standing over the
-  // article close one at a time, outermost first in the
-  // reader's path back to the article: while the narrow
+  // article close one at a time, the one opened most
+  // recently first (see lib/layers.ts): while the narrow
   // screen's menu drawer is open, a tap on the article
-  // closes the drawer alone — the drawer's own dismissal
-  // takes that tap on the click that follows — and only
-  // a second tap, with the drawer already gone, puts
-  // the window away. Presses inside the window are
+  // puts this window away only if the window was opened
+  // after the drawer — if the drawer is the more recent,
+  // the tap is the drawer's, and its own dismissal takes
+  // it on the click that follows. A second tap, with the
+  // more recent layer already gone, puts the other away.
+  // Presses inside the window are
   // the window's own business, and the bottom bar's AI
   // button is left alone — it toggles the window itself,
   // and a dismissal here would fight the toggle. Only
@@ -379,7 +387,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       ) {
         return false;
       }
-      if (!target.closest(".main")) return false;
+      if (!target.closest(".main, .header")) return false;
       return true;
     };
     const onPointerDown = (event: PointerEvent) => {
@@ -404,7 +412,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       if (window.scrollY !== start.scrollY) return;
       if (
         document.querySelector<HTMLDetailsElement>(".left-sidebar > details")
-          ?.open
+          ?.open &&
+        mostRecentLayer() !== "ai"
       ) {
         return;
       }
