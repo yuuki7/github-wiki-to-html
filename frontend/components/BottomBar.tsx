@@ -1,6 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+// The bar's fade, in the scroll's own terms. Fading is
+// proportional: the distance below takes the bar from
+// opaque to its most translucent, a quarter. Coming back
+// asks more of the reader first: the upward distance
+// below must be scrolled before the bar starts back at
+// all — a reader's small upward checks while reading do
+// not bring it back — and past that distance it returns
+// at the same proportion.
+const FADE_DISTANCE = 200;
+const RESTORE_THRESHOLD = 100;
+const MIN_OPACITY = 0.25;
+const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 
 // The narrow screen's bottom bar: one bar across the
 // page's foot, holding the controls that float as separate
@@ -14,17 +27,22 @@ import { useEffect, useState } from "react";
 // names and the home button's destination in the page's
 // language, as it does the header's (see the swap).
 //
-// The bar stands opaque when a page arrives and whenever
-// the reader scrolls up; scrolling down makes it
-// translucent, so the article shows through it and the
-// bar costs the reading less of the screen. It follows
-// the scroll position's movement — the one signal every
-// way of scrolling gives, scrollbar drags included —
-// with care for the movements that are not the reader
-// scrolling: a page still arriving settles only the
-// bar's starting point, a navigation by the frame starts
-// it opaque again, and a leap of more than a screenful
-// is a jump to somewhere, not a scroll.
+// The bar's opacity follows the reader's scrolling, in
+// the manner of the bars readers already know from the
+// large platforms: scrolling down fades it gradually, in
+// proportion to the distance scrolled, down to a quarter
+// opaque, so the article shows through it and the bar
+// costs the reading less of the screen; scrolling up
+// brings it back only after a certain amount of upward
+// scrolling, and then at the same proportion; at the top
+// of the page it is always opaque. It follows the scroll
+// position's movement — the one signal every way of
+// scrolling gives, scrollbar drags included — with care
+// for the movements that are not the reader scrolling: a
+// page still arriving settles only the bar's starting
+// point, a navigation by the frame starts it opaque
+// again, and a leap of more than a screenful is a jump
+// to somewhere, not a scroll.
 //
 // The bar's buttons reach the things they control where
 // those things live. The home button is a plain link, and
@@ -51,7 +69,7 @@ export default function BottomBar({
   contentsLabel,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [translucent, setTranslucent] = useState(false);
+  const barRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onToggle = (event: Event) => {
@@ -67,15 +85,24 @@ export default function BottomBar({
     return () => document.removeEventListener("toggle", onToggle, true);
   }, []);
 
-  // The bar's translucency follows the scroll position's
-  // movement: down fades the bar, up — a reader going
-  // back for something — brings it back solid. Every way
-  // of scrolling moves the position — a finger's drag, a
-  // wheel, the keys, and a scrollbar drag, which gives no
-  // other signal — so the position is the thing to
-  // follow. Three movements of the position are not the
-  // reader scrolling, and the bar takes no direction
-  // from them:
+  // The bar's opacity, driven by the scroll position's
+  // movement and written straight to the bar's style: it
+  // changes with every step of a scroll, and rendering
+  // each step through React would trail behind the
+  // reader's finger. Every way of scrolling moves the
+  // position — a finger's drag, a wheel, the keys, and a
+  // scrollbar drag, which gives no other signal — so the
+  // position is the thing to follow.
+  //
+  // Downward, each step takes the bar's opacity down in
+  // proportion to its length. Upward, steps first add up
+  // against the restore threshold — any downward step
+  // clears the sum — and only the distance past it counts,
+  // bringing the opacity back at the same proportion. At
+  // the top of the page the bar is opaque outright.
+  //
+  // Three movements of the position are not the reader
+  // scrolling, and the bar takes no direction from them:
   //
   // - A page still arriving. A reload partway down a
   //   page restores its position while the page loads,
@@ -89,27 +116,28 @@ export default function BottomBar({
   //   at a load, from the position the frame set.
   // - A leap: one movement of more than a screenful is a
   //   jump to somewhere — the bar takes the new position
-  //   as its starting point and keeps its state.
-  //
-  // Small movements settle nothing, so a direction
-  // counts only past a few pixels.
+  //   as its starting point and keeps its opacity.
   useEffect(() => {
-    let anchor = window.scrollY;
+    const bar = barRef.current;
+    if (!bar) return;
+    let opacity = 1;
+    let upTravel = 0;
     let previous = window.scrollY;
     let armed = false;
     let timer: number | undefined;
+    const apply = () => {
+      bar.style.opacity = String(opacity);
+    };
     const settle = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         armed = true;
-        anchor = window.scrollY;
         previous = window.scrollY;
       }, 250);
     };
     const onScroll = () => {
       const y = window.scrollY;
       if (!armed) {
-        anchor = y;
         previous = y;
         settle();
         return;
@@ -117,22 +145,33 @@ export default function BottomBar({
       const step = y - previous;
       previous = y;
       if (Math.abs(step) > window.innerHeight * 1.5) {
-        anchor = y;
+        upTravel = 0;
         return;
       }
-      if (y - anchor > 4) {
-        setTranslucent(true);
-        anchor = y;
-      } else if (anchor - y > 4) {
-        setTranslucent(false);
-        anchor = y;
+      if (y <= 0) {
+        opacity = 1;
+        upTravel = 0;
+      } else if (step > 0) {
+        upTravel = 0;
+        opacity = Math.max(MIN_OPACITY, opacity - step * FADE_RATE);
+      } else if (step < 0) {
+        const before = upTravel;
+        upTravel += -step;
+        const applied =
+          Math.max(0, upTravel - RESTORE_THRESHOLD) -
+          Math.max(0, before - RESTORE_THRESHOLD);
+        if (applied > 0) {
+          opacity = Math.min(1, opacity + applied * FADE_RATE);
+        }
       }
+      apply();
     };
     const onNavigated = () => {
-      setTranslucent(false);
+      opacity = 1;
+      upTravel = 0;
       armed = false;
-      anchor = window.scrollY;
       previous = window.scrollY;
+      apply();
       settle();
     };
     settle();
@@ -157,11 +196,7 @@ export default function BottomBar({
   };
 
   return (
-    <nav
-      className={
-        translucent ? "bottom-bar bottom-bar--translucent" : "bottom-bar"
-      }
-    >
+    <nav ref={barRef} className="bottom-bar">
       <a className="bottom-bar__button" href={homeHref} aria-label={homeLabel}>
         <svg
           viewBox="0 0 24 24"
