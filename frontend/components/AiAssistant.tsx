@@ -241,11 +241,19 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     if (element) element.scrollTop = element.scrollHeight;
   }, [log, placement]);
 
-  // The window's default place: the screen's bottom right
-  // corner — the bottom left in a right-to-left language —
-  // a margin in from the edges, at a size a conversation
-  // can start in, cut down to fit a smaller screen.
+  // The window's default place. On a wide screen: the
+  // screen's bottom right corner — the bottom left in a
+  // right-to-left language — a margin in from the edges,
+  // at a size a conversation can start in, cut down to
+  // fit a smaller screen. On a narrow screen there is no
+  // room beside the article for a corner window, so the
+  // window opens at the centred size from the start: the
+  // central column's place and size, as the heading's
+  // centre button gives it.
   const homeRect = (): WindowRect => {
+    if (window.matchMedia("(max-width: 60rem)").matches) {
+      return columnRect();
+    }
     const margin = 24;
     const width = Math.min(384, window.innerWidth - margin * 2);
     const height = Math.min(512, window.innerHeight - margin * 2);
@@ -274,6 +282,45 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const minimizeWindow = () => {
     setPlacement("minimized");
   };
+
+  // The narrow screen's bottom bar holds an AI button in
+  // the launcher's place, and it asks the box to toggle
+  // itself with this event: open when minimized, minimize
+  // when open. The listener is renewed after every render,
+  // so the toggle always acts on the placement as it
+  // stands.
+  useEffect(() => {
+    const onToggle = () => {
+      if (placement === "minimized") openWindow();
+      else minimizeWindow();
+    };
+    window.addEventListener("ai-assistant:toggle", onToggle);
+    return () => window.removeEventListener("ai-assistant:toggle", onToggle);
+  });
+
+  // A click or tap anywhere on the page while the window
+  // is open puts the window away: the reader has turned
+  // back to the page, and the window's own minimize
+  // button is not the only way to dismiss it. Presses
+  // inside the window are the window's own business, and
+  // the bottom bar's AI button is left alone — it toggles
+  // the window itself, and a dismissal here would fight
+  // the toggle. Only the primary button counts: a
+  // right-click raises a menu of its own and dismisses
+  // nothing.
+  useEffect(() => {
+    if (placement === "minimized") return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (windowRef.current?.contains(target)) return;
+      if (target.closest(".bottom-bar__button--ai")) return;
+      minimizeWindow();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [placement]);
 
   // Dragging the heading moves the window. The window is
   // kept partly on screen however far it is dragged.

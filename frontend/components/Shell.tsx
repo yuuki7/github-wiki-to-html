@@ -4,6 +4,7 @@ import { homeHref, languageName } from "../lib/i18n";
 import type { FooterData } from "../lib/page-data";
 import type { AiStrings, AlternateLink } from "../lib/types";
 import AiAssistant from "./AiAssistant";
+import BottomBar from "./BottomBar";
 import CodeCopy from "./CodeCopy";
 import LinkInterceptor from "./link-interceptor";
 import MenuDismiss from "./MenuDismiss";
@@ -27,14 +28,19 @@ import MenuDismiss from "./MenuDismiss";
 //
 // The left sidebar is an <aside> — the page's complementary
 // region, at every width — holding a <details>: on a narrow
-// screen the menu's summary is its one control, and the
-// menu sits before the article, closed; on a wide screen
-// the stylesheet shows no summary and keeps the content
-// always visible, so the menu is a plain sidebar there. A
-// page whose sidebar would be empty — an article with no
-// headings for its table of contents — passes no content,
-// and the aside stays empty, rather than holding a menu
-// that opens onto nothing.
+// screen the menu sits before the article, closed, and the
+// bottom bar's Contents button is its control; on a wide
+// screen the stylesheet keeps the content always visible,
+// so the menu is a plain sidebar there. The summary is the
+// menu's name and nothing more: the stylesheet never shows
+// it, at either width. A page whose sidebar would be
+// empty — an article with no headings for its table of
+// contents — passes no content, and the aside stays empty,
+// rather than holding a menu that opens onto nothing.
+//
+// The bottom bar stands after the grid's regions: the
+// stylesheet shows it only on a narrow screen, where it
+// holds the controls that float separately on a wide one.
 
 type Props = {
   language: string;
@@ -43,7 +49,8 @@ type Props = {
   className?: string;
   aiStrings: AiStrings;
   leftSidebar?: ReactNode;
-  leftSidebarLabel?: string;
+  leftSidebarLabel: string;
+  homeLabel: string;
   footer: FooterData;
   children: ReactNode;
 };
@@ -56,6 +63,7 @@ export default function Shell({
   aiStrings,
   leftSidebar,
   leftSidebarLabel,
+  homeLabel,
   footer,
   children,
 }: Props) {
@@ -113,31 +121,7 @@ export default function Shell({
         <aside className="left-sidebar">
           {leftSidebar && (
             <details>
-              <summary>
-                <svg
-                  className="left-sidebar__icon left-sidebar__icon--menu"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M4 7h16M4 12h10M4 17h13" />
-                </svg>
-                <svg
-                  className="left-sidebar__icon left-sidebar__icon--close"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-                {leftSidebarLabel}
-              </summary>
+              <summary>{leftSidebarLabel}</summary>
               {leftSidebar}
             </details>
           )}
@@ -155,6 +139,11 @@ export default function Shell({
         </footer>
       </div>
 
+      <BottomBar
+        homeHref={homeHref(language)}
+        homeLabel={homeLabel}
+        contentsLabel={leftSidebarLabel}
+      />
       <LinkInterceptor />
       <CodeCopy />
       <MenuDismiss />

@@ -261,6 +261,15 @@ body {
   padding-inline-start: 0;
 }
 
+/* The lists' entries stand in roomier rows than the
+   sidebar's lines: one entry is easy to pick out, with a
+   mouse on a wide screen or a finger in the narrow
+   screen's panel alike, and the rows are the same on
+   both pages. */
+.left-sidebar li {
+  padding-block: 0.35em;
+}
+
 /* Footer */
 .footer {
   grid-column: 2;
@@ -426,6 +435,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .ai-assistant__window {
     animation: none;
+  }
+
+  .bottom-bar {
+    transition: none;
   }
 }
 
@@ -681,6 +694,15 @@ body {
   margin-inline-start: 3em;
 }
 
+/* The bottom bar (see BottomBar): the narrow screen's
+   control bar, holding the home, menu, and AI buttons.
+   It is not shown at this width — a wide screen's own
+   controls stand in its place — and the narrow layout
+   below shows and styles it. */
+.bottom-bar {
+  display: none;
+}
+
 /* Narrow viewports: the three columns stack into one. Below
    this width the main column — half the viewport in the
    three-column grid — falls under about fifty characters and
@@ -688,13 +710,13 @@ body {
    at full width instead, in reading order: header, the
    article, the right sidebar, footer. The left sidebar
    leaves the flow: as a <details> it is a collapsible menu
-   here, its summary — hidden on wide screens — floats at
-   the page's bottom left as the toggle, and its content
-   opens as a panel over the page, so the menu takes no
-   row of its own and the rows that remain keep the wide
-   layout's gaps. The menu starts closed, so the article
-   is what the reader meets first. The right sidebar keeps
-   its place below the article, as it is. */
+   here, worked by the Contents button of the bottom bar at
+   the page's foot, and its content opens as a panel over
+   the page, so the menu takes no row of its own and the
+   rows that remain keep the wide layout's gaps. The menu
+   starts closed, so the article is what the reader meets
+   first. The right sidebar keeps its place below the
+   article, as it is. */
 @media (max-width: 60rem) {
   body {
     grid-template-columns: 1fr;
@@ -717,9 +739,9 @@ body {
     max-width: none;
   }
 
-  /* Out of the flow, like its toggle and its panel: the
-     aside is their container, and nothing of it is laid
-     out in the page. Its z-index is the panel's own, one
+  /* Out of the flow, like its panel: the aside is the
+     panel's container, and nothing of it is laid out in
+     the page. Its z-index is the panel's own, one
      level up: as a fixed box the aside is a stacking
      context, so a z-index on the panel would order the
      panel only within the aside, and the article's
@@ -730,59 +752,11 @@ body {
     z-index: 40;
   }
 
-  /* The menu's toggle: a pill button that floats at the
-     page's bottom left, always on screen, bordered like
-     the shell's other buttons, the icon beside the label
-     in the line's own flow. The default marker goes —
-     the icon is the indicator: the lines while the menu
-     is closed, a cross while it is open. The icon's
-     vertical alignment (see .left-sidebar__icon) centres
-     it on the label's cap-height band: this serif sets
-     its glyphs high in the em box, so centring on the
-     box, as a flex row would, sets the icon visibly
-     below the glyphs themselves. */
+  /* The menu's summary names the menu and is never
+     shown, here as on a wide screen: the bottom bar's
+     Contents button is the menu's toggle. */
   .left-sidebar > details > summary {
-    display: inline-block;
-    position: fixed;
-    inset-block-end: max(1rem, env(safe-area-inset-bottom));
-    inset-inline-start: var(--body-margin-horizontal);
-    z-index: 41;
-    line-height: 1;
-    padding: 0.5em 0.9em;
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    background-color: var(--surface-color);
-    box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
-    list-style: none;
-    cursor: pointer;
-  }
-
-  .left-sidebar > details > summary::-webkit-details-marker {
     display: none;
-  }
-
-  /* The vertical alignment lowers the icon by half the
-     difference between its height and the cap height,
-     which centres it on the cap-height band (see the
-     toggle's rule above), in any font and at any size. */
-  .left-sidebar__icon {
-    display: inline-block;
-    width: 1.4em;
-    height: 1.4em;
-    margin-inline-end: 0.4em;
-    vertical-align: calc((1cap - 1.4em) / 2);
-  }
-
-  .left-sidebar__icon--close {
-    display: none;
-  }
-
-  .left-sidebar > details[open] .left-sidebar__icon--menu {
-    display: none;
-  }
-
-  .left-sidebar > details[open] .left-sidebar__icon--close {
-    display: inline-block;
   }
 
   /* The menu is a menu here: a closed one hides its
@@ -796,19 +770,19 @@ body {
   /* An open menu floats over the page: a panel in from
      the left, 85% of the page wide and the full height
      of the screen, so the article beneath stays where
-     it was instead of being pushed down. The toggle
-     floats above the panel's bottom left corner, as
-     the panel's own close button, and the page behind
+     it was instead of being pushed down. The bottom bar
+     stands above the panel's foot, its Contents button
+     the panel's own close control, and the page behind
      does not scroll while the menu is open. The
      panel's bottom padding keeps its last entries
-     clear of the toggle. */
+     clear of the bar. */
   .left-sidebar > details[open]::details-content {
     position: fixed;
     inset: 0 auto 0 0;
     box-sizing: border-box;
     width: 85vw;
     overflow-y: auto;
-    padding: 1rem 1rem 4.5rem;
+    padding: 1rem 1rem calc(4.25rem + env(safe-area-inset-bottom));
     background-color: var(--surface-color);
     box-shadow: 0.5rem 0 1.5rem rgb(0 0 0 / 0.18);
     z-index: 40;
@@ -818,20 +792,102 @@ body {
     overflow: hidden;
   }
 
-  /* The menu's entries — the table of contents on an
-     article, the article list on the home page — are
-     tap targets in the panel: roomier rows than the
-     sidebar's, so a finger finds one entry at a time,
-     and the same rows on both pages. */
-  .left-sidebar li {
-    padding-block: 0.35em;
+  /* The bottom bar: one bar across the page's foot,
+     above the page and above the menu's panel, holding
+     its three buttons in equal shares — home at the
+     left, the menu in the middle, the AI assistant at
+     the right. The assistant's own launcher is not
+     shown here: the bar's AI button is its control on
+     this screen. A jump to a heading keeps the heading
+     clear of the bar. The bar is opaque when the page
+     loads; scrolling down fades the whole bar
+     translucent (the --translucent class, set by the bar
+     itself) — its ground, its border, and its icons
+     together, one opacity for the bar as a whole — so
+     the article shows through it, and scrolling up
+     brings it back. The fade is gentle. */
+  .bottom-bar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 45;
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+    transition: opacity 0.25s ease;
   }
 
-  /* The floating toggle overlays the page's bottom
-     left corner; the footer's bottom padding lets
-     the end of the page scroll clear of it. */
+  .bottom-bar--translucent {
+    opacity: 0.25;
+  }
+
+  .bottom-bar__button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .bottom-bar__button svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .bottom-bar__bear {
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  /* The Contents button shows the menu's state: the
+     lines while the menu is closed, a cross while it
+     is open. */
+  .bottom-bar__icon {
+    display: block;
+  }
+
+  .bottom-bar__icon--close {
+    display: none;
+  }
+
+  body:has(.left-sidebar > details[open]) .bottom-bar__icon--menu {
+    display: none;
+  }
+
+  body:has(.left-sidebar > details[open]) .bottom-bar__icon--close {
+    display: block;
+  }
+
+  /* A page with no menu — an article with no headings —
+     has nothing for the Contents button to open: the
+     button stands dimmed and inert. The rule follows
+     the page itself, so it holds as the reader moves
+     between pages. */
+  body:not(:has(.left-sidebar > details)) .bottom-bar__button--contents {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .ai-assistant__launcher {
+    display: none;
+  }
+
+  html {
+    scroll-padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* The bar overlays the page's foot; the footer's
+     bottom padding lets the end of the page scroll
+     clear of it. */
   .footer {
-    padding-bottom: 5rem;
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
   }
 
   .right-sidebar {

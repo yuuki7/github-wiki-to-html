@@ -49,6 +49,7 @@ export default async function RouteShell({
           className="home"
           aiStrings={aiStringsFor(ui)}
           leftSidebarLabel={ui.contents}
+          homeLabel={ui.home}
           leftSidebar={
             data.listedEntries.length > 0 ? (
               <ul>
@@ -101,6 +102,7 @@ export default async function RouteShell({
         languageLinks={data.articleLinks}
         aiStrings={aiStringsFor(ui)}
         leftSidebarLabel={ui.contents}
+        homeLabel={ui.home}
         leftSidebar={
           tocItems(data.headings).length > 0 ? (
             <Toc headings={data.headings} />

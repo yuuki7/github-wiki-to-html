@@ -182,6 +182,26 @@ function swapFooter(newDocument: Document): void {
   }
 }
 
+// The bottom bar: its buttons are icons, the same in
+// every language, but the home button's destination is
+// the page's language's home page, and the buttons'
+// accessible names are its words. They are updated in
+// place, like the header's own link and names.
+function swapBottomBar(newDocument: Document): void {
+  const bar = document.querySelector(".bottom-bar");
+  const newBar = newDocument.querySelector(".bottom-bar");
+  if (!bar || !newBar) return;
+  const current = [...bar.children];
+  const next = [...newBar.children];
+  for (let i = 0; i < Math.min(current.length, next.length); i++) {
+    const target = current[i];
+    const source = next[i];
+    if (target && source) {
+      copyAttributes(target, source, ["href", "aria-label"]);
+    }
+  }
+}
+
 // The right sidebar: the AI assistant itself is never
 // touched — its state is the reader's — but its texts are
 // the page's language's, so they are updated in place: the
@@ -261,4 +281,5 @@ export function swapPage(newDocument: Document): void {
 
   swapRightAside(newDocument);
   swapFooter(newDocument);
+  swapBottomBar(newDocument);
 }
