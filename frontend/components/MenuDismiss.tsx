@@ -15,7 +15,12 @@ import { useEffect } from "react";
 // closes it. A tap on the bottom bar is the bar's own
 // business — its Contents button toggles the menu itself,
 // and its other buttons must still work while the menu is
-// open — so the listener leaves the bar alone. On a wide
+// open — so the listener leaves the bar alone. A tap on
+// the AI assistant is likewise its own business, buttons
+// and all: the window floats over the page beside the
+// panel, and touching it is not turning back to the
+// article, so it neither closes the menu nor is swallowed
+// by the closing. On a wide
 // screen the menu is a plain sidebar, never open, and the
 // listener does nothing.
 
@@ -29,6 +34,7 @@ export default function MenuDismiss() {
       const target = event.target;
       if (!(target instanceof Element)) return;
       if (target.closest(".bottom-bar")) return;
+      if (target.closest(".ai-assistant")) return;
       if (!details.contains(target)) {
         event.preventDefault();
         event.stopPropagation();

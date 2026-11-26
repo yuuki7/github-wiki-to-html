@@ -246,14 +246,33 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // screen's bottom right corner — the bottom left in a
   // right-to-left language — a margin in from the edges,
   // at a size a conversation can start in, cut down to
-  // fit a smaller screen. On a narrow screen there is no
-  // room beside the article for a corner window, so the
-  // window opens at the centred size from the start: the
-  // central column's place and size, as the heading's
-  // centre button gives it.
+  // fit a smaller screen. On a narrow screen the same
+  // corner, with a slighter margin, in the part of the
+  // screen above the bottom bar: the bar stays clear of
+  // the window, and the window takes about seventy-two
+  // hundredths of that part's width and height — large,
+  // but plainly a window over the page, not the page
+  // itself. The centred size is still there, from the
+  // heading's centre button, when the reader asks for it.
+  // The narrow screen's bottom bar, measured where it
+  // stands: the window's places on a narrow screen are
+  // all in the part of the screen above it.
+  const bottomBarHeight = (): number =>
+    document.querySelector(".bottom-bar")?.getBoundingClientRect().height ?? 0;
+
   const homeRect = (): WindowRect => {
     if (window.matchMedia("(max-width: 60rem)").matches) {
-      return columnRect();
+      const margin = 12;
+      const areaHeight = window.innerHeight - bottomBarHeight();
+      const width = Math.round(window.innerWidth * 0.72);
+      const height = Math.round(areaHeight * 0.72);
+      const rtl = document.documentElement.dir === "rtl";
+      return {
+        left: rtl ? margin : window.innerWidth - width - margin,
+        top: areaHeight - height - margin,
+        width,
+        height,
+      };
     }
     const margin = 24;
     const width = Math.min(384, window.innerWidth - margin * 2);
@@ -297,6 +316,18 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
     window.addEventListener("ai-assistant:toggle", onToggle);
     return () => window.removeEventListener("ai-assistant:toggle", onToggle);
+  });
+
+  // The bar's home button, pressed on the home page
+  // itself, asks the box to put itself away with this
+  // event: showing the home article means clearing what
+  // stands over it. It is a minimize, not a toggle — a
+  // window already away stays away.
+  useEffect(() => {
+    const onMinimize = () => minimizeWindow();
+    window.addEventListener("ai-assistant:minimize", onMinimize);
+    return () =>
+      window.removeEventListener("ai-assistant:minimize", onMinimize);
   });
 
   // A tap on the article itself while the window is open
@@ -515,9 +546,10 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       window.addEventListener("pointercancel", onUp);
     };
 
-  // The centred window's place and size: over the page's
-  // central column, a margin in from the screen's top and
-  // bottom. The column is where the reading happens; the
+  // The centred window's place and size on a wide
+  // screen: over the page's central column, a margin in
+  // from the screen's top and bottom. The column is
+  // where the reading happens; the
   // window covers it, centred, and no more of the page
   // than that.
   const columnRect = (): WindowRect => {
@@ -544,8 +576,22 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // default size, and the same whatever size the reader
   // had given the window. It is always there, beside the
   // minimize button: the window has no modes for it to
-  // change with.
+  // change with. On a narrow screen the centred size is
+  // the whole of the screen above the bottom bar, a
+  // margin in from every edge of that part: the bar is
+  // the screen's own furniture and stays clear, as it
+  // does for the window's default place.
   const centerWindow = () => {
+    if (window.matchMedia("(max-width: 60rem)").matches) {
+      const margin = 12;
+      setRect({
+        left: margin,
+        top: margin,
+        width: window.innerWidth - margin * 2,
+        height: window.innerHeight - bottomBarHeight() - margin * 2,
+      });
+      return;
+    }
     setRect(columnRect());
   };
 

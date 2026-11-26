@@ -44,11 +44,23 @@ const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 // again, and a leap of more than a screenful is a jump
 // to somewhere, not a scroll.
 //
-// On the home page itself, the home button does nothing
+// On the home page itself, the home button goes nowhere
 // and shows its house filled in: the reader is already
 // there, a link to the page being read would only load
 // it again, and the filled house is the mark of the
-// current place, as on the platforms readers know. In-app
+// current place, as on the platforms readers know. Going
+// nowhere is not doing nothing, though: its work there
+// is to show the home article itself, so it puts away
+// what stands over it — the menu, and the AI window,
+// which it asks to minimize with an event, as the bar's
+// AI button asks it to toggle. From any other page the
+// button is a plain link home, and the window rides the
+// navigation as it always does. In
+// both its forms the house's doorway is open at the
+// bottom: the bottom line runs under the walls only and
+// stops at the doorway's sides, in the outline as two
+// strokes that end there, in the filled house as a notch
+// cut up from the bottom edge. In-app
 // navigation keeps the button's state current as it does
 // its destination (see the swap and the frame:navigated
 // event).
@@ -220,6 +232,11 @@ export default function BottomBar({
     const href = event.currentTarget.getAttribute("href");
     if (href && href === window.location.pathname) {
       event.preventDefault();
+      const details = document.querySelector<HTMLDetailsElement>(
+        ".left-sidebar > details",
+      );
+      if (details) details.open = false;
+      window.dispatchEvent(new Event("ai-assistant:minimize"));
     }
   };
 
@@ -246,10 +263,7 @@ export default function BottomBar({
       >
         {atHome ? (
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 21v-8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v8z"
-            />
+            <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2h-4v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8H5a2 2 0 0 1-2-2z" />
           </svg>
         ) : (
           <svg
@@ -262,7 +276,7 @@ export default function BottomBar({
             aria-hidden="true"
           >
             <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-            <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <path d="M9 21H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2h-4" />
           </svg>
         )}
       </a>
