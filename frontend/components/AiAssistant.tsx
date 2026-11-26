@@ -263,7 +263,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
 
   const homeRect = (): WindowRect => {
     if (window.matchMedia("(max-width: 60rem)").matches) {
-      const margin = 12;
+      const margin = 6;
       const areaHeight = window.innerHeight - bottomBarHeight();
       const width = Math.round(window.innerWidth * 0.72);
       const height = Math.round(areaHeight * 0.72);
@@ -335,18 +335,24 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // A tap on the article itself while the window is open
   // puts the window away: the reader has turned back to
   // the article, and the window's own minimize button is
-  // not the only way to dismiss it. The dismissal belongs
-  // to the article and to the site header's empty ground
-  // — the header stands at the article's head, and a tap
-  // on its bare part is the same turning back. The rest
-  // of the frame (the sidebars, the footer, the bottom
-  // bar) never dismisses, nor does a tap on something
-  // that acts — a link above all, a button, a field,
-  // the header's own home link and language button among
-  // them — which is that thing's business, not a
-  // dismissal: following a link carries the window
-  // along, as a navigation should. A tap is a press that
-  // ends where it began,
+  // not the only way to dismiss it. Where the dismissal
+  // belongs depends on the screen. On a wide screen it
+  // belongs to every empty part of the page — the
+  // article, the header, both sidebars, the footer: the
+  // window floats over a page that lies open around it,
+  // and a press on any bare part of it is a turning
+  // back. On a narrow screen it belongs to the article
+  // and to the site header's empty ground alone — the
+  // header stands at the article's head, and a tap on
+  // its bare part is the same turning back — because
+  // there the frame's other parts carry the layers'
+  // own dealings (see lib/layers.ts). Neither screen
+  // dismisses on a tap on something that acts — a link
+  // above all, a button, a field, the header's own home
+  // link and language button among them — which is that
+  // thing's business, not a dismissal: following a link
+  // carries the window along, as a navigation should.
+  // A tap is a press that ends where it began,
   // soon after it began, with the page unmoved: a swipe
   // that scrolls the page begins with a press too, but
   // it is a scroll, not a tap, and leaves the window
@@ -387,7 +393,12 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       ) {
         return false;
       }
-      if (!target.closest(".main, .header")) return false;
+      if (
+        window.matchMedia("(max-width: 60rem)").matches &&
+        !target.closest(".main, .header")
+      ) {
+        return false;
+      }
       return true;
     };
     const onPointerDown = (event: PointerEvent) => {
@@ -592,7 +603,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // does for the window's default place.
   const centerWindow = () => {
     if (window.matchMedia("(max-width: 60rem)").matches) {
-      const margin = 12;
+      const margin = 6;
       setRect({
         left: margin,
         top: margin,
