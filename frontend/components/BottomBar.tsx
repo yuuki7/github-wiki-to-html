@@ -14,10 +14,17 @@ import { useEffect, useState } from "react";
 // names and the home button's destination in the page's
 // language, as it does the header's (see the swap).
 //
-// The bar stands opaque when the page loads and whenever
+// The bar stands opaque when a page arrives and whenever
 // the reader scrolls up; scrolling down makes it
 // translucent, so the article shows through it and the
-// bar costs the reading less of the screen.
+// bar costs the reading less of the screen. It follows
+// the scroll position's movement — the one signal every
+// way of scrolling gives, scrollbar drags included —
+// with care for the movements that are not the reader
+// scrolling: a page still arriving settles only the
+// bar's starting point, a navigation by the frame starts
+// it opaque again, and a leap of more than a screenful
+// is a jump to somewhere, not a scroll.
 //
 // The bar's buttons reach the things they control where
 // those things live. The home button is a plain link, and
@@ -60,55 +67,81 @@ export default function BottomBar({
     return () => document.removeEventListener("toggle", onToggle, true);
   }, []);
 
-  // The bar's translucency follows the reader's own
-  // scrolling — the wheel's turn, the finger's drag, the
-  // scrolling keys — and nothing else. It does not follow
-  // the scroll position: a change of position is not
-  // necessarily the reader scrolling. A reload partway
-  // down a page restores the position on its own, and a
-  // jump to a heading moves it at a stroke; neither may
-  // fade the bar. The bar starts opaque however far down
-  // the page loads, and only the reader's scrolling fades
-  // it: down fades it, up — a reader going back for
-  // something — brings it back solid. Small movements
-  // settle nothing, so a direction counts only past a
-  // few pixels.
+  // The bar's translucency follows the scroll position's
+  // movement: down fades the bar, up — a reader going
+  // back for something — brings it back solid. Every way
+  // of scrolling moves the position — a finger's drag, a
+  // wheel, the keys, and a scrollbar drag, which gives no
+  // other signal — so the position is the thing to
+  // follow. Three movements of the position are not the
+  // reader scrolling, and the bar takes no direction
+  // from them:
+  //
+  // - A page still arriving. A reload partway down a
+  //   page restores its position while the page loads,
+  //   and until the position has been quiet a while,
+  //   movements only settle where the bar starts from.
+  //   The bar therefore starts opaque however far down
+  //   the page loads.
+  // - A navigation by the frame, which sets the position
+  //   itself and says so (frame:navigated, see the
+  //   link interceptor): the bar starts opaque again, as
+  //   at a load, from the position the frame set.
+  // - A leap: one movement of more than a screenful is a
+  //   jump to somewhere — the bar takes the new position
+  //   as its starting point and keeps its state.
+  //
+  // Small movements settle nothing, so a direction
+  // counts only past a few pixels.
   useEffect(() => {
-    let lastTouchY: number | null = null;
-    const onWheel = (event: WheelEvent) => {
-      if (event.deltaY > 4) setTranslucent(true);
-      else if (event.deltaY < -4) setTranslucent(false);
+    let anchor = window.scrollY;
+    let previous = window.scrollY;
+    let armed = false;
+    let timer: number | undefined;
+    const settle = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        armed = true;
+        anchor = window.scrollY;
+        previous = window.scrollY;
+      }, 250);
     };
-    const onTouchStart = (event: TouchEvent) => {
-      lastTouchY = event.touches[0]?.clientY ?? null;
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      const y = event.touches[0]?.clientY;
-      if (y === undefined || lastTouchY === null) return;
-      if (lastTouchY - y > 4) {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (!armed) {
+        anchor = y;
+        previous = y;
+        settle();
+        return;
+      }
+      const step = y - previous;
+      previous = y;
+      if (Math.abs(step) > window.innerHeight * 1.5) {
+        anchor = y;
+        return;
+      }
+      if (y - anchor > 4) {
         setTranslucent(true);
-        lastTouchY = y;
-      } else if (y - lastTouchY > 4) {
+        anchor = y;
+      } else if (anchor - y > 4) {
         setTranslucent(false);
-        lastTouchY = y;
+        anchor = y;
       }
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (["ArrowDown", "PageDown", " ", "End"].includes(event.key)) {
-        setTranslucent(true);
-      } else if (["ArrowUp", "PageUp", "Home"].includes(event.key)) {
-        setTranslucent(false);
-      }
+    const onNavigated = () => {
+      setTranslucent(false);
+      armed = false;
+      anchor = window.scrollY;
+      previous = window.scrollY;
+      settle();
     };
-    window.addEventListener("wheel", onWheel, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("keydown", onKeyDown);
+    settle();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("frame:navigated", onNavigated);
     return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("keydown", onKeyDown);
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("frame:navigated", onNavigated);
     };
   }, []);
 

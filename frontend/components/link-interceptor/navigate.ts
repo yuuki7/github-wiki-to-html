@@ -126,6 +126,13 @@ export async function navigate(url: URL, pop: boolean): Promise<void> {
     window.scrollTo(0, 0);
   }
 
+  // The scroll position is the new page's own now, set by
+  // the frame and not by the reader: say so, for the parts
+  // of the frame that answer the reader's scrolling — the
+  // bottom bar above all — so they take this position as
+  // their starting point, not as a scroll.
+  window.dispatchEvent(new Event("frame:navigated"));
+
   enhanceCodeBlocks();
   void typesetArticle();
 }
