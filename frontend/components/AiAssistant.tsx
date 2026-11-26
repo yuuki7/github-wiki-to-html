@@ -32,8 +32,9 @@ import type { AiStrings } from "../lib/types";
 // opens the conversation as a floating window that grows
 // out of that corner; its default place is the bottom
 // right, with a margin from the page's edges. The reader
-// can drag the window by its heading and put it anywhere on
-// the screen, resize it from any edge or corner, and centre
+// can drag the window by any empty part of it and put it
+// anywhere on the screen, resize it from any edge or
+// corner, and centre
 // it from the heading; minimizing it back to the button
 // keeps where it was, so it opens again where it left off,
 // and the default place is where a freshly loaded page
@@ -298,34 +299,123 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     return () => window.removeEventListener("ai-assistant:toggle", onToggle);
   });
 
-  // A click or tap anywhere on the page while the window
-  // is open puts the window away: the reader has turned
-  // back to the page, and the window's own minimize
-  // button is not the only way to dismiss it. Presses
-  // inside the window are the window's own business, and
-  // the bottom bar's AI button is left alone — it toggles
-  // the window itself, and a dismissal here would fight
-  // the toggle. Only the primary button counts: a
-  // right-click raises a menu of its own and dismisses
-  // nothing.
+  // A tap on the article itself while the window is open
+  // puts the window away: the reader has turned back to
+  // the article, and the window's own minimize button is
+  // not the only way to dismiss it. The dismissal belongs
+  // to the article alone — the frame around it (the
+  // header, the sidebars, the footer, the bottom bar)
+  // never dismisses, nor does a tap on something that
+  // acts — a link above all, a button, a field — which
+  // is that thing's business, not a dismissal: following
+  // a link carries the window along, as a navigation
+  // should. A tap is a press that ends where it began,
+  // soon after it began, with the page unmoved: a swipe
+  // that scrolls the page begins with a press too, but
+  // it is a scroll, not a tap, and leaves the window
+  // standing — the reader is reading the page alongside
+  // it, not turning away from the window. (A scrollbar
+  // drag gives the page no press at all, and leaves it
+  // standing likewise.) Two layers standing over the
+  // article close one at a time, outermost first in the
+  // reader's path back to the article: while the narrow
+  // screen's menu drawer is open, a tap on the article
+  // closes the drawer alone — the drawer's own dismissal
+  // takes that tap on the click that follows — and only
+  // a second tap, with the drawer already gone, puts
+  // the window away. Presses inside the window are
+  // the window's own business, and the bottom bar's AI
+  // button is left alone — it toggles the window itself,
+  // and a dismissal here would fight the toggle. Only
+  // the primary button counts: a right-click raises a
+  // menu of its own and dismisses nothing.
   useEffect(() => {
     if (placement === "minimized") return;
+    let tapStart: {
+      x: number;
+      y: number;
+      scrollY: number;
+      time: number;
+    } | null = null;
+    const eligible = (target: EventTarget | null): boolean => {
+      if (!(target instanceof Element)) return false;
+      if (windowRef.current?.contains(target)) return false;
+      if (target.closest(".bottom-bar__button--ai")) return false;
+      if (
+        target.closest(
+          "a[href], button, input, textarea, select, summary, label",
+        )
+      ) {
+        return false;
+      }
+      if (!target.closest(".main")) return false;
+      return true;
+    };
     const onPointerDown = (event: PointerEvent) => {
-      if (event.button !== 0) return;
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      if (windowRef.current?.contains(target)) return;
-      if (target.closest(".bottom-bar__button--ai")) return;
+      if (event.button !== 0 || !eligible(event.target)) {
+        tapStart = null;
+        return;
+      }
+      tapStart = {
+        x: event.clientX,
+        y: event.clientY,
+        scrollY: window.scrollY,
+        time: Date.now(),
+      };
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      const start = tapStart;
+      tapStart = null;
+      if (!start || !eligible(event.target)) return;
+      if (Date.now() - start.time > 500) return;
+      if (Math.abs(event.clientX - start.x) > 10) return;
+      if (Math.abs(event.clientY - start.y) > 10) return;
+      if (window.scrollY !== start.scrollY) return;
+      if (
+        document.querySelector<HTMLDetailsElement>(".left-sidebar > details")
+          ?.open
+      ) {
+        return;
+      }
       minimizeWindow();
     };
+    const onPointerCancel = () => {
+      tapStart = null;
+    };
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerCancel);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointercancel", onPointerCancel);
+    };
   }, [placement]);
 
-  // Dragging the heading moves the window. The window is
-  // kept partly on screen however far it is dragged.
-  const onHeadingPointerDown = (event: React.PointerEvent) => {
-    if ((event.target as Element).closest("button")) return;
+  // Dragging any empty part of the window moves it: the
+  // heading, the window's own padding, the conversation's
+  // empty ground, the form's frame around its field. What
+  // acts or holds content is not a handle — the controls,
+  // the input, a link, and the messages themselves keep
+  // their own business (a message can still be selected),
+  // the resize handles resize, and the conversation's
+  // scrollbar still scrolls the conversation. The window
+  // is kept partly on screen however far it is dragged.
+  const onWindowPointerDown = (event: React.PointerEvent) => {
+    if (event.button !== 0) return;
+    const target = event.target as Element;
+    if (
+      target.closest(
+        "button, textarea, input, select, a, label, .ai-assistant__resize, .ai-assistant__message",
+      )
+    ) {
+      return;
+    }
+    const logElement = target.closest<HTMLElement>(".ai-assistant__log-view");
+    if (logElement && target === logElement) {
+      const logBox = logElement.getBoundingClientRect();
+      if (event.clientX > logBox.left + logElement.clientWidth) return;
+    }
     const box = windowRef.current?.getBoundingClientRect();
     if (!box) return;
     const offset = { x: event.clientX - box.left, y: event.clientY - box.top };
@@ -347,9 +437,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   // The handles on the window's edges and corners resize
@@ -358,8 +450,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // keeps a minimum the form needs, and growth stops at
   // the screen's edge: a window is never enlarged past
   // the page, however far its handle is dragged. Moving
-  // the window itself is freer — the heading's drag keeps
-  // only a part of it on screen.
+  // the window itself is freer — its drag keeps only a
+  // part of it on screen.
   type ResizeHandle =
     | "top-left"
     | "top"
@@ -416,9 +508,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
     };
 
   // The centred window's place and size: over the page's
@@ -479,6 +573,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
         <div
           ref={windowRef}
           className="ai-assistant__window"
+          onPointerDown={onWindowPointerDown}
           style={{
             left: rect.left,
             top: rect.top,
@@ -486,10 +581,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             height: rect.height,
           }}
         >
-          <div
-            className="ai-assistant__heading"
-            onPointerDown={onHeadingPointerDown}
-          >
+          <div className="ai-assistant__heading">
             <h2 className="ai-assistant__title">🧸</h2>
             <div className="ai-assistant__controls">
               <button
@@ -535,15 +627,17 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
               </button>
             </div>
           </div>
-          <div className="ai-assistant__log" ref={logRef}>
-            {log.map((message, index) => (
-              <p
-                key={index}
-                className={`ai-assistant__message ai-assistant__message--${message.role}`}
-              >
-                {message.content}
-              </p>
-            ))}
+          <div className="ai-assistant__log">
+            <div className="ai-assistant__log-view" ref={logRef}>
+              {log.map((message, index) => (
+                <p
+                  key={index}
+                  className={`ai-assistant__message ai-assistant__message--${message.role}`}
+                >
+                  {message.content}
+                </p>
+              ))}
+            </div>
           </div>
           <p className="ai-assistant__status" hidden={status === null}>
             {status}

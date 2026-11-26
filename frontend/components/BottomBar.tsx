@@ -44,6 +44,15 @@ const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 // again, and a leap of more than a screenful is a jump
 // to somewhere, not a scroll.
 //
+// On the home page itself, the home button does nothing
+// and shows its house filled in: the reader is already
+// there, a link to the page being read would only load
+// it again, and the filled house is the mark of the
+// current place, as on the platforms readers know. In-app
+// navigation keeps the button's state current as it does
+// its destination (see the swap and the frame:navigated
+// event).
+//
 // The bar's buttons reach the things they control where
 // those things live. The home button is a plain link, and
 // in-app navigation carries it like any other. The
@@ -61,15 +70,33 @@ type Props = {
   homeHref: string;
   homeLabel: string;
   contentsLabel: string;
+  homeCurrent: boolean;
 };
 
 export default function BottomBar({
   homeHref,
   homeLabel,
   contentsLabel,
+  homeCurrent,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [atHome, setAtHome] = useState(homeCurrent);
   const barRef = useRef<HTMLElement>(null);
+  const homeRef = useRef<HTMLAnchorElement>(null);
+
+  // Whether the page being read is the home page, kept
+  // current across in-app navigation: the frame sets the
+  // bar's home destination for the new page (see the
+  // swap), and its navigated event says the move is done.
+  useEffect(() => {
+    const update = () => {
+      const href = homeRef.current?.getAttribute("href");
+      setAtHome(!!href && href === window.location.pathname);
+    };
+    update();
+    window.addEventListener("frame:navigated", update);
+    return () => window.removeEventListener("frame:navigated", update);
+  }, []);
 
   useEffect(() => {
     const onToggle = (event: Event) => {
@@ -184,6 +211,18 @@ export default function BottomBar({
     };
   }, []);
 
+  // On the home page the home button is a no-op: the
+  // link points at the page being read, and following it
+  // would only load the page again. Preventing the click
+  // also keeps the link interceptor from acting — it
+  // leaves an already-prevented click alone.
+  const onHomeClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const href = event.currentTarget.getAttribute("href");
+    if (href && href === window.location.pathname) {
+      event.preventDefault();
+    }
+  };
+
   const toggleMenu = () => {
     const details = document.querySelector<HTMLDetailsElement>(
       ".left-sidebar > details",
@@ -197,19 +236,35 @@ export default function BottomBar({
 
   return (
     <nav ref={barRef} className="bottom-bar">
-      <a className="bottom-bar__button" href={homeHref} aria-label={homeLabel}>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-          <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        </svg>
+      <a
+        ref={homeRef}
+        className="bottom-bar__button"
+        href={homeHref}
+        aria-label={homeLabel}
+        aria-current={atHome ? "page" : undefined}
+        onClick={onHomeClick}
+      >
+        {atHome ? (
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              fillRule="evenodd"
+              d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 21v-8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v8z"
+            />
+          </svg>
+        ) : (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+            <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          </svg>
+        )}
       </a>
       <button
         type="button"

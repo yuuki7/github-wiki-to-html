@@ -143,6 +143,7 @@ export default function Shell({
         homeHref={homeHref(language)}
         homeLabel={homeLabel}
         contentsLabel={leftSidebarLabel}
+        homeCurrent={!!isHome}
       />
       <LinkInterceptor />
       <CodeCopy />

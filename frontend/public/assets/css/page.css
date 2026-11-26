@@ -430,6 +430,17 @@ body {
   box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 0.25);
   transform-origin: 100% 100%;
   animation: ai-assistant-grow 0.18s ease-out;
+  cursor: grab;
+  /* No touch gesture on the window is the page's: a
+     vertical swipe that starts on the window must stay
+     the window's — as a drag of the window itself — and
+     never become the page scrolling under it, which
+     would take the pointer away mid-drag. The one
+     exception is the conversation's own view, below,
+     which keeps its vertical scroll: a touch there is
+     judged up to that view, not up to the page, so the
+     window's bar does not reach it. */
+  touch-action: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -438,11 +449,14 @@ body {
   }
 }
 
-/* The heading is the window's title bar and its drag
-   handle. Its three tracks — an empty one, the mark, the
-   controls — put the mark at the window's exact centre
-   whatever the controls take, and a margin below sets the
-   bar apart from the conversation. */
+/* The heading is the window's title bar. Its three
+   tracks — an empty one, the mark, the controls — put
+   the mark at the window's exact centre whatever the
+   controls take, and a margin below sets the bar apart
+   from the conversation. Dragging is the whole window's:
+   any empty part of it is a handle (see the window's own
+   rule for its cursor), and the heading is one such part,
+   barred from scrolling under a touch so the drag holds. */
 .ai-assistant__heading {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -486,18 +500,30 @@ body {
 }
 
 /* The conversation is set in a sans-serif face, as chat
-   is: the window's one break with the page's serif. */
+   is: the window's one break with the page's serif. The
+   conversation's ground and its scrolling view are two
+   elements, so that a touch told them apart: the view
+   wraps the messages at their own height, capped by the
+   ground, and scrolls them; the ground below and around
+   the view is the window's empty part, and a drag there
+   moves the window, on a touch screen as much as with a
+   mouse. Were the ground itself the scroller, its empty
+   part could not be told from its content, and a
+   vertical touch on it would scroll instead of drag. */
 .ai-assistant__log {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   font-family: sans-serif;
 }
 
-.ai-assistant__log:empty {
-  display: none;
+.ai-assistant__log-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  touch-action: pan-y;
 }
 
 /* The messages are bubbles, as in a direct-message
@@ -522,6 +548,7 @@ body {
   border-radius: 1.4em;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  cursor: text;
 }
 
 .ai-assistant__message--user {
@@ -563,6 +590,7 @@ body {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 1.5rem;
+  touch-action: none;
 }
 
 .ai-assistant__input {
@@ -575,6 +603,7 @@ body {
   background: none;
   font: inherit;
   font-size: 90%;
+  cursor: text;
   field-sizing: content;
   max-height: 8lh;
   overflow-y: auto;
@@ -608,73 +637,77 @@ body {
 /* The resize handles: the window's four edges and four
    corners, invisible strips and squares that only their
    cursors name. The corners take the wider hold; the edge
-   strips run between them. */
+   strips run between them. The hold is generous — an edge
+   is a thin target on a touch screen — and the handles sit
+   above the window's own parts, so a drag that starts on
+   an edge resizes rather than moving the window. */
 .ai-assistant__resize {
   position: absolute;
+  z-index: 3;
   touch-action: none;
 }
 
 .ai-assistant__resize--top-left {
   left: 0;
   top: 0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   cursor: nwse-resize;
 }
 
 .ai-assistant__resize--top-right {
   right: 0;
   top: 0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   cursor: nesw-resize;
 }
 
 .ai-assistant__resize--bottom-right {
   right: 0;
   bottom: 0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   cursor: nwse-resize;
 }
 
 .ai-assistant__resize--bottom-left {
   left: 0;
   bottom: 0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   cursor: nesw-resize;
 }
 
 .ai-assistant__resize--top {
-  left: 1.25rem;
-  right: 1.25rem;
+  left: 1.5rem;
+  right: 1.5rem;
   top: 0;
-  height: 0.5rem;
+  height: 0.75rem;
   cursor: ns-resize;
 }
 
 .ai-assistant__resize--bottom {
-  left: 1.25rem;
-  right: 1.25rem;
+  left: 1.5rem;
+  right: 1.5rem;
   bottom: 0;
-  height: 0.5rem;
+  height: 0.75rem;
   cursor: ns-resize;
 }
 
 .ai-assistant__resize--left {
   left: 0;
-  top: 1.25rem;
-  bottom: 1.25rem;
-  width: 0.5rem;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 0.75rem;
   cursor: ew-resize;
 }
 
 .ai-assistant__resize--right {
   right: 0;
-  top: 1.25rem;
-  bottom: 1.25rem;
-  width: 0.5rem;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 0.75rem;
   cursor: ew-resize;
 }
 
