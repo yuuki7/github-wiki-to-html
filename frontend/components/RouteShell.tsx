@@ -50,7 +50,6 @@ export default async function RouteShell({
           aiStrings={aiStringsFor(ui)}
           leftSidebarLabel={ui.contents}
           leftSidebarCloseLabel={ui.close}
-          homeLabel={ui.home}
           sidebarMenu={
             data.listedEntries.length > 0
               ? {
@@ -121,7 +120,6 @@ export default async function RouteShell({
         aiStrings={aiStringsFor(ui)}
         leftSidebarLabel={ui.contents}
         leftSidebarCloseLabel={ui.close}
-        homeLabel={ui.home}
         sidebarMenu={
           tocItems(data.headings).length > 0
             ? {

@@ -238,27 +238,41 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   }
   type Placement = "minimized" | "docked" | "floating" | "fullscreen";
   const [placement, setPlacement] = useState<Placement>("minimized");
-  // One place for each kind of screen. A place is
-  // measured in its own screen's terms — the narrow
-  // screen's as a share of the part above its bar, the
-  // wide screen's from its corner at its own size — and
+  // The floating window's arrangement: where it stands,
+  // and how big it is. The places are one for each kind
+  // of screen — a place is measured in its own screen's
+  // terms, the narrow screen's from its corner of the
+  // screen it has, the wide screen's from its own — and
   // neither is the other's. A screen that changes kind
   // neither carries a place over nor rewrites one: the
   // window stands at the place of the screen it is on,
   // a place made on the other screen is not left behind
   // in this one's terms, and a screen returned to gives
   // its own place back untouched, so a round trip out
-  // and back restores the window exactly. A place of
-  // width 0 is no place yet: on that kind of screen the
-  // window stands at its default place (see homeRect)
-  // until the reader's hand writes one.
+  // and back restores the window exactly. The size, by
+  // contrast, is one for both kinds of screen: a change
+  // of screen moves the window, it does not make the
+  // window a different size — a window that changes its
+  // size the moment the screen changes kind, in either
+  // direction, is a window remade, not a window moved.
+  // What the arrangement has not written, the window
+  // itself writes once, at the moment it stands (see
+  // the standing effect below): the defaults are taken
+  // from the screen as it is at that moment, and from
+  // then on they are the arrangement, like anything the
+  // reader's hand writes.
+  interface WindowPlace {
+    left: number;
+    top: number;
+  }
   const [places, setPlaces] = useState<{
-    wide: WindowRect;
-    narrow: WindowRect;
-  }>({
-    wide: { left: 0, top: 0, width: 0, height: 0 },
-    narrow: { left: 0, top: 0, width: 0, height: 0 },
-  });
+    wide: WindowPlace | null;
+    narrow: WindowPlace | null;
+  }>({ wide: null, narrow: null });
+  const [size, setSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   // The conversation's end stays in view: the log scrolls
   // within the window, a new message — the reader's own
   // above all — is no use below the fold, and a window
@@ -269,46 +283,51 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     if (element) element.scrollTop = element.scrollHeight;
   }, [log, placement]);
 
-  // The window's default place. On a wide screen: the
-  // screen's bottom right corner — the bottom left in a
-  // right-to-left language — a margin in from the edges,
-  // at a size a conversation can start in, cut down to
-  // fit a smaller screen. On a narrow screen the same
-  // corner, with a slighter margin, in the part of the
-  // screen above the bottom bar: the bar stays clear of
-  // the window, and the window takes about seventy-two
-  // hundredths of that part's width and height — large,
-  // but plainly a window over the page, not the page
-  // itself.
-  // The narrow screen's bottom bar, measured where it
-  // stands: the window's places on a narrow screen are
-  // all in the part of the screen above it.
-  const bottomBarHeight = (): number =>
-    document.querySelector(".bottom-bar")?.getBoundingClientRect().height ?? 0;
+  // The window's default size. It keeps one fixed
+  // ratio, three wide to four tall, on either screen: a
+  // window whose height is a share of the screen's
+  // height and whose width is a share of its width
+  // takes the screen's own shape — tall and thin in a
+  // tall thin browser window — which is the screen's
+  // shape, not a window's. So the width is the anchor —
+  // at most 384 on a wide screen, at most about
+  // seventy-two hundredths of the screen on a narrow
+  // one, large but plainly a window over the page — the
+  // height follows it by the ratio, and where the
+  // screen is too short for that height, the height is
+  // the anchor instead and the width follows it back,
+  // the ratio kept either way. The margin is the
+  // screen's own: a slighter one on a narrow screen.
+  const screenMargin = (): number =>
+    window.matchMedia("(max-width: 60rem)").matches ? 6 : 24;
 
-  const homeRect = (): WindowRect => {
-    if (window.matchMedia("(max-width: 60rem)").matches) {
-      const margin = 6;
-      const areaHeight = window.innerHeight - bottomBarHeight();
-      const width = Math.round(window.innerWidth * 0.72);
-      const height = Math.round(areaHeight * 0.72);
-      const rtl = document.documentElement.dir === "rtl";
-      return {
-        left: rtl ? margin : window.innerWidth - width - margin,
-        top: areaHeight - height - margin,
-        width,
-        height,
-      };
+  const defaultSize = (): { width: number; height: number } => {
+    const narrow = window.matchMedia("(max-width: 60rem)").matches;
+    const margin = narrow ? 6 : 24;
+    const widest = narrow ? Math.round(window.innerWidth * 0.72) : 384;
+    let width = Math.min(widest, window.innerWidth - margin * 2);
+    let height = Math.round((width * 4) / 3);
+    const tallest = window.innerHeight - margin * 2;
+    if (height > tallest) {
+      height = tallest;
+      width = Math.round((height * 3) / 4);
     }
-    const margin = 24;
-    const width = Math.min(384, window.innerWidth - margin * 2);
-    const height = Math.min(512, window.innerHeight - margin * 2);
+    return { width, height };
+  };
+
+  // The default place: the screen's bottom right
+  // corner — the bottom left in a right-to-left
+  // language — a margin in from the edges, holding a
+  // window of the size given, whatever that size is.
+  const cornerPlace = (ofSize: {
+    width: number;
+    height: number;
+  }): WindowPlace => {
+    const margin = screenMargin();
     const rtl = document.documentElement.dir === "rtl";
     return {
-      left: rtl ? margin : window.innerWidth - width - margin,
-      top: window.innerHeight - height - margin,
-      width,
-      height,
+      left: rtl ? margin : window.innerWidth - ofSize.width - margin,
+      top: window.innerHeight - ofSize.height - margin,
     };
   };
 
@@ -368,23 +387,22 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // The place in force — the current screen's own — and
-  // its writer. The reader's hand writes a place: a
-  // drag, a resize, the making of a default. It writes
-  // the place of the screen it is on, and no other; the
-  // screen itself never writes one, it only reads the
-  // place in force for standing (see shownRect).
-  const rect = narrowScreen ? places.narrow : places.wide;
-  const setRect = (
-    next: WindowRect | ((previous: WindowRect) => WindowRect),
-  ) => {
-    setPlaces((previous) => {
-      const current = narrowScreen ? previous.narrow : previous.wide;
-      const value = typeof next === "function" ? next(current) : next;
-      return narrowScreen
-        ? { ...previous, narrow: value }
-        : { ...previous, wide: value };
-    });
+  // The arrangement's writers. The reader's hand writes
+  // the arrangement: a drag writes the place, a resize
+  // writes the size and the place it ends at. A place is
+  // written to the screen it was made on, and no other.
+  // The window's own standing writes the defaults, once
+  // (see the standing effect below); between those
+  // moments the screen writes nothing at all — a resize
+  // of the browser within a kind of screen leaves the
+  // arrangement exactly as it stands, and the screen
+  // only reads it for standing (see shownRect).
+  const setPlace = (place: WindowPlace) => {
+    setPlaces((previous) =>
+      narrowScreen
+        ? { ...previous, narrow: place }
+        : { ...previous, wide: place },
+    );
   };
 
   // The form the box stands in, as the page and the
@@ -401,24 +419,63 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const effectivePlacement: Placement =
     placement === "docked" && narrowScreen ? "fullscreen" : placement;
 
-  // The window's place, read through the screen for
-  // standing (see fitRect): the derivation is made here,
-  // where the window is drawn, and the library below is
-  // handed the fitted place. A kind of screen with no
-  // place yet stands at its default (see homeRect): the
-  // default is read for standing, not yet kept — the
-  // reader's first drag or resize on that screen writes
-  // the place as it stands, the default included, and
-  // from then on the place is kept. Its reports — a
-  // drag, a resize — are of the window as it stands, and
-  // they are what rewrites the place: the reader's hand,
-  // not the screen.
-  const standingRect =
-    rect.width === 0 ? (viewport === null ? rect : homeRect()) : rect;
+  // The window's standing, read from the arrangement
+  // through the screen (see fitRect): the derivation is
+  // made here, where the window is drawn, and the
+  // library below is handed the fitted standing. The
+  // fallbacks for what the arrangement has not written
+  // — the default size, the screen's corner — serve the
+  // first frame only: the standing effect below writes
+  // them into the arrangement at once, and from then on
+  // the standing is read from the arrangement alone.
+  // A default read afresh from the screen at every
+  // drawing would make the window a function of the
+  // browser's size — growing and shrinking as the
+  // reader resizes the browser, and jumping at the
+  // crossing of the kinds — which is no arrangement at
+  // all.
+  let standingRect: WindowRect = { left: 0, top: 0, width: 0, height: 0 };
+  if (viewport !== null) {
+    const standingSize = size === null ? defaultSize() : size;
+    const place = narrowScreen ? places.narrow : places.wide;
+    const margin = screenMargin();
+    const rtl = document.documentElement.dir === "rtl";
+    standingRect = {
+      left:
+        place === null
+          ? rtl
+            ? margin
+            : viewport.width - standingSize.width - margin
+          : place.left,
+      top:
+        place === null
+          ? viewport.height - standingSize.height - margin
+          : place.top,
+      width: standingSize.width,
+      height: standingSize.height,
+    };
+  }
   const shownRect =
-    standingRect.width === 0 || viewport === null
-      ? standingRect
-      : fitRect(standingRect, viewport);
+    viewport === null ? standingRect : fitRect(standingRect, viewport);
+
+  // The standing writes the defaults, once. When the
+  // window stands and the arrangement has no size yet,
+  // the size is taken from the screen as it is at that
+  // moment; when it stands on a kind of screen with no
+  // place yet, the place is that screen's corner at the
+  // size as it stands. A change of the screen's kind
+  // under a standing window is such a moment for the
+  // new kind: its place is written then, at the
+  // crossing, from the screen as it is then. Nothing
+  // here runs again for a mere resize: what is written
+  // is written, and the guards leave it alone.
+  useEffect(() => {
+    if (placement !== "floating") return;
+    const standingSize = size === null ? defaultSize() : size;
+    if (size === null) setSize(standingSize);
+    const place = narrowScreen ? places.narrow : places.wide;
+    if (place === null) setPlace(cornerPlace(standingSize));
+  });
 
   // Opening the box: on a wide screen it docks, on a
   // narrow one it floats. The floating window opens at
@@ -459,11 +516,10 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
 
   // The form the box stands in, told to the page: the
   // stylesheet lays the page out around a standing panel
-  // from the body's classes, and the panda buttons — the
+  // from the body's classes, and the panda button — the
   // launcher in the article header, a fresh element on
-  // every page, and the bottom bar's button — take their
-  // pressed state from here, on a navigation as on a
-  // change of the form itself.
+  // every page — takes its pressed state from here, on a
+  // navigation as on a change of the form itself.
   useEffect(() => {
     const sync = () => {
       document.body.classList.toggle(
@@ -475,7 +531,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
         effectivePlacement === "fullscreen",
       );
       document
-        .querySelectorAll(".ai-launcher, .bottom-bar__button--ai")
+        .querySelectorAll(".ai-launcher")
         .forEach((button) =>
           button.setAttribute(
             "aria-pressed",
@@ -489,8 +545,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     // title's button — stands only while the panel does,
     // and a drawer left standing would keep only the
     // article's own dismissals. On a narrow screen the
-    // menu is the bottom bar's business, not the dock's,
-    // and it is left alone.
+    // drawer is that screen's own furniture, not the
+    // dock's, and it is left alone.
     if (
       effectivePlacement !== "docked" &&
       effectivePlacement !== "fullscreen" &&
@@ -569,27 +625,14 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     window.localStorage.setItem("ai-column-width", String(next));
   };
 
-  // The launcher in the article header and the narrow
-  // screen's bottom bar both ask the box to toggle itself
-  // with this event: open when minimized, minimize when
-  // open. The listener is renewed after every render, so
-  // the toggle always acts on the placement as it stands.
-  useEffect(() => {
-    const onToggle = () => {
-      if (placement === "minimized") openAssistant();
-      else minimizeAssistant();
-    };
-    window.addEventListener("ai-assistant:toggle", onToggle);
-    return () => window.removeEventListener("ai-assistant:toggle", onToggle);
-  });
-
   // The article header's launcher is worked from here,
   // not from the button itself: the article is swapped
   // for the next page's at every in-app navigation, and
   // the button swapped in with it is inert (see
-  // AiLauncher). A click on the button's class is the
-  // same ask as the toggle event above. The listener is
-  // renewed after every render, for the same reason.
+  // AiLauncher). A click on the button's class toggles
+  // the box: open when minimized, minimize when open.
+  // The listener is renewed after every render, so the
+  // toggle always acts on the placement as it stands.
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       const target = event.target;
@@ -600,18 +643,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
-  });
-
-  // The bar's home button, pressed on the home page
-  // itself, asks the box to put itself away with this
-  // event: showing the home article means clearing what
-  // stands over it. It is a minimize, not a toggle — a
-  // window already away stays away.
-  useEffect(() => {
-    const onMinimize = () => minimizeAssistant();
-    window.addEventListener("ai-assistant:minimize", onMinimize);
-    return () =>
-      window.removeEventListener("ai-assistant:minimize", onMinimize);
   });
 
   // A tap on the article itself while the window floats
@@ -630,10 +661,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // and to the site header's empty ground alone — the
   // header stands at the article's head, and a tap on
   // its bare part is the same turning back — because
-  // there the frame's other parts carry their own
-  // dealings: the bottom bar works its buttons, and the
-  // menu's drawer stands over the article with a
-  // dismissal of its own. Neither screen
+  // there the menu's drawer stands over the article
+  // with a dismissal of its own. Neither screen
   // dismisses on a tap on something that acts — a link
   // above all, a button, a field, the header's own home
   // link and language button among them — which is that
@@ -657,11 +686,9 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // the drawer is already gone. A second press, with the
   // drawer gone, puts the window away.
   // Presses inside the window are
-  // the window's own business, and the bottom bar's AI
-  // button is left alone — it toggles the window itself,
-  // and a dismissal here would fight the toggle. Only
-  // the primary button counts: a right-click raises a
-  // menu of its own and dismisses nothing.
+  // the window's own business. Only the primary button
+  // counts: a right-click raises a menu of its own and
+  // dismisses nothing.
   useEffect(() => {
     if (placement !== "floating") return;
     let tapStart: {
@@ -675,7 +702,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       if (!(target instanceof Element)) return false;
       if (target.closest(".ai-assistant__window")) return false;
       if (target.closest(".sidebar-drawer__popup")) return false;
-      if (target.closest(".bottom-bar__button--ai")) return false;
       if (
         target.closest(
           "a[href], button, input, textarea, select, summary, label",
@@ -917,21 +943,13 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             minHeight={200}
             bounds="window"
             cancel="button, textarea, input, select, a, label, .ai-assistant__message"
-            onDrag={(_event, data) =>
-              setRect({
-                ...standingRect,
-                left: data.x,
-                top: data.y,
-              })
-            }
-            onResize={(_event, _direction, ref, _delta, position) =>
-              setRect({
-                left: position.x,
-                top: position.y,
-                width: ref.offsetWidth,
-                height: ref.offsetHeight,
-              })
-            }
+            onDrag={(_event, data) => {
+              setPlace({ left: data.x, top: data.y });
+            }}
+            onResize={(_event, _direction, ref, _delta, position) => {
+              setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
+              setPlace({ left: position.x, top: position.y });
+            }}
           >
             {heading(
               <>

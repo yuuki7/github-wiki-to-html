@@ -5,7 +5,6 @@ import type { FooterData } from "../lib/page-data";
 import type { AiStrings, AlternateLink, SidebarMenuData } from "../lib/types";
 import AiAssistant from "./AiAssistant";
 import LanguageMenu from "./LanguageMenu";
-import BottomBar from "./BottomBar";
 import CodeCopy from "./CodeCopy";
 import LinkInterceptor from "./link-interceptor";
 import TocDrawer from "./TocDrawer";
@@ -42,11 +41,6 @@ import TocDrawer from "./TocDrawer";
 // empty — an article with no headings for its table of
 // contents — passes no content, and the aside stays empty,
 // rather than holding a menu that opens onto nothing.
-//
-// The bottom bar stands after the grid's regions: the
-// stylesheet shows it only on a narrow screen, where it
-// holds in one bar the controls a wide screen spreads
-// over the page.
 
 type Props = {
   language: string;
@@ -58,7 +52,6 @@ type Props = {
   sidebarMenu?: SidebarMenuData | null;
   leftSidebarLabel: string;
   leftSidebarCloseLabel: string;
-  homeLabel: string;
   footer: FooterData;
   children: ReactNode;
 };
@@ -73,7 +66,6 @@ export default function Shell({
   sidebarMenu,
   leftSidebarLabel,
   leftSidebarCloseLabel,
-  homeLabel,
   footer,
   children,
 }: Props) {
@@ -121,11 +113,6 @@ export default function Shell({
         </footer>
       </div>
 
-      <BottomBar
-        homeHref={homeHref(language)}
-        homeLabel={homeLabel}
-        homeCurrent={!!isHome}
-      />
       <LinkInterceptor />
       <CodeCopy />
       <TocDrawer initialData={sidebarMenu ?? null} />

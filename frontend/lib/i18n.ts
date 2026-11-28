@@ -208,7 +208,6 @@ export interface UiStrings {
   originalArticle: string;
   redirect: string;
   contents: string;
-  home: string;
   close: string;
   aiSummarize: string;
   aiLoading: string;
@@ -227,7 +226,6 @@ const UI_STRINGS: Record<string, UiStrings> = {
     originalArticle: "Show original",
     redirect: "Redirect",
     contents: "Contents",
-    home: "Home",
     close: "Close",
     aiSummarize: "Summarize this article",
     aiLoading: "Loading the model…",
@@ -245,7 +243,6 @@ const UI_STRINGS: Record<string, UiStrings> = {
     originalArticle: "原文を表示",
     redirect: "リダイレクト",
     contents: "目次",
-    home: "ホーム",
     close: "閉じる",
     aiSummarize: "この記事を要約",
     aiLoading: "モデルを読み込んでいます…",
@@ -263,7 +260,6 @@ const UI_STRINGS: Record<string, UiStrings> = {
     originalArticle: "Original anzeigen",
     redirect: "Weiterleitung",
     contents: "Inhalt",
-    home: "Start",
     close: "Schließen",
     aiSummarize: "Diesen Artikel zusammenfassen",
     aiLoading: "Das Modell wird geladen…",
@@ -281,7 +277,6 @@ const UI_STRINGS: Record<string, UiStrings> = {
     originalArticle: "查看原文",
     redirect: "重定向",
     contents: "目录",
-    home: "首页",
     close: "关闭",
     aiSummarize: "总结这篇文章",
     aiLoading: "正在加载模型…",
@@ -298,7 +293,6 @@ const UI_STRINGS: Record<string, UiStrings> = {
     originalArticle: "查看原文",
     redirect: "重新導向",
     contents: "目錄",
-    home: "首頁",
     close: "關閉",
     aiSummarize: "總結這篇文章",
     aiLoading: "正在載入模型…",
@@ -315,7 +309,6 @@ const UI_STRINGS: Record<string, UiStrings> = {
     originalArticle: "عرض الأصل",
     redirect: "إعادة التوجيه",
     contents: "المحتويات",
-    home: "الرئيسية",
     close: "إغلاق",
     aiSummarize: "لخّص هذه المقالة",
     aiLoading: "جارٍ تحميل النموذج…",

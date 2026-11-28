@@ -42,13 +42,12 @@ import type { SidebarMenuData } from "../lib/types";
 // leave it closed. Its control stands elsewhere: the article
 // title's own button (see TocToggle), swapped in with the
 // article and inert there, so the drawer hears clicks on
-// its class itself and toggles; and the home button's no-op
-// and the assistant's dock ask it to close, by event. It
-// reports its state the same way (the "sidebar-menu:state"
-// event and the body's menu-open class), for the bar's
-// fading, and it works the title button's expanded state
-// onto whichever copy stands, as the frame writes its other
-// state after a swap.
+// its class itself and toggles; and the assistant's dock
+// asks it to close, by event. It reports its state the
+// same way (the body's menu-open class), and it works the
+// title button's expanded state onto whichever copy
+// stands, as the frame writes its other state after a
+// swap.
 
 export default function TocDrawer({
   initialData,
@@ -86,20 +85,16 @@ export default function TocDrawer({
     };
   }, [hasMenu]);
 
-  // The state the rest of the frame reads: the bottom bar
-  // holds its fading while the menu stands and stands solid
-  // again at its opening, the stylesheet shows the title
-  // button's open face from the body's class, and the
-  // article title's button — a fresh element on every
-  // page — takes its expanded state from here.
+  // The state the rest of the frame reads: the stylesheet
+  // shows the title button's open face from the body's
+  // class, and the article title's button — a fresh
+  // element on every page — takes its expanded state
+  // from here.
   useEffect(() => {
     document.body.classList.toggle("menu-open", open);
     document
       .querySelector(".toc-toggle")
       ?.setAttribute("aria-expanded", String(open));
-    window.dispatchEvent(
-      new CustomEvent("sidebar-menu:state", { detail: { open } }),
-    );
   }, [open]);
 
   if (!data || data.items.length === 0) return null;
@@ -108,15 +103,6 @@ export default function TocDrawer({
       open={open}
       onOpenChange={(next, details) => {
         if (!next && details.reason === "focus-out") {
-          details.cancel();
-          return;
-        }
-        if (
-          !next &&
-          details.reason === "outside-press" &&
-          details.event.target instanceof Element &&
-          details.event.target.closest(".bottom-bar")
-        ) {
           details.cancel();
           return;
         }

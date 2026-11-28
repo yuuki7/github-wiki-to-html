@@ -491,8 +491,8 @@ body {
 
 .toc-toggle__icon {
   display: block;
-  width: 0.85em;
-  height: 0.85em;
+  width: 0.68em;
+  height: 0.68em;
 }
 
 .toc-toggle__icon--menu {
@@ -802,15 +802,6 @@ body.menu-open .toc-toggle__icon--close {
   margin-inline-start: 3em;
 }
 
-/* The bottom bar (see BottomBar): the narrow screen's
-   control bar, holding the home, menu, and AI buttons.
-   It is not shown at this width — a wide screen's own
-   controls stand in its place — and the narrow layout
-   below shows and styles it. */
-.bottom-bar {
-  display: none;
-}
-
 /* Narrow viewports: the three columns stack into one. Below
    this width the main column — half the viewport in the
    three-column grid — falls under about fifty characters and
@@ -818,8 +809,8 @@ body.menu-open .toc-toggle__icon--close {
    at full width instead, in reading order: header, the
    article, the right sidebar, footer. The left sidebar
    leaves the page: its menu is a drawer here, worked by
-   the Contents button of the bottom bar at the page's foot
-   (see TocDrawer), and its panel opens over the page, so
+   the button before the article's title (see TocDrawer),
+   and its panel opens over the page, so
    the menu takes no row of its own and the rows that
    remain keep the wide layout's gaps. The menu starts
    closed, so the article is what the reader meets first.
@@ -858,58 +849,7 @@ body.menu-open .toc-toggle__icon--close {
   /* The drawer's panel is a layer over the article, not
      a mode that freezes it: the article behind keeps its
      own scrolling, by swipe and by scrollbar alike,
-     while the panel is open. The bottom bar stands above
-     the panel's foot, its Contents button the panel's
-     own close control; the panel's bottom padding keeps
-     its last entries clear of the bar. */
-  .sidebar-drawer__content {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
-  }
-
-  /* The bottom bar: one bar across the page's foot,
-     above the page and above the menu's panel, holding
-     its three buttons in equal shares — home at the
-     left, the menu in the middle, the AI assistant at
-     the right. The assistant's own launcher is not
-     shown here: the bar's AI button is its control on
-     this screen. A jump to a heading keeps the heading
-     clear of the bar. The bar is opaque when the page
-     loads; scrolling down fades the whole bar — its
-     ground, its border, and its icons together, one
-     opacity for the bar as a whole, set by the bar
-     itself on the bar's style — gradually, in
-     proportion to the distance scrolled, and scrolling
-     up brings it back once a certain amount has been
-     scrolled that way. */
-  .bottom-bar {
-    position: fixed;
-    inset-inline: 0;
-    inset-block-end: 0;
-    z-index: 45;
-    display: flex;
-    padding-bottom: env(safe-area-inset-bottom);
-    border-top: 1px solid var(--border-color);
-    background-color: var(--surface-color);
-  }
-
-  .bottom-bar__button {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.65rem 0;
-    border: none;
-    background: none;
-    color: inherit;
-    font: inherit;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .bottom-bar__button svg {
-    width: 1.35rem;
-    height: 1.35rem;
-  }
+     while the panel is open. */
 
   /* The title's toggle is the menu's control here, as
      it is on a wide screen while the AI panel stands:
@@ -920,16 +860,8 @@ body.menu-open .toc-toggle__icon--close {
     display: inline-flex;
   }
 
-  /* While the assistant stands, the bar's panda is
-     filled in, as the article header's launcher is: the
-     pressed state the assistant writes onto the button
-     carries the filled look. */
-  .bottom-bar__button--ai[aria-pressed="true"] svg {
-    fill: currentColor;
-  }
-
   /* The assistant's full screen here: the page's regions
-     go, the bottom bar with them, and the panel takes
+     go, and the panel takes
      the whole screen over everything that stays. A box
      whose form is the dock stands in this form on a
      narrow screen — the dock has no room here, and the
@@ -939,8 +871,7 @@ body.menu-open .toc-toggle__icon--close {
   body.ai-fullscreen .header,
   body.ai-fullscreen .main,
   body.ai-fullscreen .footer,
-  body.ai-fullscreen .left-sidebar,
-  body.ai-fullscreen .bottom-bar {
+  body.ai-fullscreen .left-sidebar {
     display: none;
   }
 
@@ -949,17 +880,6 @@ body.menu-open .toc-toggle__icon--close {
     inset: 0;
     z-index: 50;
     background-color: var(--surface-color);
-  }
-
-  html {
-    scroll-padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
-  }
-
-  /* The bar overlays the page's foot; the footer's
-     bottom padding lets the end of the page scroll
-     clear of it. */
-  .footer {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
   }
 
   .right-sidebar {
