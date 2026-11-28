@@ -21,6 +21,14 @@ gems:
     revision: fe94342897d07a822906e8618969424c9dbb11c4
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
+- name: crass
+  version: '1.0'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: b809333551d2486c7bad027248d4e9dfca382fd0
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: csv
   version: '3.3'
   source:

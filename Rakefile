@@ -8,6 +8,7 @@ task :setup do
   sh 'bundle install'
   sh 'rbs --collection .config/rbs_collection.yaml collection install'
   sh 'npm install'
+  sh 'npm run setup:browser'
 end
 
 namespace :check do
@@ -42,6 +43,11 @@ namespace :test do
   desc 'Run the TypeScript unit tests'
   task :ts do
     sh 'npm run test'
+  end
+
+  desc 'Run the browser tests, against the built site'
+  task :browser do
+    sh 'npm run test:browser'
   end
 end
 Rake::Task[:test].enhance(['test:ts'])

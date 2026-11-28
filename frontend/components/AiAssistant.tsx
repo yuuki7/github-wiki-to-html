@@ -18,6 +18,16 @@ import {
   type WebLLM,
 } from "../lib/ai-client";
 import type { AiStrings } from "../lib/types";
+import {
+  dragWindow,
+  emptyArrangement,
+  resizeWindow,
+  standingRect,
+  takeSize,
+  type ScreenKind,
+  type WindowArrangement,
+  type WindowRect,
+} from "../lib/window-arrangement";
 import PandaIcon from "./PandaIcon";
 import { Rnd } from "react-rnd";
 
@@ -230,49 +240,15 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // blank, docked the stylesheet stands the sidebar itself
   // up as the panel, and floating the window leaves the
   // sidebar and floats over the page as before.
-  interface WindowRect {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  }
   type Placement = "minimized" | "docked" | "floating" | "fullscreen";
   const [placement, setPlacement] = useState<Placement>("minimized");
-  // The floating window's arrangement: where it stands,
-  // and how big it is. The places are one for each kind
-  // of screen — a place is measured in its own screen's
-  // terms, the narrow screen's from its corner of the
-  // screen it has, the wide screen's from its own — and
-  // neither is the other's. A screen that changes kind
-  // neither carries a place over nor rewrites one: the
-  // window stands at the place of the screen it is on,
-  // a place made on the other screen is not left behind
-  // in this one's terms, and a screen returned to gives
-  // its own place back untouched, so a round trip out
-  // and back restores the window exactly. The size, by
-  // contrast, is one for both kinds of screen: a change
-  // of screen moves the window, it does not make the
-  // window a different size — a window that changes its
-  // size the moment the screen changes kind, in either
-  // direction, is a window remade, not a window moved.
-  // What the arrangement has not written, the window
-  // itself writes once, at the moment it stands (see
-  // the standing effect below): the defaults are taken
-  // from the screen as it is at that moment, and from
-  // then on they are the arrangement, like anything the
-  // reader's hand writes.
-  interface WindowPlace {
-    left: number;
-    top: number;
-  }
-  const [places, setPlaces] = useState<{
-    wide: WindowPlace | null;
-    narrow: WindowPlace | null;
-  }>({ wide: null, narrow: null });
-  const [size, setSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
+  // The floating window's arrangement — the one place
+  // and the one size (see lib/window-arrangement for
+  // the arrangement itself: what is the reader's, what
+  // is a default, and how the screen reads it without
+  // ever rewriting it).
+  const [arrangement, setArrangement] =
+    useState<WindowArrangement>(emptyArrangement);
   // The conversation's end stays in view: the log scrolls
   // within the window, a new message — the reader's own
   // above all — is no use below the fold, and a window
@@ -282,83 +258,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     const element = logRef.current;
     if (element) element.scrollTop = element.scrollHeight;
   }, [log, placement]);
-
-  // The window's default size. It keeps one fixed
-  // ratio, three wide to four tall, on either screen: a
-  // window whose height is a share of the screen's
-  // height and whose width is a share of its width
-  // takes the screen's own shape — tall and thin in a
-  // tall thin browser window — which is the screen's
-  // shape, not a window's. So the width is the anchor —
-  // at most 384 on a wide screen, at most about
-  // seventy-two hundredths of the screen on a narrow
-  // one, large but plainly a window over the page — the
-  // height follows it by the ratio, and where the
-  // screen is too short for that height, the height is
-  // the anchor instead and the width follows it back,
-  // the ratio kept either way. The margin is the
-  // screen's own: a slighter one on a narrow screen.
-  const screenMargin = (): number =>
-    window.matchMedia("(max-width: 60rem)").matches ? 6 : 24;
-
-  const defaultSize = (): { width: number; height: number } => {
-    const narrow = window.matchMedia("(max-width: 60rem)").matches;
-    const margin = narrow ? 6 : 24;
-    const widest = narrow ? Math.round(window.innerWidth * 0.72) : 384;
-    let width = Math.min(widest, window.innerWidth - margin * 2);
-    let height = Math.round((width * 4) / 3);
-    const tallest = window.innerHeight - margin * 2;
-    if (height > tallest) {
-      height = tallest;
-      width = Math.round((height * 3) / 4);
-    }
-    return { width, height };
-  };
-
-  // The default place: the screen's bottom right
-  // corner — the bottom left in a right-to-left
-  // language — a margin in from the edges, holding a
-  // window of the size given, whatever that size is.
-  const cornerPlace = (ofSize: {
-    width: number;
-    height: number;
-  }): WindowPlace => {
-    const margin = screenMargin();
-    const rtl = document.documentElement.dir === "rtl";
-    return {
-      left: rtl ? margin : window.innerWidth - ofSize.width - margin,
-      top: window.innerHeight - ofSize.height - margin,
-    };
-  };
-
-  // The window's place, read for the screen as it now
-  // stands. The place itself is the reader's arrangement
-  // on that kind of screen, and the screen never rewrites
-  // it: a screen that shrinks under the window and grows
-  // back leaves the place exactly as it was, as the
-  // screen leaves the chosen form (see the effective
-  // placement below). What the screen governs is only
-  // how the place stands while it lasts. A place
-  // outside the screen as it stands now would leave the
-  // window nowhere, beyond every control that could
-  // bring it back, so for standing the place is fitted —
-  // a window larger than the screen is cut down to it,
-  // and one past an edge is drawn back inside — and the
-  // fitting is a reading, recomputed as the window is
-  // drawn, never written back into the place.
-  const fitRect = (
-    place: WindowRect,
-    screen: { width: number; height: number },
-  ): WindowRect => {
-    const width = Math.min(place.width, screen.width);
-    const height = Math.min(place.height, screen.height);
-    return {
-      left: Math.min(Math.max(place.left, 0), screen.width - width),
-      top: Math.min(Math.max(place.top, 0), screen.height - height),
-      width,
-      height,
-    };
-  };
 
   // Which screen the box is on, wide or narrow, kept as
   // the screen changes.
@@ -387,22 +286,22 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // The kind of screen the box is on, for the
+  // arrangement's reads: the defaults are the kind's.
+  const screenKind: ScreenKind = narrowScreen ? "narrow" : "wide";
+
   // The arrangement's writers. The reader's hand writes
   // the arrangement: a drag writes the place, a resize
-  // writes the size and the place it ends at. A place is
-  // written to the screen it was made on, and no other.
-  // The window's own standing writes the defaults, once
-  // (see the standing effect below); between those
-  // moments the screen writes nothing at all — a resize
-  // of the browser within a kind of screen leaves the
-  // arrangement exactly as it stands, and the screen
-  // only reads it for standing (see shownRect).
-  const setPlace = (place: WindowPlace) => {
-    setPlaces((previous) =>
-      narrowScreen
-        ? { ...previous, narrow: place }
-        : { ...previous, wide: place },
-    );
+  // of the window writes the size and the place it ends
+  // at. The window's own standing writes the size, once
+  // (see the standing effect below). Nothing else writes
+  // the arrangement at all: the screen only reads it for
+  // standing (see shownRect).
+  const dragTo = (place: { left: number; top: number }) => {
+    setArrangement((previous) => dragWindow(previous, place));
+  };
+  const resizeTo = (rect: WindowRect) => {
+    setArrangement((previous) => resizeWindow(previous, rect));
   };
 
   // The form the box stands in, as the page and the
@@ -420,69 +319,48 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     placement === "docked" && narrowScreen ? "fullscreen" : placement;
 
   // The window's standing, read from the arrangement
-  // through the screen (see fitRect): the derivation is
-  // made here, where the window is drawn, and the
-  // library below is handed the fitted standing. The
-  // fallbacks for what the arrangement has not written
-  // — the default size, the screen's corner — serve the
-  // first frame only: the standing effect below writes
-  // them into the arrangement at once, and from then on
-  // the standing is read from the arrangement alone.
-  // A default read afresh from the screen at every
-  // drawing would make the window a function of the
-  // browser's size — growing and shrinking as the
-  // reader resizes the browser, and jumping at the
-  // crossing of the kinds — which is no arrangement at
-  // all.
-  let standingRect: WindowRect = { left: 0, top: 0, width: 0, height: 0 };
+  // through the screen as it stands (see
+  // lib/window-arrangement): the reading is made here,
+  // where the window is drawn, and the library below is
+  // handed the fitted standing. Until the size is taken
+  // (see the standing effect below) the standing reads
+  // the current screen's default size — the first frame
+  // only, before the effect writes it.
+  let shownRect: WindowRect = { left: 0, top: 0, width: 0, height: 0 };
   if (viewport !== null) {
-    const standingSize = size === null ? defaultSize() : size;
-    const place = narrowScreen ? places.narrow : places.wide;
-    const margin = screenMargin();
-    const rtl = document.documentElement.dir === "rtl";
-    standingRect = {
-      left:
-        place === null
-          ? rtl
-            ? margin
-            : viewport.width - standingSize.width - margin
-          : place.left,
-      top:
-        place === null
-          ? viewport.height - standingSize.height - margin
-          : place.top,
-      width: standingSize.width,
-      height: standingSize.height,
-    };
+    shownRect = standingRect(
+      arrangement,
+      viewport,
+      screenKind,
+      document.documentElement.dir === "rtl",
+    );
   }
-  const shownRect =
-    viewport === null ? standingRect : fitRect(standingRect, viewport);
 
-  // The standing writes the defaults, once. When the
-  // window stands and the arrangement has no size yet,
-  // the size is taken from the screen as it is at that
-  // moment; when it stands on a kind of screen with no
-  // place yet, the place is that screen's corner at the
-  // size as it stands. A change of the screen's kind
-  // under a standing window is such a moment for the
-  // new kind: its place is written then, at the
-  // crossing, from the screen as it is then. Nothing
-  // here runs again for a mere resize: what is written
-  // is written, and the guards leave it alone.
+  // The standing takes the size, once. When the window
+  // stands and the arrangement has no size yet, the size
+  // is written from the screen as it is at that moment,
+  // and from then on it is the arrangement's, like
+  // anything the reader's hand writes: no screen, of
+  // either kind, at any size, writes it again. (The
+  // places are not written here: an unwritten place is
+  // the screen's corner, read as the screen stands —
+  // see lib/window-arrangement.)
   useEffect(() => {
     if (placement !== "floating") return;
-    const standingSize = size === null ? defaultSize() : size;
-    if (size === null) setSize(standingSize);
-    const place = narrowScreen ? places.narrow : places.wide;
-    if (place === null) setPlace(cornerPlace(standingSize));
+    setArrangement((previous) =>
+      takeSize(
+        previous,
+        { width: window.innerWidth, height: window.innerHeight },
+        screenKind,
+      ),
+    );
   });
 
   // Opening the box: on a wide screen it docks, on a
   // narrow one it floats. The floating window opens at
-  // the place of the screen it opens on — the places
-  // survive minimizing, one for each kind of screen — so
-  // only an opening on a kind of screen with no place
-  // yet starts from that screen's default place.
+  // the arrangement's place — the place survives
+  // minimizing — and only a window the reader has never
+  // placed starts from the screen's corner.
   const openAssistant = () => {
     if (narrowScreen) {
       setPlacement("floating");
@@ -944,11 +822,15 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             bounds="window"
             cancel="button, textarea, input, select, a, label, .ai-assistant__message"
             onDrag={(_event, data) => {
-              setPlace({ left: data.x, top: data.y });
+              dragTo({ left: data.x, top: data.y });
             }}
             onResize={(_event, _direction, ref, _delta, position) => {
-              setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
-              setPlace({ left: position.x, top: position.y });
+              resizeTo({
+                left: position.x,
+                top: position.y,
+                width: ref.offsetWidth,
+                height: ref.offsetHeight,
+              });
             }}
           >
             {heading(

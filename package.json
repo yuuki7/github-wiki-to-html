@@ -9,6 +9,8 @@
     "build": "tsc --project frontend/tsconfig.scripts.json && next build frontend && node scripts/copy-assets.mjs && node scripts/normalize-export-filenames.mjs",
     "check": "tsc -p frontend/tsconfig.json --noEmit",
     "test": "node --test frontend/tests/*.test.ts",
+    "test:browser": "playwright test --config .config/playwright.config.ts",
+    "setup:browser": "playwright install chromium",
     "format": "prettier --config .config/.prettierrc --ignore-path .config/.prettierignore --log-level warn --write \"frontend/{app,components,lib,scripts}/**/*.{css,js,ts,tsx}\"",
     "preview": "serve -l tcp://127.0.0.1:4321 frontend/out"
   },
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@mlc-ai/web-llm": "0.2.88",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
