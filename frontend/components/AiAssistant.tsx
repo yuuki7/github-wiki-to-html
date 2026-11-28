@@ -20,6 +20,7 @@ import {
 import { mostRecentLayer, noteLayerOpened } from "../lib/layers";
 import type { AiStrings } from "../lib/types";
 import PandaIcon from "./PandaIcon";
+import { Rnd } from "react-rnd";
 
 // The AI box: one question form, answered by a small
 // language model that runs entirely in the reader's browser,
@@ -244,8 +245,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     width: 0,
     height: 0,
   });
-  const windowRef = useRef<HTMLDivElement>(null);
-
   // The conversation's end stays in view: the log scrolls
   // within the window, a new message — the reader's own
   // above all — is no use below the fold, and a window
@@ -579,7 +578,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     } | null = null;
     const eligible = (target: EventTarget | null): boolean => {
       if (!(target instanceof Element)) return false;
-      if (windowRef.current?.contains(target)) return false;
+      if (target.closest(".ai-assistant__window")) return false;
       if (target.closest(".bottom-bar__button--ai")) return false;
       if (
         target.closest(
@@ -637,129 +636,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       document.removeEventListener("pointercancel", onPointerCancel);
     };
   }, [placement]);
-
-  // Dragging any empty part of the window moves it: the
-  // heading, the window's own padding, the conversation's
-  // empty ground, the form's frame around its field. What
-  // acts or holds content is not a handle — the controls,
-  // the input, a link, and the messages themselves keep
-  // their own business (a message can still be selected),
-  // the resize handles resize, and the conversation's
-  // scrollbar still scrolls the conversation. The window
-  // is kept partly on screen however far it is dragged.
-  const onWindowPointerDown = (event: React.PointerEvent) => {
-    if (event.button !== 0) return;
-    const target = event.target as Element;
-    if (
-      target.closest(
-        "button, textarea, input, select, a, label, .ai-assistant__resize, .ai-assistant__message",
-      )
-    ) {
-      return;
-    }
-    const logElement = target.closest<HTMLElement>(".ai-assistant__log-view");
-    if (logElement && target === logElement) {
-      const logBox = logElement.getBoundingClientRect();
-      if (event.clientX > logBox.left + logElement.clientWidth) return;
-    }
-    const box = windowRef.current?.getBoundingClientRect();
-    if (!box) return;
-    const offset = { x: event.clientX - box.left, y: event.clientY - box.top };
-    const onMove = (move: PointerEvent) => {
-      setRect((previous) => ({
-        ...previous,
-        width: box.width,
-        height: box.height,
-        left: Math.min(
-          Math.max(move.clientX - offset.x, 80 - box.width),
-          window.innerWidth - 80,
-        ),
-        top: Math.min(
-          Math.max(move.clientY - offset.y, 0),
-          window.innerHeight - 40,
-        ),
-      }));
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-  };
-
-  // The handles on the window's edges and corners resize
-  // it. A handle moves its
-  // own edge and holds the opposite one still. A size
-  // keeps a minimum the form needs, and growth stops at
-  // the screen's edge: a window is never enlarged past
-  // the page, however far its handle is dragged. Moving
-  // the window itself is freer — its drag keeps only a
-  // part of it on screen.
-  type ResizeHandle =
-    | "top-left"
-    | "top"
-    | "top-right"
-    | "right"
-    | "bottom-right"
-    | "bottom"
-    | "bottom-left"
-    | "left";
-  const resizeHandles: ResizeHandle[] = [
-    "top-left",
-    "top",
-    "top-right",
-    "right",
-    "bottom-right",
-    "bottom",
-    "bottom-left",
-    "left",
-  ];
-  const onResizePointerDown =
-    (handle: ResizeHandle) => (event: React.PointerEvent) => {
-      event.preventDefault();
-      const start = { x: event.clientX, y: event.clientY, rect };
-      const right = start.rect.left + start.rect.width;
-      const bottom = start.rect.top + start.rect.height;
-      const clampSize = (value: number, min: number, max: number) =>
-        Math.max(min, Math.min(value, Math.max(min, max)));
-      const onMove = (move: PointerEvent) => {
-        const dx = move.clientX - start.x;
-        const dy = move.clientY - start.y;
-        let { left, top, width, height } = start.rect;
-        if (handle.includes("left")) {
-          width = clampSize(start.rect.width - dx, 260, right);
-          left = right - width;
-        } else if (handle.includes("right")) {
-          width = clampSize(
-            start.rect.width + dx,
-            260,
-            Math.min(window.innerWidth - start.rect.left, window.innerWidth),
-          );
-        }
-        if (handle.includes("top")) {
-          height = clampSize(start.rect.height - dy, 200, bottom);
-          top = bottom - height;
-        } else if (handle.includes("bottom")) {
-          height = clampSize(
-            start.rect.height + dy,
-            200,
-            Math.min(window.innerHeight - start.rect.top, window.innerHeight),
-          );
-        }
-        setRect({ left, top, width, height });
-      };
-      const onUp = () => {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        window.removeEventListener("pointercancel", onUp);
-      };
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-      window.addEventListener("pointercancel", onUp);
-    };
 
   // The heading's controls and the conversation are the
   // same in every form the box takes; only the controls
@@ -924,36 +800,62 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
           )}
         </div>
       ) : effectivePlacement === "floating" ? (
-        <div
-          ref={windowRef}
-          className="ai-assistant__window"
-          onPointerDown={onWindowPointerDown}
-          style={{
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-          }}
-        >
-          {heading(
-            <>
-              {!narrowScreen && controlButton("Dock", dockAssistant, dockIcon)}
-              {controlButton(
-                "Full screen",
-                fullScreenAssistant,
-                fullScreenIcon,
-              )}
-              {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
-            </>,
-          )}
-          {conversation}
-          {resizeHandles.map((handle) => (
-            <div
-              key={handle}
-              className={`ai-assistant__resize ai-assistant__resize--${handle}`}
-              onPointerDown={onResizePointerDown(handle)}
-            />
-          ))}
+        // The window's dragging and resizing are react-rnd's:
+        // a drag starts on any empty part of the window, and
+        // what acts or holds content is not a handle — the
+        // controls, the input, a link, and the messages
+        // themselves are cancelled out of dragging, so a
+        // message can still be selected. The bounds keep the
+        // whole window on screen, where the hand-written
+        // drag kept only a part of it. The frame around it
+        // is the library's ground: it counts positions from
+        // its parent's corner, and the box lives deep in the
+        // page's grid, so a fixed frame at the viewport's own
+        // corner gives it the viewport to count from. The
+        // library renders its box as an inline block, so the
+        // window's flex column goes to it as a style —
+        // without it, the conversation spills out of the
+        // window instead of scrolling inside it.
+        <div className="ai-assistant__window-frame">
+          <Rnd
+            className="ai-assistant__window"
+            style={{ display: "flex" }}
+            size={{ width: rect.width, height: rect.height }}
+            position={{ x: rect.left, y: rect.top }}
+            minWidth={260}
+            minHeight={200}
+            bounds="window"
+            cancel="button, textarea, input, select, a, label, .ai-assistant__message"
+            onDrag={(_event, data) =>
+              setRect((previous) => ({
+                ...previous,
+                left: data.x,
+                top: data.y,
+              }))
+            }
+            onResize={(_event, _direction, ref, _delta, position) =>
+              setRect({
+                left: position.x,
+                top: position.y,
+                width: ref.offsetWidth,
+                height: ref.offsetHeight,
+              })
+            }
+          >
+            {heading(
+              <>
+                {!narrowScreen &&
+                  controlButton("Dock", dockAssistant, dockIcon)}
+                {controlButton(
+                  "Full screen",
+                  fullScreenAssistant,
+                  fullScreenIcon,
+                )}
+                {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
+              </>,
+            )}
+            {conversation}
+          </Rnd>
         </div>
       ) : null}
     </section>

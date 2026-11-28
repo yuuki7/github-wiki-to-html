@@ -13,11 +13,13 @@
     "preview": "serve -l tcp://127.0.0.1:4321 frontend/out"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "hast-util-to-jsx-runtime": "^2.3.7",
     "hastscript": "^9.0.3",
     "next": "^15.5.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-rnd": "^10.5.3",
     "rehype-expressive-code": "^0.44.4",
     "unist-util-visit": "^5.2.0"
   },

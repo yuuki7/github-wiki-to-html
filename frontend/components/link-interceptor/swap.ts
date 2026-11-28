@@ -1,3 +1,5 @@
+import type { LanguageMenuData } from "../../lib/types";
+
 // The head elements that are one page's own: its title, its
 // canonical and alternate URLs, its author and social
 // metadata, and its structured data. The rest of the head —
@@ -55,10 +57,11 @@ function swapHead(newDocument: Document): void {
 
 // The header's navigation: the site-name link a home page
 // omits, and the language switcher, whose links are this
-// page's in the other languages. Both are updated in place —
-// an element whose destination or wording changed keeps its
-// identity; only an element that genuinely appears or
-// disappears is inserted or removed.
+// page's in the other languages. The link is updated in
+// place — an element whose destination or wording changed
+// keeps its identity; only an element that genuinely
+// appears or disappears is inserted or removed. The
+// switcher is handed its page's languages as data, below.
 function swapHeader(newDocument: Document): void {
   const nav = document.querySelector(".header nav");
   const newNav = newDocument.querySelector(".header nav");
@@ -80,63 +83,38 @@ function swapHeader(newDocument: Document): void {
     currentHome.remove();
   }
 
-  const menu = nav.querySelector(".language-menu");
-  const newMenu = newNav.querySelector(".language-menu");
-  if (menu && newMenu) {
-    // The button names the current language, in the text
-    // node after its globe: update that node in place, and
-    // only when the name changed.
-    const button = menu.querySelector(".language-menu__button");
-    const newButton = newMenu.querySelector(".language-menu__button");
-    if (button && newButton && button.textContent !== newButton.textContent) {
-      const textNode = (root: Element): Text | null =>
-        [...root.childNodes].find(
-          (node): node is Text =>
-            node instanceof Text && node.textContent.trim() !== "",
-        ) ?? null;
-      const current = textNode(button);
-      const next = textNode(newButton);
-      if (current && next) current.nodeValue = next.textContent;
-    }
-
-    // The panel's items, one per language, matched by their
-    // language names: a link stays a link and only its
-    // destination is rewritten; the current language's item
-    // is a span, and becoming or ceasing to be current is the
-    // one change of kind.
-    const panel = menu.querySelector(".language-menu__panel");
-    const newPanel = newMenu.querySelector(".language-menu__panel");
-    if (panel && newPanel) {
-      const items = new Map(
-        [...panel.children].map((item) => [item.textContent.trim(), item]),
-      );
-      for (const newItem of [...newPanel.children]) {
-        const key = newItem.textContent.trim();
-        const item = items.get(key);
-        if (!item) {
-          panel.appendChild(document.importNode(newItem, true));
-          continue;
-        }
-        items.delete(key);
-        const current = item.firstElementChild;
-        const next = newItem.firstElementChild;
-        if (current && next && current.tagName === next.tagName) {
-          if (
-            current instanceof HTMLAnchorElement &&
-            next instanceof HTMLAnchorElement
-          ) {
-            copyAttributes(current, next, ["href", "hreflang", "lang"]);
-          }
-        } else if (next) {
-          item.replaceChildren(document.importNode(next, true));
-        }
-      }
-      items.forEach((item) => item.remove());
-    }
-  } else if (!menu && newMenu) {
-    nav.appendChild(document.importNode(newMenu, true));
-  } else if (menu && !newMenu) {
-    menu.remove();
+  // The language menu is the frame's own component (see
+  // LanguageMenu), and its panel is the component's to
+  // render: the swap cannot rewrite it in place as it did
+  // the plain list the component replaced. Instead the
+  // swap reads the new page's languages from the document
+  // itself — the page's language from its root element,
+  // and one item per language from its hreflang links,
+  // whose hrefs the head carries as absolute URLs, taken
+  // back to paths here — and hands them over as data.
+  // The current language's item carries no href: in the
+  // menu it is not a link. The head also carries an
+  // x-default link, for search engines; it is not a
+  // language and never a menu item.
+  const pageLanguage = newDocument.documentElement.lang || "en";
+  const menuLinks: LanguageMenuData["links"] = [];
+  newDocument
+    .querySelectorAll("link[rel='alternate'][hreflang]")
+    .forEach((link) => {
+      const linkLanguage = link.getAttribute("hreflang");
+      const href = link.getAttribute("href");
+      if (!linkLanguage || !href || linkLanguage === "x-default") return;
+      menuLinks.push({
+        language: linkLanguage,
+        href: linkLanguage === pageLanguage ? null : new URL(href).pathname,
+      });
+    });
+  if (menuLinks.length > 0) {
+    window.dispatchEvent(
+      new CustomEvent<LanguageMenuData>("frame:language-menu", {
+        detail: { language: pageLanguage, links: menuLinks },
+      }),
+    );
   }
 }
 
@@ -252,16 +230,6 @@ export function swapPage(newDocument: Document): void {
   if (root) root.className = newRoot.className;
 
   swapHeader(newDocument);
-
-  // The language menu is the frame's one popover, and the
-  // header swap above leaves the element itself in place:
-  // a menu the reader chose a language from would otherwise
-  // stay open over the page they arrive at. A full load
-  // dismisses a popover; the swap does the same.
-  const languageMenu = document.querySelector("#language-switcher");
-  if (languageMenu?.matches(":popover-open")) {
-    (languageMenu as HTMLElement).hidePopover();
-  }
 
   // The left sidebar is an <aside> on every page; the menu
   // inside it — a <details> — is present only on pages that

@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import site from "../../site.json";
-import { homeHref, languageName } from "../lib/i18n";
+import { homeHref } from "../lib/i18n";
 import type { FooterData } from "../lib/page-data";
 import type { AiStrings, AlternateLink } from "../lib/types";
 import AiAssistant from "./AiAssistant";
+import LanguageMenu from "./LanguageMenu";
 import BottomBar from "./BottomBar";
 import CodeCopy from "./CodeCopy";
 import LinkInterceptor from "./link-interceptor";
@@ -94,38 +95,11 @@ export default function Shell({
           <nav>
             {!isHome && <a href={homeHref(language)}>{site.name}</a>}
             {languageLinks && languageLinks.length > 1 && (
-              <div className="language-menu">
-                <button
-                  type="button"
-                  className="language-menu__button"
-                  popoverTarget="language-switcher"
-                >
-                  <span aria-hidden="true">🌐</span> {languageName(language)}
-                </button>
-                <ul
-                  className="language-menu__panel"
-                  id="language-switcher"
-                  popover="auto"
-                >
-                  {languageLinks.map((link) => (
-                    <li key={link.language}>
-                      {link.language === language ? (
-                        <span aria-current="true">
-                          {languageName(link.language)}
-                        </span>
-                      ) : (
-                        <a
-                          href={link.href}
-                          hrefLang={link.language}
-                          lang={link.language}
-                        >
-                          {languageName(link.language)}
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <LanguageMenu
+                language={language}
+                languageLinks={languageLinks}
+                isHome={isHome ?? false}
+              />
             )}
           </nav>
         </header>

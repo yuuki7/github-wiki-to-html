@@ -74,6 +74,15 @@ export interface AlternateLink {
   href: string;
 }
 
+// The language switcher's state as the frame hands it over on an
+// in-app navigation: the page's language, and one item per
+// language. The current language's item carries no href — it is
+// not a link.
+export interface LanguageMenuData {
+  language: string;
+  links: { language: string; href: string | null }[];
+}
+
 // The strings the AI assistant needs, in its own terms. They are
 // derived from UiStrings, which names the same texts in the
 // site's interface vocabulary.

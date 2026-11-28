@@ -329,10 +329,14 @@ body {
 }
 
 /* The language menu: a button showing the current language,
-   opening a panel with every language. However many languages the
-   site gains, the header keeps this one control. The panel is a
-   popover, so clicking anywhere outside it (or pressing Escape)
-   closes it, with no script. */
+   opening a panel with every language. However many languages
+   the site gains, the header keeps this one control. The panel
+   is Base UI's Popover (see LanguageMenu): clicking anywhere
+   outside it, or pressing Escape, closes it. The library
+   places the panel in the page — its absolute position
+   method — so the panel travels with the button as the page
+   scrolls, rather than staying pinned to the viewport where
+   it was opened. */
 .language-menu__button {
   display: inline-flex;
   align-items: baseline;
@@ -343,7 +347,6 @@ body {
   font: inherit;
   color: inherit;
   cursor: pointer;
-  anchor-name: --language-menu-button;
 }
 
 .language-menu__button::after {
@@ -351,35 +354,26 @@ body {
   font-size: 80%;
 }
 
-/* While closed, the browser keeps a popover out of view; the
-   flex layout therefore applies only in the open state, or it
-   would override the hidden state. The panel is positioned
-   absolutely, against the popover's built-in fixed: a fixed
-   panel is pinned to the viewport at the place it opened,
-   and on a phone the viewport itself changes as the
-   browser's own bars come and go, so a pinned panel drifts,
-   clips at the screen's top, and vanishes while the page
-   scrolls. Absolute puts the panel in the page, and the
-   placement anchors it to the button, so the two travel
-   together as the page scrolls. The fixed values before the
-   anchor() lines are the fallback for browsers without
-   anchor positioning. The inset reset comes first: a
-   popover's built-in style pins all four edges to 0, and an
-   edge left pinned over-constrains the panel against the
-   opposite one. */
+/* The panel itself: the library's positioner puts it
+   against the button — from the button's end edge, or its
+   start edge on a home page, where the menu sits at the
+   header's start (see LanguageMenu) — and what is here is
+   only how the list looks. The library renders the panel
+   only while it is open, so the column layout stands
+   unconditionally. */
+.language-menu__positioner {
+  z-index: 60;
+}
+
 .language-menu__panel {
-  position: absolute;
-  inset: auto;
-  margin: 0;
-  margin-top: 0.25em;
-  top: 3em;
-  top: anchor(--language-menu-button bottom);
-  inset-inline-end: var(--body-margin-horizontal);
-  inset-inline-end: anchor(--language-menu-button end);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
   min-width: 10em;
   max-height: 60vh;
   overflow-y: auto;
   list-style: none;
+  margin: 0;
   padding: 0.5em 0.75em;
   border: 1px solid currentColor;
   background-color: var(--surface-color);
@@ -387,26 +381,13 @@ body {
   font-size: 95%;
 }
 
-.language-menu__panel:popover-open {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25em;
-}
-
 .language-menu__panel a {
   display: block;
 }
 
-/* On a home page the menu sits at the start of the header, and
-   its panel opens from the start as well. */
+/* On a home page the menu sits at the start of the header. */
 .home .header nav {
   justify-content: flex-start;
-}
-
-.home .language-menu__panel {
-  inset-inline-end: auto;
-  inset-inline-start: var(--body-margin-horizontal);
-  inset-inline-start: anchor(--language-menu-button start);
 }
 
 /* The AI assistant: its launcher, a panel, and a window.
@@ -501,16 +482,31 @@ body {
   outline: none;
 }
 
-@keyframes ai-assistant-grow {
+/* The window's entrance is a fade only: a transform on the
+   window itself — a scale, as this was at first — displaces
+   react-rnd's own measurement of the window, and the window
+   lands displaced by the same amount. */
+@keyframes ai-assistant-appear {
   from {
     opacity: 0;
-    transform: scale(0.95);
   }
 }
 
-.ai-assistant__window {
+/* The floating window's frame: react-rnd counts the
+   window's positions from its parent's corner, and the box
+   lives deep in the page's grid, so the frame stands at the
+   viewport's own corner and gives the library the viewport
+   to count from. The frame itself takes no touches; the
+   window inside it does. */
+.ai-assistant__window-frame {
   position: fixed;
+  inset: 0;
   z-index: 50;
+  pointer-events: none;
+}
+
+.ai-assistant__window {
+  pointer-events: auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -520,9 +516,7 @@ body {
   border-radius: 1rem;
   background-color: var(--surface-color);
   box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 0.25);
-  transform-origin: 100% 100%;
-  animation: ai-assistant-grow 0.18s ease-out;
-  cursor: grab;
+  animation: ai-assistant-appear 0.18s ease-out;
   /* No touch gesture on the window is the page's: a
      vertical swipe that starts on the window must stay
      the window's — as a drag of the window itself — and
@@ -546,9 +540,10 @@ body {
    the mark at the window's exact centre whatever the
    controls take, and a margin below sets the bar apart
    from the conversation. Dragging is the whole window's:
-   any empty part of it is a handle (see the window's own
-   rule for its cursor), and the heading is one such part,
-   barred from scrolling under a touch so the drag holds. */
+   any empty part of it is a handle (the library puts its
+   move cursor on the window), and the heading is one such
+   part, barred from scrolling under a touch so the drag
+   holds. */
 .ai-assistant__heading {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -556,12 +551,6 @@ body {
   margin-bottom: 0.75rem;
   user-select: none;
   touch-action: none;
-}
-
-/* In the floating window the heading is one of the
-   window's handles; in the panel it is a title bar only. */
-.ai-assistant__window .ai-assistant__heading {
-  cursor: grab;
 }
 
 .ai-assistant__title {
@@ -734,83 +723,6 @@ body {
   background-color: var(--muted-surface-color);
   color: rgb(0 0 0 / 0.3);
   cursor: default;
-}
-
-/* The resize handles: the window's four edges and four
-   corners, invisible strips and squares that only their
-   cursors name. The corners take the wider hold; the edge
-   strips run between them. The hold is generous — an edge
-   is a thin target on a touch screen — and the handles sit
-   above the window's own parts, so a drag that starts on
-   an edge resizes rather than moving the window. */
-.ai-assistant__resize {
-  position: absolute;
-  z-index: 3;
-  touch-action: none;
-}
-
-.ai-assistant__resize--top-left {
-  left: 0;
-  top: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  cursor: nwse-resize;
-}
-
-.ai-assistant__resize--top-right {
-  right: 0;
-  top: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  cursor: nesw-resize;
-}
-
-.ai-assistant__resize--bottom-right {
-  right: 0;
-  bottom: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  cursor: nwse-resize;
-}
-
-.ai-assistant__resize--bottom-left {
-  left: 0;
-  bottom: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  cursor: nesw-resize;
-}
-
-.ai-assistant__resize--top {
-  left: 1.5rem;
-  right: 1.5rem;
-  top: 0;
-  height: 0.75rem;
-  cursor: ns-resize;
-}
-
-.ai-assistant__resize--bottom {
-  left: 1.5rem;
-  right: 1.5rem;
-  bottom: 0;
-  height: 0.75rem;
-  cursor: ns-resize;
-}
-
-.ai-assistant__resize--left {
-  left: 0;
-  top: 1.5rem;
-  bottom: 1.5rem;
-  width: 0.75rem;
-  cursor: ew-resize;
-}
-
-.ai-assistant__resize--right {
-  right: 0;
-  top: 1.5rem;
-  bottom: 1.5rem;
-  width: 0.75rem;
-  cursor: ew-resize;
 }
 
 /* Table of contents: each depth steps the item in with a
