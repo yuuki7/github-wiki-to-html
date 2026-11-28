@@ -1002,6 +1002,37 @@ body {
     pointer-events: none;
   }
 
+  /* While the assistant stands, the bar's panda is
+     filled in, as the article header's launcher is: the
+     pressed state the assistant writes onto the button
+     carries the filled look. */
+  .bottom-bar__button--ai[aria-pressed="true"] svg {
+    fill: currentColor;
+  }
+
+  /* The assistant's full screen here: the page's regions
+     go, the bottom bar with them, and the panel takes
+     the whole screen over everything that stays. A box
+     whose form is the dock stands in this form on a
+     narrow screen — the dock has no room here, and the
+     full screen is its shape (see AiAssistant). The
+     column's measure is stated after the layouts, for
+     both screens together. */
+  body.ai-fullscreen .header,
+  body.ai-fullscreen .main,
+  body.ai-fullscreen .footer,
+  body.ai-fullscreen .left-sidebar,
+  body.ai-fullscreen .bottom-bar {
+    display: none;
+  }
+
+  body.ai-fullscreen .ai-assistant__panel {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: var(--surface-color);
+  }
+
   html {
     scroll-padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
   }
@@ -1168,10 +1199,7 @@ body {
     top: 0;
     inset-inline-end: 0;
     z-index: 45;
-    width: var(
-      --ai-column-width,
-      calc(100dvw - var(--line-length) - 6ch)
-    );
+    width: var(--ai-column-width, calc(100dvw - var(--line-length) - 6ch));
     max-width: none;
     height: 100dvh;
   }
@@ -1185,14 +1213,9 @@ body {
   }
 
   /* The full screen: the page's own regions go, and the
-     panel takes the whole screen. The conversation keeps
-     a measure of 66ch, centred, however wide the screen
-     is — the article's own count of characters, in the
-     conversation's own type. What is easy on the eyes is
-     the count, not the width in millimetres: a ch is by
-     design the width of the type it is measured in, so
-     the same 66ch is wider here in millimetres than in
-     the article's serif, and that is as it should be. */
+     panel takes the whole screen. The column it stands
+     in is measured after the layouts, for both screens
+     together. */
   body.ai-fullscreen .header,
   body.ai-fullscreen .main,
   body.ai-fullscreen .footer,
@@ -1209,28 +1232,33 @@ body {
     width: auto;
     justify-self: stretch;
   }
+}
 
-  /* The column is measured once, on the panel, in the
-     conversation's own type: the panel takes the
-     conversation's sans while it fills the screen, so
-     the 66ch its padding leaves is the conversation's
-     66ch, and every part of the panel — heading,
-     conversation, status, form — stands in that one
-     column, their edges together. Measured on each part
-     in its own type instead, the parts in the page's
-     serif would stand narrower than the conversation,
-     and the heading's buttons would sit in from the
-     column's edge. The heading's title and the status
-     keep the page's serif, by the rule below: only the
-     measure is the conversation's. */
-  body.ai-fullscreen .ai-assistant__panel {
-    border-inline-start: none;
-    font-family: sans-serif;
-    padding-inline: max(0.75rem, calc((100% - var(--line-length)) / 2));
-  }
+/* The full screen's column, on either screen: measured
+   once, on the panel, in the conversation's own type.
+   The panel takes the conversation's sans while it
+   fills the screen, so the 66ch its padding leaves is
+   the conversation's 66ch, and every part of the panel
+   — heading, conversation, status, form — stands in
+   that one column, their edges together. Measured on
+   each part in its own type instead, the parts in the
+   page's serif would stand narrower than the
+   conversation, and the heading's buttons would sit in
+   from the column's edge. What is easy on the eyes is
+   the count of characters, not the width in
+   millimetres: a ch is by design the width of the type
+   it is measured in, so the same 66ch is wider here in
+   millimetres than in the article's serif, and that is
+   as it should be. The heading's title and the status
+   keep the page's serif, by the rule below: only the
+   measure is the conversation's. */
+body.ai-fullscreen .ai-assistant__panel {
+  border-inline-start: none;
+  font-family: sans-serif;
+  padding-inline: max(0.75rem, calc((100% - var(--line-length)) / 2));
+}
 
-  body.ai-fullscreen .ai-assistant__title,
-  body.ai-fullscreen .ai-assistant__status {
-    font-family: "Palatino Linotype", Palatino, serif;
-  }
+body.ai-fullscreen .ai-assistant__title,
+body.ai-fullscreen .ai-assistant__status {
+  font-family: "Palatino Linotype", Palatino, serif;
 }

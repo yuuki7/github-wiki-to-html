@@ -44,9 +44,12 @@ import PandaIcon from "./PandaIcon";
 // it can be made the whole
 // screen, which on the home page is the way a reader who
 // came only for the assistant uses it. On a narrow screen
-// there is no dock: the box opens as the floating window,
-// over the page, in the part of the screen above the
-// bottom bar. Minimizing, from any of the forms, keeps the
+// there is no dock to stand in the page: the box opens as
+// the floating window, over the page, in the part of the
+// screen above the bottom bar, and a box whose form is
+// the dock stands there as the full screen instead —
+// the form that fills a narrow screen, as the dock fills
+// its column on a wide one. Minimizing, from any of the forms, keeps the
 // floating window's place, so it opens again where it left
 // off; the dock's width is kept likewise, in the reader's
 // own storage.
@@ -297,28 +300,29 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   };
 
   // Which screen the box is on, wide or narrow, kept as
-  // the screen changes: the dock is a wide screen's form,
-  // and a box docked or full-screen when the screen turns
-  // narrow falls back to the floating window, the one
-  // form a narrow screen has.
+  // the screen changes.
   const [narrowScreen, setNarrowScreen] = useState(false);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 60rem)");
-    const update = () => {
-      setNarrowScreen(query.matches);
-      if (
-        query.matches &&
-        (placement === "docked" || placement === "fullscreen")
-      ) {
-        if (rect.width === 0) setRect(homeRect());
-        setPlacement("floating");
-        noteLayerOpened("ai");
-      }
-    };
+    const update = () => setNarrowScreen(query.matches);
     update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   });
+
+  // The form the box stands in, as the page and the
+  // stylesheet see it. The placement is the form the
+  // reader chose; the dock among the forms is a wide
+  // screen's, and on a narrow screen a docked box stands
+  // as the full screen — the form that fills the screen
+  // there, as the dock fills its column on a wide one.
+  // The window and the full screen are both screens'
+  // forms, and stand as chosen on either. Nothing is
+  // changed by the screen's turning: the chosen form is
+  // only read through it, and widening the screen again
+  // stands the dock back up, untouched.
+  const effectivePlacement: Placement =
+    placement === "docked" && narrowScreen ? "fullscreen" : placement;
 
   // Opening the box: on a wide screen it docks, on a
   // narrow one it floats. The floating window opens where
@@ -360,28 +364,29 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     setPlacement("fullscreen");
   };
 
-  // The placement, told to the page: the stylesheet lays
-  // the page out around a standing panel from the body's
-  // classes, and the launcher in the article header — a
-  // fresh element on every page, arriving with the page —
-  // takes its pressed state from here, on a navigation as
-  // on a change of the placement itself.
+  // The form the box stands in, told to the page: the
+  // stylesheet lays the page out around a standing panel
+  // from the body's classes, and the panda buttons — the
+  // launcher in the article header, a fresh element on
+  // every page, and the bottom bar's button — take their
+  // pressed state from here, on a navigation as on a
+  // change of the form itself.
   useEffect(() => {
     const sync = () => {
       document.body.classList.toggle(
         "ai-open",
-        placement === "docked" || placement === "fullscreen",
+        effectivePlacement === "docked" || effectivePlacement === "fullscreen",
       );
       document.body.classList.toggle(
         "ai-fullscreen",
-        placement === "fullscreen",
+        effectivePlacement === "fullscreen",
       );
       document
-        .querySelectorAll(".ai-launcher")
-        .forEach((launcher) =>
-          launcher.setAttribute(
+        .querySelectorAll(".ai-launcher, .bottom-bar__button--ai")
+        .forEach((button) =>
+          button.setAttribute(
             "aria-pressed",
-            placement === "minimized" ? "false" : "true",
+            effectivePlacement === "minimized" ? "false" : "true",
           ),
         );
     };
@@ -394,8 +399,8 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     // menu is the bottom bar's business, not the dock's,
     // and it is left alone.
     if (
-      placement !== "docked" &&
-      placement !== "fullscreen" &&
+      effectivePlacement !== "docked" &&
+      effectivePlacement !== "fullscreen" &&
       !window.matchMedia("(max-width: 60rem)").matches
     ) {
       const details = document.querySelector<HTMLDetailsElement>(
@@ -405,7 +410,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     }
     window.addEventListener("frame:navigated", sync);
     return () => window.removeEventListener("frame:navigated", sync);
-  }, [placement]);
+  }, [effectivePlacement]);
 
   // The dock's width, in pixels, once the reader has
   // dragged its divider; until then the stylesheet's own
@@ -881,11 +886,12 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       data-error={strings.error}
       data-message={strings.message}
     >
-      {placement === "docked" || placement === "fullscreen" ? (
+      {effectivePlacement === "docked" ||
+      effectivePlacement === "fullscreen" ? (
         <div className="ai-assistant__panel">
           {heading(
             <>
-              {placement === "docked" ? (
+              {effectivePlacement === "docked" ? (
                 <>
                   {controlButton("Float", floatAssistant, floatIcon)}
                   {controlButton(
@@ -897,14 +903,15 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
               ) : (
                 <>
                   {controlButton("Float", floatAssistant, floatIcon)}
-                  {controlButton("Dock", dockAssistant, dockIcon)}
+                  {!narrowScreen &&
+                    controlButton("Dock", dockAssistant, dockIcon)}
                 </>
               )}
               {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
             </>,
           )}
           {conversation}
-          {placement === "docked" && (
+          {effectivePlacement === "docked" && (
             <div
               className="ai-assistant__divider"
               role="separator"
@@ -916,7 +923,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             />
           )}
         </div>
-      ) : placement === "floating" ? (
+      ) : effectivePlacement === "floating" ? (
         <div
           ref={windowRef}
           className="ai-assistant__window"

@@ -409,6 +409,7 @@ export default function BottomBar({
         type="button"
         className="bottom-bar__button bottom-bar__button--ai"
         aria-label="AI"
+        aria-pressed="false"
         onClick={toggleAssistant}
       >
         <PandaIcon />
