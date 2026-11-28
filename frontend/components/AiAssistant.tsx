@@ -224,7 +224,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // put it, or filling the screen. The placement is the
   // box's own state, so it is kept like the rest of the
   // box's state while the reader moves between pages. The
-  // rectangle is the floating window's, in viewport
+  // places are the floating window's, in viewport
   // coordinates. The box's element sits in the right
   // sidebar: minimized it is empty and the sidebar is left
   // blank, docked the stylesheet stands the sidebar itself
@@ -238,11 +238,26 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   }
   type Placement = "minimized" | "docked" | "floating" | "fullscreen";
   const [placement, setPlacement] = useState<Placement>("minimized");
-  const [rect, setRect] = useState<WindowRect>({
-    left: 0,
-    top: 0,
-    width: 0,
-    height: 0,
+  // One place for each kind of screen. A place is
+  // measured in its own screen's terms — the narrow
+  // screen's as a share of the part above its bar, the
+  // wide screen's from its corner at its own size — and
+  // neither is the other's. A screen that changes kind
+  // neither carries a place over nor rewrites one: the
+  // window stands at the place of the screen it is on,
+  // a place made on the other screen is not left behind
+  // in this one's terms, and a screen returned to gives
+  // its own place back untouched, so a round trip out
+  // and back restores the window exactly. A place of
+  // width 0 is no place yet: on that kind of screen the
+  // window stands at its default place (see homeRect)
+  // until the reader's hand writes one.
+  const [places, setPlaces] = useState<{
+    wide: WindowRect;
+    narrow: WindowRect;
+  }>({
+    wide: { left: 0, top: 0, width: 0, height: 0 },
+    narrow: { left: 0, top: 0, width: 0, height: 0 },
   });
   // The conversation's end stays in view: the log scrolls
   // within the window, a new message — the reader's own
@@ -297,6 +312,35 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
   };
 
+  // The window's place, read for the screen as it now
+  // stands. The place itself is the reader's arrangement
+  // on that kind of screen, and the screen never rewrites
+  // it: a screen that shrinks under the window and grows
+  // back leaves the place exactly as it was, as the
+  // screen leaves the chosen form (see the effective
+  // placement below). What the screen governs is only
+  // how the place stands while it lasts. A place
+  // outside the screen as it stands now would leave the
+  // window nowhere, beyond every control that could
+  // bring it back, so for standing the place is fitted —
+  // a window larger than the screen is cut down to it,
+  // and one past an edge is drawn back inside — and the
+  // fitting is a reading, recomputed as the window is
+  // drawn, never written back into the place.
+  const fitRect = (
+    place: WindowRect,
+    screen: { width: number; height: number },
+  ): WindowRect => {
+    const width = Math.min(place.width, screen.width);
+    const height = Math.min(place.height, screen.height);
+    return {
+      left: Math.min(Math.max(place.left, 0), screen.width - width),
+      top: Math.min(Math.max(place.top, 0), screen.height - height),
+      width,
+      height,
+    };
+  };
+
   // Which screen the box is on, wide or narrow, kept as
   // the screen changes.
   const [narrowScreen, setNarrowScreen] = useState(false);
@@ -307,6 +351,41 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   });
+
+  // The screen's size, kept as it changes: the standing
+  // place is read from it (see shownRect), so a change
+  // of size is a change of the reading, rendered like
+  // any other — the place itself is not touched.
+  const [viewport, setViewport] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  useEffect(() => {
+    const update = () =>
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // The place in force — the current screen's own — and
+  // its writer. The reader's hand writes a place: a
+  // drag, a resize, the making of a default. It writes
+  // the place of the screen it is on, and no other; the
+  // screen itself never writes one, it only reads the
+  // place in force for standing (see shownRect).
+  const rect = narrowScreen ? places.narrow : places.wide;
+  const setRect = (
+    next: WindowRect | ((previous: WindowRect) => WindowRect),
+  ) => {
+    setPlaces((previous) => {
+      const current = narrowScreen ? previous.narrow : previous.wide;
+      const value = typeof next === "function" ? next(current) : next;
+      return narrowScreen
+        ? { ...previous, narrow: value }
+        : { ...previous, wide: value };
+    });
+  };
 
   // The form the box stands in, as the page and the
   // stylesheet see it. The placement is the form the
@@ -322,14 +401,33 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const effectivePlacement: Placement =
     placement === "docked" && narrowScreen ? "fullscreen" : placement;
 
+  // The window's place, read through the screen for
+  // standing (see fitRect): the derivation is made here,
+  // where the window is drawn, and the library below is
+  // handed the fitted place. A kind of screen with no
+  // place yet stands at its default (see homeRect): the
+  // default is read for standing, not yet kept — the
+  // reader's first drag or resize on that screen writes
+  // the place as it stands, the default included, and
+  // from then on the place is kept. Its reports — a
+  // drag, a resize — are of the window as it stands, and
+  // they are what rewrites the place: the reader's hand,
+  // not the screen.
+  const standingRect =
+    rect.width === 0 ? (viewport === null ? rect : homeRect()) : rect;
+  const shownRect =
+    standingRect.width === 0 || viewport === null
+      ? standingRect
+      : fitRect(standingRect, viewport);
+
   // Opening the box: on a wide screen it docks, on a
-  // narrow one it floats. The floating window opens where
-  // it last was — its rectangle survives minimizing — so
-  // only an opening on a freshly loaded page, no rectangle
-  // yet, starts from the default place.
+  // narrow one it floats. The floating window opens at
+  // the place of the screen it opens on — the places
+  // survive minimizing, one for each kind of screen — so
+  // only an opening on a kind of screen with no place
+  // yet starts from that screen's default place.
   const openAssistant = () => {
     if (narrowScreen) {
-      if (rect.width === 0) setRect(homeRect());
       setPlacement("floating");
     } else {
       setPlacement("docked");
@@ -349,7 +447,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // them; the full screen is the dock widened to the
   // whole page, and its control steps back to the dock.
   const floatAssistant = () => {
-    if (rect.width === 0) setRect(homeRect());
     setPlacement("floating");
   };
   const dockAssistant = () => {
@@ -647,7 +744,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
 
   const minimizeIcon = (
     <svg {...iconProps}>
-      <path d="M6 9l6 6 6-6" />
+      <path d="M18 6 6 18M6 6l12 12" />
     </svg>
   );
   const floatIcon = (
@@ -814,18 +911,18 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
           <Rnd
             className="ai-assistant__window"
             style={{ display: "flex" }}
-            size={{ width: rect.width, height: rect.height }}
-            position={{ x: rect.left, y: rect.top }}
+            size={{ width: shownRect.width, height: shownRect.height }}
+            position={{ x: shownRect.left, y: shownRect.top }}
             minWidth={260}
             minHeight={200}
             bounds="window"
             cancel="button, textarea, input, select, a, label, .ai-assistant__message"
             onDrag={(_event, data) =>
-              setRect((previous) => ({
-                ...previous,
+              setRect({
+                ...standingRect,
                 left: data.x,
                 top: data.y,
-              }))
+              })
             }
             onResize={(_event, _direction, ref, _delta, position) =>
               setRect({

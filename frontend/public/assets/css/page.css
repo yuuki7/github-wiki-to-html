@@ -467,12 +467,48 @@ body {
 }
 
 /* The menu's toggle at the article title's head (see
-   TocToggle): it stands only while the AI panel does, on
-   a wide screen — the one state in which the menu has no
-   control of its own in the layout — and the wide layout
-   at the end of this file shows it there. */
+   TocToggle): its presentation is the same wherever it
+   stands, and where it stands is the layouts' business —
+   the narrow layout below shows it wherever the page has
+   a menu, and the wide layout at the end of this file
+   shows it while the AI panel stands. Its icon follows
+   the menu's state: the table of contents while the menu
+   is closed, a cross while it stands. The table of
+   contents is mirrored left-to-right, its dots at the
+   start of each line. */
 .toc-toggle {
   display: none;
+  align-items: center;
+  margin-inline-end: 0.3em;
+  padding: 0.12em;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  vertical-align: -0.08em;
+  cursor: pointer;
+}
+
+.toc-toggle__icon {
+  display: block;
+  width: 0.85em;
+  height: 0.85em;
+}
+
+.toc-toggle__icon--menu {
+  transform: scaleX(-1);
+}
+
+.toc-toggle__icon--close {
+  display: none;
+}
+
+body.menu-open .toc-toggle__icon--menu {
+  display: none;
+}
+
+body.menu-open .toc-toggle__icon--close {
+  display: block;
 }
 
 /* The docked panel: the conversation's column, filling
@@ -875,33 +911,13 @@ body {
     height: 1.35rem;
   }
 
-  /* The Contents button shows the menu's state: the
-     lines while the menu is closed, a cross while it
-     is open. */
-  .bottom-bar__icon {
-    display: block;
-  }
-
-  .bottom-bar__icon--close {
-    display: none;
-  }
-
-  body.menu-open .bottom-bar__icon--menu {
-    display: none;
-  }
-
-  body.menu-open .bottom-bar__icon--close {
-    display: block;
-  }
-
-  /* A page with no menu — an article with no headings —
-     has nothing for the Contents button to open: the
-     button stands dimmed and inert. The rule follows
-     the page itself, so it holds as the reader moves
-     between pages. */
-  body:not(:has(.left-sidebar > :is(nav, ul))) .bottom-bar__button--contents {
-    opacity: 0.4;
-    pointer-events: none;
+  /* The title's toggle is the menu's control here, as
+     it is on a wide screen while the AI panel stands:
+     the bar holds no button for the menu. A page with
+     no menu — an article with no headings — has nothing
+     for it to open, and it does not stand. */
+  body:has(.left-sidebar > :is(nav, ul)) .toc-toggle {
+    display: inline-flex;
   }
 
   /* While the assistant stands, the bar's panda is
@@ -1029,39 +1045,9 @@ body {
   }
 
   /* The title's toggle stands while the panel does, on
-     a page that has a menu for it to open. Its icon
-     follows the menu's state, as the bottom bar's does:
-     the table of contents while the menu is closed, a
-     cross while it stands. */
+     a page that has a menu for it to open. */
   body.ai-open:has(.left-sidebar > :is(nav, ul)) .toc-toggle {
     display: inline-flex;
-    align-items: center;
-    margin-inline-end: 0.3em;
-    padding: 0.12em;
-    border: none;
-    background: none;
-    color: inherit;
-    font: inherit;
-    vertical-align: -0.08em;
-    cursor: pointer;
-  }
-
-  .toc-toggle__icon {
-    display: block;
-    width: 0.85em;
-    height: 0.85em;
-  }
-
-  .toc-toggle__icon--close {
-    display: none;
-  }
-
-  body.menu-open .toc-toggle__icon--menu {
-    display: none;
-  }
-
-  body.menu-open .toc-toggle__icon--close {
-    display: block;
   }
 
   /* The drawer's panel here, as on a narrow screen, in

@@ -1,14 +1,16 @@
-// The menu's control while the AI panel stands on a wide
-// screen: a button at the head of the article's title,
-// wearing Lucide's table-of-contents. The menu itself
-// leaves the page's layout while the panel stands, and
-// opens as a drawer over the article (see TocDrawer);
-// this button is its toggle there, as the bottom bar's
-// Contents button is on a narrow screen, and the
-// stylesheet shows it in that one state only. Its icon
-// follows the menu's state in the stylesheet, as the
-// bar's does: the table of contents while the menu is
-// closed, a cross while it stands.
+// The menu's control at the head of the article's title:
+// a button wearing Lucide's table-of-contents, which the
+// stylesheet mirrors left-to-right. The menu itself, as
+// a panel over the page, is the frame's drawer (see
+// TocDrawer); this button is its toggle wherever the
+// menu has no control of its own in the layout — on a
+// narrow screen always, the bottom bar holding no button
+// for the menu, and on a wide screen while the AI panel
+// stands and the sidebar is folded away — and the
+// stylesheet shows it in those states only. Its icon
+// follows the menu's state in the stylesheet: the table
+// of contents while the menu is closed, a cross while it
+// stands.
 //
 // Like the article header's launcher, the button is
 // markup and nothing more: the article is swapped for

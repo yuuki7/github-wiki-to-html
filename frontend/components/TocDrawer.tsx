@@ -20,11 +20,12 @@ import type { SidebarMenuData } from "../lib/types";
 // hand-written menu before it carried in a <details> and a
 // document listener of its own, the library carries now.
 // One press is not an outside press: the bottom bar's. The
-// bar is the drawer's own furniture — its Contents button
-// toggles the drawer, and its other buttons do their own
-// work while the drawer stands — so a dismissal the bar's
-// press asks for is cancelled here, through the library's
-// own veto, and the bar's events decide what happens.
+// bar's buttons do their own work while the drawer stands
+// — its home button's no-op asks the drawer to close, and
+// its AI button toggles the window — so a dismissal the
+// bar's press asks for is cancelled here, through the
+// library's own veto, and the bar's events decide what
+// happens.
 // Focus leaving is not a dismissal either: the page behind
 // the drawer stays the reader's to work with — the AI
 // window above all, which focuses its own input as it
@@ -38,16 +39,16 @@ import type { SidebarMenuData } from "../lib/types";
 // place. So the swap hands it each page's menu as data (the
 // "frame:sidebar-menu" event, read from the new document's
 // sidebar), and a navigation closes it, as a full load would
-// leave it closed. Its controls stand elsewhere and ask by
-// event, as the bar's AI button asks the assistant: the
-// bottom bar's Contents button and the article title's own
-// button (see TocToggle) ask it to toggle, and the home
-// button's no-op and the assistant's dock ask it to close.
-// It reports its state the same way (the "sidebar-menu:state"
-// event and the body's menu-open class), for the bar's own
-// button and fading, and it works the title button's
-// expanded state onto whichever copy stands, as the frame
-// writes its other state after a swap.
+// leave it closed. Its control stands elsewhere: the article
+// title's own button (see TocToggle), swapped in with the
+// article and inert there, so the drawer hears clicks on
+// its class itself and toggles; and the home button's no-op
+// and the assistant's dock ask it to close, by event. It
+// reports its state the same way (the "sidebar-menu:state"
+// event and the body's menu-open class), for the bar's
+// fading, and it works the title button's expanded state
+// onto whichever copy stands, as the frame writes its other
+// state after a swap.
 
 export default function TocDrawer({
   initialData,
@@ -75,24 +76,22 @@ export default function TocDrawer({
     };
     window.addEventListener("frame:sidebar-menu", onMenuData);
     window.addEventListener("frame:navigated", onNavigated);
-    window.addEventListener("sidebar-menu:toggle", onToggle);
     window.addEventListener("sidebar-menu:close", onClose);
     document.addEventListener("click", onClick);
     return () => {
       window.removeEventListener("frame:sidebar-menu", onMenuData);
       window.removeEventListener("frame:navigated", onNavigated);
-      window.removeEventListener("sidebar-menu:toggle", onToggle);
       window.removeEventListener("sidebar-menu:close", onClose);
       document.removeEventListener("click", onClick);
     };
   }, [hasMenu]);
 
   // The state the rest of the frame reads: the bottom bar
-  // reports it on its own button and holds its fading while
-  // the menu stands, the stylesheet shows the controls'
-  // open faces from the body's class, and the article
-  // title's button — a fresh element on every page — takes
-  // its expanded state from here.
+  // holds its fading while the menu stands and stands solid
+  // again at its opening, the stylesheet shows the title
+  // button's open face from the body's class, and the
+  // article title's button — a fresh element on every
+  // page — takes its expanded state from here.
   useEffect(() => {
     document.body.classList.toggle("menu-open", open);
     document

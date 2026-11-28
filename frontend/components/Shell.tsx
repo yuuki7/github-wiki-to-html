@@ -34,9 +34,8 @@ import TocDrawer from "./TocDrawer";
 // screen, and on a wide one while the AI panel stands —
 // the same menu opens as a drawer over the page: the frame
 // renders it from the same content carried as data (see
-// TocDrawer), worked by the bottom bar's Contents button
-// on a narrow screen and by the article title's own button
-// (see TocToggle) while the panel stands. The aside
+// TocDrawer), worked by the article title's own button
+// (see TocToggle) on either screen. The aside
 // carries the menu's names as its data attributes, so the
 // swap can hand the drawer each page's menu whole (see the
 // link interceptor's swap). A page whose sidebar would be
@@ -125,7 +124,6 @@ export default function Shell({
       <BottomBar
         homeHref={homeHref(language)}
         homeLabel={homeLabel}
-        contentsLabel={leftSidebarLabel}
         homeCurrent={!!isHome}
       />
       <LinkInterceptor />

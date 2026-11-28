@@ -19,8 +19,10 @@ const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 // The narrow screen's bottom bar: one bar across the
 // page's foot, holding in one place the controls a wide
 // screen spreads over the page — back to the home page at
-// the left, the menu in the middle, the AI assistant at
-// the right. The stylesheet shows it only on a narrow
+// the left, the AI assistant at the right. The menu is
+// not among them: its control stands at the article
+// title's head on this screen as it does on a wide one
+// (see TocToggle). The stylesheet shows it only on a narrow
 // screen; on a wide one the menu's sidebar and the
 // assistant's launcher in the article header keep their
 // own places, and the bar is not shown at all. Its buttons are icons only: their names
@@ -68,30 +70,18 @@ const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 //
 // The bar's buttons reach the things they control where
 // those things live. The home button is a plain link, and
-// in-app navigation carries it like any other. The
-// Contents button asks the frame's drawer to toggle
-// itself, with an event the drawer listens for, and takes
-// its state from the drawer's own reports — the menu has
-// other closes besides (a tap beside its panel, Escape, a
-// link inside it), so the button does not trust its
-// clicks. The AI button asks the assistant to toggle
-// itself the same way: the assistant owns its window's
-// state, and the bar does not reach into it.
+// in-app navigation carries it like any other. The AI
+// button asks the assistant to toggle itself, with an
+// event the assistant listens for: the assistant owns its
+// window's state, and the bar does not reach into it.
 
 type Props = {
   homeHref: string;
   homeLabel: string;
-  contentsLabel: string;
   homeCurrent: boolean;
 };
 
-export default function BottomBar({
-  homeHref,
-  homeLabel,
-  contentsLabel,
-  homeCurrent,
-}: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
+export default function BottomBar({ homeHref, homeLabel, homeCurrent }: Props) {
   const [atHome, setAtHome] = useState(homeCurrent);
   const barRef = useRef<HTMLElement>(null);
   const homeRef = useRef<HTMLAnchorElement>(null);
@@ -108,18 +98,6 @@ export default function BottomBar({
     update();
     window.addEventListener("frame:navigated", update);
     return () => window.removeEventListener("frame:navigated", update);
-  }, []);
-
-  // The menu's state, as the drawer reports it (see
-  // TocDrawer): the button wears it, and nothing here
-  // derives it from clicks of its own.
-  useEffect(() => {
-    const onState = (event: Event) => {
-      const detail = (event as CustomEvent<{ open: boolean }>).detail;
-      if (detail) setMenuOpen(detail.open);
-    };
-    window.addEventListener("sidebar-menu:state", onState);
-    return () => window.removeEventListener("sidebar-menu:state", onState);
   }, []);
 
   // The bar's opacity, driven by the scroll position's
@@ -158,15 +136,11 @@ export default function BottomBar({
   // A press on the bar itself restores it outright,
   // whatever its faded state: a reader reaching for one
   // of its buttons gets the bar solid under the finger,
-  // and the fading starts again from there. The Contents
-  // button is the one exception: its press is not the
-  // restore, its opening of the menu is. The drawer's
-  // report of its opening reaches this effect after the
-  // open state has been painted — the button's icon
-  // already the close mark, the panel already standing —
-  // and only then does the bar turn opaque, so the reader
-  // never sees a solid bar still wearing the menu icon,
-  // nor a faded close mark waiting on the bar.
+  // and the fading starts again from there. The menu's
+  // opening restores it too, on the drawer's own report:
+  // while the menu stands the fading is off entirely
+  // (below), and the bar the reader works beside stands
+  // solid for it.
   useEffect(() => {
     const bar = barRef.current;
     if (!bar) return;
@@ -234,13 +208,7 @@ export default function BottomBar({
       apply();
       settle();
     };
-    const onPress = (event: PointerEvent) => {
-      if (
-        event.target instanceof Element &&
-        event.target.closest(".bottom-bar__button--contents")
-      ) {
-        return;
-      }
+    const onPress = () => {
       opacity = 1;
       upTravel = 0;
       apply();
@@ -281,10 +249,6 @@ export default function BottomBar({
     }
   };
 
-  const toggleMenu = () => {
-    window.dispatchEvent(new Event("sidebar-menu:toggle"));
-  };
-
   const toggleAssistant = () => {
     window.dispatchEvent(new Event("ai-assistant:toggle"));
   };
@@ -318,41 +282,6 @@ export default function BottomBar({
           </svg>
         )}
       </a>
-      <button
-        type="button"
-        className="bottom-bar__button bottom-bar__button--contents"
-        aria-label={contentsLabel}
-        aria-expanded={menuOpen}
-        onClick={toggleMenu}
-      >
-        <svg
-          className="bottom-bar__icon bottom-bar__icon--menu"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M16 5H3" />
-          <path d="M16 12H3" />
-          <path d="M16 19H3" />
-          <path d="M21 5h.01" />
-          <path d="M21 12h.01" />
-          <path d="M21 19h.01" />
-        </svg>
-        <svg
-          className="bottom-bar__icon bottom-bar__icon--close"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M18 6 6 18M6 6l12 12" />
-        </svg>
-      </button>
       <button
         type="button"
         className="bottom-bar__button bottom-bar__button--ai"
