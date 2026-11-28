@@ -91,7 +91,6 @@ test("cornerPlace holds the window at the screen's corner, at its own size", () 
   assert.deepEqual(
     cornerPlace(
       { width: 1440, height: 900 },
-      "wide",
       { width: 281, height: 375 },
       false,
     ),
@@ -100,7 +99,6 @@ test("cornerPlace holds the window at the screen's corner, at its own size", () 
   assert.deepEqual(
     cornerPlace(
       { width: 1440, height: 900 },
-      "wide",
       { width: 281, height: 375 },
       true,
     ),
@@ -109,12 +107,33 @@ test("cornerPlace holds the window at the screen's corner, at its own size", () 
   assert.deepEqual(
     cornerPlace(
       { width: 390, height: 844 },
-      "narrow",
       { width: 281, height: 375 },
       false,
     ),
-    { left: 103, top: 463 },
+    { left: 85, top: 445 },
   );
+});
+
+test("the corner's margin is the same on either kind of screen", () => {
+  // The gap between the window and the screen's right
+  // and bottom edges, read through standingRect on an
+  // untouched arrangement, does not change at the
+  // crossing.
+  const taken = takeSize(
+    emptyArrangement,
+    { width: 800, height: 900 },
+    "narrow",
+  );
+  for (const [screen, kind] of [
+    [{ width: 800, height: 900 }, "narrow"],
+    [{ width: 959, height: 900 }, "narrow"],
+    [{ width: 961, height: 900 }, "wide"],
+    [{ width: 1440, height: 900 }, "wide"],
+  ] as const) {
+    const rect = standingRect(taken, screen, kind, false);
+    assert.equal(screen.width - (rect.left + rect.width), 24);
+    assert.equal(screen.height - (rect.top + rect.height), 24);
+  }
 });
 
 test("takeSize writes the size once, from the screen it stands on", () => {
@@ -165,8 +184,8 @@ test("an unwritten place follows the corner as the screen widens, through the cr
   assert.deepEqual(
     standingRect(taken, { width: 800, height: 900 }, "narrow", false),
     {
-      left: 308,
-      top: 246,
+      left: 290,
+      top: 228,
       width: 486,
       height: 648,
     },
@@ -176,8 +195,8 @@ test("an unwritten place follows the corner as the screen widens, through the cr
   assert.deepEqual(
     standingRect(taken, { width: 900, height: 900 }, "narrow", false),
     {
-      left: 408,
-      top: 246,
+      left: 390,
+      top: 228,
       width: 486,
       height: 648,
     },
@@ -209,8 +228,8 @@ test("an unwritten place follows the corner as the screen widens, through the cr
   assert.deepEqual(
     standingRect(taken, { width: 800, height: 900 }, "narrow", false),
     {
-      left: 308,
-      top: 246,
+      left: 290,
+      top: 228,
       width: 486,
       height: 648,
     },

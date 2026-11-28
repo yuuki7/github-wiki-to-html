@@ -70,11 +70,13 @@ export const emptyArrangement: WindowArrangement = {
   size: null,
 };
 
-// The screen's own margin: a slighter one on a narrow
-// screen.
-export function screenMargin(kind: ScreenKind): number {
-  return kind === "narrow" ? 6 : 24;
-}
+// The window's margin from the screen's corner. It is
+// one margin, on either kind of screen: a margin that
+// changed at the crossing would move the window at the
+// crossing — the window standing further from the
+// corner on one kind than on the other — which is the
+// crossing's own kind of jump.
+const windowMargin = 24;
 
 // The window's default size. It keeps one fixed ratio,
 // three wide to four tall, on either kind of screen: a
@@ -95,12 +97,11 @@ export function screenMargin(kind: ScreenKind): number {
 // is the anchor instead and the width follows it back,
 // the ratio kept either way.
 export function defaultSize(screen: ScreenSize, kind: ScreenKind): WindowSize {
-  const margin = screenMargin(kind);
   const widest = kind === "narrow" ? Math.round(screen.width * 0.72) : 384;
   const tallest = Math.round(screen.height * 0.72);
-  let width = Math.min(widest, screen.width - margin * 2);
+  let width = Math.min(widest, screen.width - windowMargin * 2);
   let height = Math.round((width * 4) / 3);
-  const maxHeight = Math.min(tallest, screen.height - margin * 2);
+  const maxHeight = Math.min(tallest, screen.height - windowMargin * 2);
   if (height > maxHeight) {
     height = maxHeight;
     width = Math.round((height * 3) / 4);
@@ -114,14 +115,12 @@ export function defaultSize(screen: ScreenSize, kind: ScreenKind): WindowSize {
 // size given, whatever that size is.
 export function cornerPlace(
   screen: ScreenSize,
-  kind: ScreenKind,
   size: WindowSize,
   rtl: boolean,
 ): WindowPlace {
-  const margin = screenMargin(kind);
   return {
-    left: rtl ? margin : screen.width - size.width - margin,
-    top: screen.height - size.height - margin,
+    left: rtl ? windowMargin : screen.width - size.width - windowMargin,
+    top: screen.height - size.height - windowMargin,
   };
 }
 
@@ -187,6 +186,6 @@ export function standingRect(
   rtl: boolean,
 ): WindowRect {
   const size = arrangement.size ?? defaultSize(screen, kind);
-  const place = arrangement.place ?? cornerPlace(screen, kind, size, rtl);
+  const place = arrangement.place ?? cornerPlace(screen, size, rtl);
   return fitRect({ ...place, ...size }, screen);
 }

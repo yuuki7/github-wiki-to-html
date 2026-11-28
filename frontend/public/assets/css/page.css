@@ -929,13 +929,19 @@ body.menu-open .toc-toggle__icon--close {
 
 /* Wide screens with the AI panel standing (the body's
    ai-open class, set by the assistant itself): the page
-   lays itself out again around the panel, in two
-   columns. The article keeps its own measure in the
-   first column, at the page's own edge — no column is
-   spent on the folded sidebar: it leaves the layout
-   entirely, and its menu is a drawer here again, under
-   the control of the article title's own button, its
-   panel opening over the article as on a narrow screen.
+   lays itself out again around the panel. The article
+   keeps its own measure in the second column, against
+   the panel: the first column is the folded sidebar's
+   place, left empty — no column is spent on it, it
+   leaves the layout entirely, and its menu is a drawer
+   here again, under the control of the article title's
+   own button, its panel opening over the article as on
+   a narrow screen. Unless the reader draws the panel
+   narrow enough to leave the sidebar's own measure
+   beside the article's: then the sidebar takes that
+   first column and stands again (below), and the
+   article, whose place is counted from the panel, does
+   not move.
    The second column is the panel's, as wide as the
    screen leaves after the article, or the width the
    reader gave it at the divider. The panel itself
@@ -946,14 +952,15 @@ body.menu-open .toc-toggle__icon--close {
 @media (min-width: 60.01rem) {
   body.ai-open {
     grid-template-columns:
+      1fr
       minmax(0, var(--line-length))
-      var(--ai-column-width, calc(100dvw - var(--line-length) - 6ch));
+      var(--ai-column-width, calc(100dvw - var(--line-length) - 8ch));
   }
 
   body.ai-open .header,
   body.ai-open .main,
   body.ai-open .footer {
-    grid-column: 1;
+    grid-column: 2;
   }
 
   /* The folded sidebar leaves the layout, as on a
@@ -968,6 +975,33 @@ body.menu-open .toc-toggle__icon--close {
      a page that has a menu for it to open. */
   body.ai-open:has(.left-sidebar > :is(nav, ul)) .toc-toggle {
     display: inline-flex;
+  }
+
+  /* With room to spare — the reader has drawn the panel
+     narrow, and the assistant has set the body's
+     ai-with-sidebar class — the sidebar stands again:
+     three columns, the article back in the middle one,
+     and the title's toggle folded away, the sidebar
+     itself being the menu once more. */
+  body.ai-open.ai-with-sidebar {
+    grid-template-columns:
+      minmax(var(--side-line-length), 1fr)
+      minmax(0, var(--line-length))
+      var(--ai-column-width, calc(100dvw - var(--line-length) - 8ch));
+  }
+
+  body.ai-open.ai-with-sidebar .header,
+  body.ai-open.ai-with-sidebar .main,
+  body.ai-open.ai-with-sidebar .footer {
+    grid-column: 2;
+  }
+
+  body.ai-open.ai-with-sidebar .left-sidebar {
+    display: block;
+  }
+
+  body.ai-open.ai-with-sidebar:has(.left-sidebar > :is(nav, ul)) .toc-toggle {
+    display: none;
   }
 
   /* The drawer's panel here, as on a narrow screen, in
@@ -987,7 +1021,7 @@ body.menu-open .toc-toggle__icon--close {
     top: 0;
     inset-inline-end: 0;
     z-index: 45;
-    width: var(--ai-column-width, calc(100dvw - var(--line-length) - 6ch));
+    width: var(--ai-column-width, calc(100dvw - var(--line-length) - 8ch));
     max-width: none;
     height: 100dvh;
   }

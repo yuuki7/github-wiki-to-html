@@ -308,15 +308,16 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // stylesheet see it. The placement is the form the
   // reader chose; the dock among the forms is a wide
   // screen's, and on a narrow screen a docked box stands
-  // as the full screen — the form that fills the screen
-  // there, as the dock fills its column on a wide one.
-  // The window and the full screen are both screens'
-  // forms, and stand as chosen on either. Nothing is
-  // changed by the screen's turning: the chosen form is
-  // only read through it, and widening the screen again
-  // stands the dock back up, untouched.
+  // as the floating window — the page keeps its own
+  // layout there, and the box stands over it, as a
+  // window opened on a narrow screen does. The window
+  // and the full screen are both screens' forms, and
+  // stand as chosen on either. Nothing is changed by
+  // the screen's turning: the chosen form is only read
+  // through it, and widening the screen again stands
+  // the dock back up, untouched.
   const effectivePlacement: Placement =
-    placement === "docked" && narrowScreen ? "fullscreen" : placement;
+    placement === "docked" && narrowScreen ? "floating" : placement;
 
   // The window's standing, read from the arrangement
   // through the screen as it stands (see
@@ -346,7 +347,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // the screen's corner, read as the screen stands —
   // see lib/window-arrangement.)
   useEffect(() => {
-    if (placement !== "floating") return;
+    if (effectivePlacement !== "floating") return;
     setArrangement((previous) =>
       takeSize(
         previous,
@@ -455,6 +456,38 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       document.body.style.setProperty("--ai-column-width", `${aiWidth}px`);
     }
   }, [aiWidth]);
+
+  // The sidebar's return. Docked, the panel takes the
+  // sidebar's place in the layout — unless the reader
+  // has drawn the panel narrow enough that the screen
+  // holds the sidebar at its own measure, the article
+  // at its measure, and the panel at the reader's
+  // width, with the page's gaps and margins besides:
+  // then the sidebar stands again, in a third column
+  // (see page.css). The comparison is the assistant's
+  // to make — the stylesheet cannot set the panel's
+  // width against the screen's — and the fixed part,
+  // the two measures with the gaps and margins, is
+  // 107ch in all, measured in the page's own font, as
+  // the grid measures it. At the stylesheet's own width
+  // the panel takes all the screen the article leaves,
+  // so the sidebar's return waits for the reader's
+  // width.
+  useEffect(() => {
+    let fits = false;
+    if (effectivePlacement === "docked" && aiWidth !== null) {
+      const probe = document.createElement("div");
+      probe.style.cssText =
+        "position: absolute; visibility: hidden; width: 107ch;";
+      document.body.appendChild(probe);
+      fits = aiWidth + probe.offsetWidth <= window.innerWidth;
+      probe.remove();
+    }
+    document.body.classList.toggle("ai-with-sidebar", fits);
+    return () => {
+      document.body.classList.remove("ai-with-sidebar");
+    };
+  }, [effectivePlacement, aiWidth, viewport]);
 
   const clampAiWidth = (value: number): number =>
     Math.min(Math.max(value, 320), Math.max(320, window.innerWidth - 360));
@@ -568,7 +601,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // counts: a right-click raises a menu of its own and
   // dismisses nothing.
   useEffect(() => {
-    if (placement !== "floating") return;
+    if (effectivePlacement !== "floating") return;
     let tapStart: {
       x: number;
       y: number;
@@ -630,7 +663,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       document.removeEventListener("pointerup", onPointerUp);
       document.removeEventListener("pointercancel", onPointerCancel);
     };
-  }, [placement]);
+  }, [effectivePlacement]);
 
   // The heading's controls and the conversation are the
   // same in every form the box takes; only the controls
