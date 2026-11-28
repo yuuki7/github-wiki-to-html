@@ -45,8 +45,9 @@ export default async function ArticleView({
           <TocToggle label={data.ui.contents} />
           {entry.data.title}
         </h1>
-        <ArticleMeta {...data.meta} />
-        <AiLauncher />
+        <ArticleMeta {...data.meta}>
+          <AiLauncher />
+        </ArticleMeta>
       </header>
 
       <div className="article__main">{data.body}</div>

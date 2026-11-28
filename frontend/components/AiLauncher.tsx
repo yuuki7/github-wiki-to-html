@@ -1,12 +1,10 @@
 import PandaIcon from "./PandaIcon";
 
-// The AI assistant's launcher: the panda at the article
-// header's top right, on every page the shell frames —
-// an article's own header, and the home page's, which
-// carries the site's name. It is the assistant's entrance
-// at every width; the narrow screen's bottom bar holds
-// another, for the reader whose header has scrolled
-// away.
+// The AI assistant's launcher: the panda in the article
+// header, on every page the shell frames — at the date
+// row's right end on an article page, and at the title's
+// right end on the home page, which carries the site's
+// name. It is the assistant's entrance at every width.
 //
 // The button is markup and nothing more: it carries no
 // working of its own. The article it stands in is

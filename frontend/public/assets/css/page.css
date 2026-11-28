@@ -76,9 +76,11 @@ body {
 }
 
 /* Article header. It carries the AI assistant's launcher
-   at its top right (see the assistant's rules below), so
-   it is the button's containing block, and the title
-   keeps clear of the button's corner. */
+   (see the assistant's rules below): on the home page the
+   header is the button's containing block and the title
+   keeps clear of the button's corner; on an article page
+   the button stands in the date row instead (see the
+   meta's rules below), and the title's row is its own. */
 .article__header {
   position: relative;
   grid-row: article-header;
@@ -93,9 +95,28 @@ body {
   line-height: calc(1em + 0.3ex);
 }
 
+/* An article's title keeps no corner clear: its page's
+   launcher stands in the date row, not in the title's. */
+.article__header:has(.article__meta) .article__title {
+  padding-inline-end: 0;
+}
+
 .article__meta {
+  position: relative;
   margin: var(--article__meta-gap) 0 0;
   font-size: 95%;
+}
+
+/* The date row's launcher: the row is its containing
+   block, and it stands at the row's right end, centred
+   on the row. The row keeps its dates clear of it. */
+.article__meta:has(.ai-launcher) {
+  padding-inline-end: 2.75rem;
+}
+
+.article__meta .ai-launcher {
+  top: 50%;
+  translate: 0 -50%;
 }
 
 .article__date--modified::before {
@@ -485,14 +506,14 @@ body {
   background: none;
   color: inherit;
   font: inherit;
-  vertical-align: -0.08em;
+  vertical-align: middle;
   cursor: pointer;
 }
 
 .toc-toggle__icon {
   display: block;
-  width: 0.68em;
-  height: 0.68em;
+  width: 0.6em;
+  height: 0.6em;
 }
 
 .toc-toggle__icon--menu {

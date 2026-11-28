@@ -1,9 +1,13 @@
+import type { ReactNode } from "react";
 import { defaultLanguage, languageNameIn, uiFor } from "../lib/i18n";
 import type { ArticleMetaProps } from "../lib/types";
 
 // An article's byline: its author, its creation and last
 // modification dates, and, for a translation, the note that
-// says so, with a link to the original.
+// says so, with a link to the original. The date row also
+// carries the AI assistant's launcher, at its right end —
+// the article page's place for it, where the home page's
+// is the title's right end (see ArticleView).
 
 export default function ArticleMeta({
   author,
@@ -11,7 +15,8 @@ export default function ArticleMeta({
   modifiedDate,
   language,
   translation,
-}: ArticleMetaProps) {
+  children,
+}: ArticleMetaProps & { children?: ReactNode }) {
   const locale = language ?? defaultLanguage;
 
   const dateFmt = new Intl.DateTimeFormat(locale, {
@@ -69,6 +74,7 @@ export default function ArticleMeta({
             </time>
           </>
         )}
+        {children}
       </p>
 
       {translation && (
