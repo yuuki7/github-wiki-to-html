@@ -277,6 +277,14 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: terminal-table
+  version: '4.0'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: 0d3b32352cd2f9c78a545b009586d8b05392b057
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
 - name: tmpdir
   version: '0'
   source:
@@ -291,6 +299,14 @@ gems:
     type: git
     name: ruby/gem_rbs_collection
     revision: fe94342897d07a822906e8618969424c9dbb11c4
+    remote: https://github.com/ruby/gem_rbs_collection.git
+    repo_dir: gems
+- name: unicode-display_width
+  version: '3.3'
+  source:
+    type: git
+    name: ruby/gem_rbs_collection
+    revision: 0d3b32352cd2f9c78a545b009586d8b05392b057
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
 - name: uri
