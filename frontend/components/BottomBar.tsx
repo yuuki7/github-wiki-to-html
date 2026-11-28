@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { noteLayerOpened } from "../lib/layers";
+import PandaIcon from "./PandaIcon";
 
 // The bar's fade, in the scroll's own terms. Fading is
 // proportional: the distance below takes the bar from
@@ -17,13 +18,13 @@ const MIN_OPACITY = 0.25;
 const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 
 // The narrow screen's bottom bar: one bar across the
-// page's foot, holding the controls that float as separate
-// buttons on a wide screen — back to the home page at the
-// left, the menu in the middle, the AI assistant at the
-// right. The stylesheet shows it only on a narrow screen;
-// on a wide one the menu's sidebar and the assistant's
-// launcher keep their own places, and the bar is not
-// shown at all. Its buttons are icons only: their names
+// page's foot, holding in one place the controls a wide
+// screen spreads over the page — back to the home page at
+// the left, the menu in the middle, the AI assistant at
+// the right. The stylesheet shows it only on a narrow
+// screen; on a wide one the menu's sidebar and the
+// assistant's launcher in the article header keep their
+// own places, and the bar is not shown at all. Its buttons are icons only: their names
 // are spoken, not shown, and in-app navigation keeps the
 // names and the home button's destination in the page's
 // language, as it does the header's (see the swap).
@@ -351,7 +352,12 @@ export default function BottomBar({
           strokeLinecap="round"
           aria-hidden="true"
         >
-          <path d="M4 7h16M4 12h10M4 17h13" />
+          <path d="M16 5H3" />
+          <path d="M16 12H3" />
+          <path d="M16 19H3" />
+          <path d="M21 5h.01" />
+          <path d="M21 12h.01" />
+          <path d="M21 19h.01" />
         </svg>
         <svg
           className="bottom-bar__icon bottom-bar__icon--close"
@@ -371,9 +377,7 @@ export default function BottomBar({
         aria-label="AI"
         onClick={toggleAssistant}
       >
-        <span className="bottom-bar__bear" aria-hidden="true">
-          🧸
-        </span>
+        <PandaIcon />
       </button>
     </nav>
   );

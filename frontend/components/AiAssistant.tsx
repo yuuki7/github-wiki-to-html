@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   articleTextLimit,
   checkCache,
@@ -19,6 +19,7 @@ import {
 } from "../lib/ai-client";
 import { mostRecentLayer, noteLayerOpened } from "../lib/layers";
 import type { AiStrings } from "../lib/types";
+import PandaIcon from "./PandaIcon";
 
 // The AI box: one question form, answered by a small
 // language model that runs entirely in the reader's browser,
@@ -28,19 +29,27 @@ import type { AiStrings } from "../lib/types";
 // without script there is no form, rather than a form that
 // does nothing.
 //
-// The box starts minimized: a launcher button framed at a
-// page's bottom right corner, and nothing else. The button
-// opens the conversation as a floating window that grows
-// out of that corner; its default place is the bottom
-// right, with a margin from the page's edges. The reader
-// can drag the window by any empty part of it and put it
-// anywhere on the screen, resize it from any edge or
-// corner, and centre
-// it from the heading; minimizing it back to the button
-// keeps where it was, so it opens again where it left off,
-// and the default place is where a freshly loaded page
-// puts it. The article never moves for it: the window
-// floats over the page, and only the window moves.
+// The box starts minimized: nothing of it stands on the
+// page but its launcher, the panda at the article header's
+// top right (see AiLauncher), and the section itself is
+// empty. Opened on a wide screen, the box stands docked:
+// the page gives it the right column, the left sidebar
+// folds away, the article moves over, and the panel stands
+// fixed at the screen's full height while the article
+// scrolls past it, its conversation scrolling within
+// itself. The divider at the panel's edge gives the reader
+// the column's width. From the dock the box can be floated
+// — the window it was before, dragged by any empty part,
+// resized from any edge or corner, centred from its
+// heading — and docked back; and it can be made the whole
+// screen, which on the home page is the way a reader who
+// came only for the assistant uses it. On a narrow screen
+// there is no dock: the box opens as the floating window,
+// over the page, in the part of the screen above the
+// bottom bar. Minimizing, from any of the forms, keeps the
+// floating window's place, so it opens again where it left
+// off; the dock's width is kept likewise, in the reader's
+// own storage.
 //
 // The box is part of the app's frame, not of the page: the
 // frame stays mounted while the reader moves between pages,
@@ -207,24 +216,25 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     }
   };
 
-  // The window's placement: minimized to its launcher
-  // button, or floating where the reader has put it.
-  // The placement is the box's own state, so it
-  // is kept like the rest of the box's state while the
-  // reader moves between pages. The rectangle is in
-  // viewport coordinates. The box's element itself stays
-  // where the layout puts it and takes no room: the button
-  // and the window both float over the page, so the right
-  // sidebar the element sits in is left blank.
+  // The box's placement: minimized away, docked in the
+  // page's right column, floating where the reader has
+  // put it, or filling the screen. The placement is the
+  // box's own state, so it is kept like the rest of the
+  // box's state while the reader moves between pages. The
+  // rectangle is the floating window's, in viewport
+  // coordinates. The box's element sits in the right
+  // sidebar: minimized it is empty and the sidebar is left
+  // blank, docked the stylesheet stands the sidebar itself
+  // up as the panel, and floating the window leaves the
+  // sidebar and floats over the page as before.
   interface WindowRect {
     left: number;
     top: number;
     width: number;
     height: number;
   }
-  const [placement, setPlacement] = useState<"minimized" | "floating">(
-    "minimized",
-  );
+  type Placement = "minimized" | "docked" | "floating" | "fullscreen";
+  const [placement, setPlacement] = useState<Placement>("minimized");
   const [rect, setRect] = useState<WindowRect>({
     left: 0,
     top: 0,
@@ -287,34 +297,193 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
   };
 
-  // The launcher's click: the window opens where it last
-  // was. Its rectangle survives minimizing, so only an
-  // opening on a freshly loaded page — no rectangle yet —
-  // starts from the default place.
-  const openWindow = () => {
+  // Which screen the box is on, wide or narrow, kept as
+  // the screen changes: the dock is a wide screen's form,
+  // and a box docked or full-screen when the screen turns
+  // narrow falls back to the floating window, the one
+  // form a narrow screen has.
+  const [narrowScreen, setNarrowScreen] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 60rem)");
+    const update = () => {
+      setNarrowScreen(query.matches);
+      if (
+        query.matches &&
+        (placement === "docked" || placement === "fullscreen")
+      ) {
+        if (rect.width === 0) setRect(homeRect());
+        setPlacement("floating");
+        noteLayerOpened("ai");
+      }
+    };
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  });
+
+  // Opening the box: on a wide screen it docks, on a
+  // narrow one it floats. The floating window opens where
+  // it last was — its rectangle survives minimizing — so
+  // only an opening on a freshly loaded page, no rectangle
+  // yet, starts from the default place.
+  const openAssistant = () => {
+    if (narrowScreen) {
+      if (rect.width === 0) setRect(homeRect());
+      setPlacement("floating");
+      noteLayerOpened("ai");
+    } else {
+      setPlacement("docked");
+    }
+  };
+
+  // Minimizing keeps the window's place and size, and the
+  // dock's width: the reader's arrangement is worth more
+  // than the defaults, and the defaults are still there —
+  // they are where a freshly loaded page puts the box.
+  const minimizeAssistant = () => {
+    setPlacement("minimized");
+  };
+
+  // The dock and the floating window are two forms of the
+  // one box, and the heading carries the reader between
+  // them; the full screen is the dock widened to the
+  // whole page, and its control steps back to the dock.
+  const floatAssistant = () => {
     if (rect.width === 0) setRect(homeRect());
     setPlacement("floating");
     noteLayerOpened("ai");
   };
-
-  // Minimizing keeps the window's place and size: the
-  // reader's arrangement is worth more than the default
-  // place, and the default is still there — it is where
-  // a freshly loaded page opens the window.
-  const minimizeWindow = () => {
-    setPlacement("minimized");
+  const dockAssistant = () => {
+    if (narrowScreen) return;
+    setPlacement("docked");
+  };
+  const fullScreenAssistant = () => {
+    setPlacement("fullscreen");
   };
 
-  // The narrow screen's bottom bar holds an AI button in
-  // the launcher's place, and it asks the box to toggle
-  // itself with this event: open when minimized, minimize
-  // when open. The listener is renewed after every render,
-  // so the toggle always acts on the placement as it
-  // stands.
+  // The placement, told to the page: the stylesheet lays
+  // the page out around a standing panel from the body's
+  // classes, and the launcher in the article header — a
+  // fresh element on every page, arriving with the page —
+  // takes its pressed state from here, on a navigation as
+  // on a change of the placement itself.
+  useEffect(() => {
+    const sync = () => {
+      document.body.classList.toggle(
+        "ai-open",
+        placement === "docked" || placement === "fullscreen",
+      );
+      document.body.classList.toggle(
+        "ai-fullscreen",
+        placement === "fullscreen",
+      );
+      document
+        .querySelectorAll(".ai-launcher")
+        .forEach((launcher) =>
+          launcher.setAttribute(
+            "aria-pressed",
+            placement === "minimized" ? "false" : "true",
+          ),
+        );
+    };
+    sync();
+    // Leaving the dock on a wide screen takes the menu's
+    // drawer with it: the drawer's control — the article
+    // title's button — stands only while the panel does,
+    // and a drawer left standing would keep only the
+    // article's own dismissals. On a narrow screen the
+    // menu is the bottom bar's business, not the dock's,
+    // and it is left alone.
+    if (
+      placement !== "docked" &&
+      placement !== "fullscreen" &&
+      !window.matchMedia("(max-width: 60rem)").matches
+    ) {
+      const details = document.querySelector<HTMLDetailsElement>(
+        ".left-sidebar > details",
+      );
+      if (details) details.open = false;
+    }
+    window.addEventListener("frame:navigated", sync);
+    return () => window.removeEventListener("frame:navigated", sync);
+  }, [placement]);
+
+  // The dock's width, in pixels, once the reader has
+  // dragged its divider; until then the stylesheet's own
+  // width — the whole of the screen the article's measure
+  // leaves — stands. The width is the reader's, so it is
+  // kept in their storage and restored on a later visit,
+  // and it is written to the body's style, where the
+  // stylesheet's grid takes it from.
+  const [aiWidth, setAiWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const saved = Number(window.localStorage.getItem("ai-column-width"));
+    if (Number.isFinite(saved) && saved > 0) setAiWidth(saved);
+  }, []);
+  useEffect(() => {
+    if (aiWidth === null) {
+      document.body.style.removeProperty("--ai-column-width");
+    } else {
+      document.body.style.setProperty("--ai-column-width", `${aiWidth}px`);
+    }
+  }, [aiWidth]);
+
+  const clampAiWidth = (value: number): number =>
+    Math.min(Math.max(value, 320), Math.max(320, window.innerWidth - 360));
+
+  // Dragging the divider at the panel's edge moves the
+  // boundary between the article and the panel: toward
+  // the article the panel widens, away it narrows, in
+  // either writing direction. The keys move it likewise —
+  // the divider is a separator, and a separator is worked
+  // from the keyboard as from the pointer.
+  const onDividerPointerDown = (event: React.PointerEvent) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const rtl = document.documentElement.dir === "rtl";
+    const start = {
+      x: event.clientX,
+      width: aiWidth ?? sectionRef.current?.getBoundingClientRect().width ?? 0,
+    };
+    let last = start.width;
+    const onMove = (move: PointerEvent) => {
+      const delta = rtl ? move.clientX - start.x : start.x - move.clientX;
+      last = clampAiWidth(start.width + delta);
+      setAiWidth(last);
+    };
+    const onUp = () => {
+      window.localStorage.setItem("ai-column-width", String(last));
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
+  const onDividerKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const rtl = document.documentElement.dir === "rtl";
+    const step =
+      (event.shiftKey ? 64 : 16) * (event.key === "ArrowLeft" ? 1 : -1);
+    const current =
+      aiWidth ?? sectionRef.current?.getBoundingClientRect().width ?? 0;
+    const next = clampAiWidth(current + (rtl ? -step : step));
+    setAiWidth(next);
+    window.localStorage.setItem("ai-column-width", String(next));
+  };
+
+  // The launcher in the article header and the narrow
+  // screen's bottom bar both ask the box to toggle itself
+  // with this event: open when minimized, minimize when
+  // open. The listener is renewed after every render, so
+  // the toggle always acts on the placement as it stands.
   useEffect(() => {
     const onToggle = () => {
-      if (placement === "minimized") openWindow();
-      else minimizeWindow();
+      if (placement === "minimized") openAssistant();
+      else minimizeAssistant();
     };
     window.addEventListener("ai-assistant:toggle", onToggle);
     return () => window.removeEventListener("ai-assistant:toggle", onToggle);
@@ -326,16 +495,19 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // stands over it. It is a minimize, not a toggle — a
   // window already away stays away.
   useEffect(() => {
-    const onMinimize = () => minimizeWindow();
+    const onMinimize = () => minimizeAssistant();
     window.addEventListener("ai-assistant:minimize", onMinimize);
     return () =>
       window.removeEventListener("ai-assistant:minimize", onMinimize);
   });
 
-  // A tap on the article itself while the window is open
+  // A tap on the article itself while the window floats
   // puts the window away: the reader has turned back to
   // the article, and the window's own minimize button is
-  // not the only way to dismiss it. Where the dismissal
+  // not the only way to dismiss it. The docked panel and
+  // the full screen are the page's own layout, not a layer
+  // over it, and no tap dismisses them — their controls
+  // put them away. Where the dismissal
   // belongs depends on the screen. On a wide screen it
   // belongs to every empty part of the page — the
   // article, the header, both sidebars, the footer: the
@@ -375,7 +547,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // the primary button counts: a right-click raises a
   // menu of its own and dismisses nothing.
   useEffect(() => {
-    if (placement === "minimized") return;
+    if (placement !== "floating") return;
     let tapStart: {
       x: number;
       y: number;
@@ -428,7 +600,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       ) {
         return;
       }
-      minimizeWindow();
+      minimizeAssistant();
     };
     const onPointerCancel = () => {
       tapStart = null;
@@ -615,6 +787,126 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     setRect(columnRect());
   };
 
+  // The heading's controls and the conversation are the
+  // same in every form the box takes; only the controls
+  // differ, as the forms do. The icons are Lucide's, in
+  // the heading's own line weight.
+  const iconProps = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.75,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": true,
+  } as const;
+
+  const centerIcon = (
+    <svg {...iconProps}>
+      <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" />
+      <path d="M11 11h2v2h-2v-2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+  const minimizeIcon = (
+    <svg {...iconProps}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+  const floatIcon = (
+    <svg {...iconProps}>
+      <path d="M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4" />
+      <rect width="10" height="7" x="12" y="13" rx="2" />
+    </svg>
+  );
+  const dockIcon = (
+    <svg {...iconProps}>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M15 3v18" />
+    </svg>
+  );
+  const fullScreenIcon = (
+    <svg {...iconProps}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+    </svg>
+  );
+
+  const controlButton = (
+    label: string,
+    onClick: () => void,
+    icon: ReactNode,
+  ) => (
+    <button
+      type="button"
+      className="ai-assistant__control"
+      aria-label={label}
+      onClick={onClick}
+    >
+      {icon}
+    </button>
+  );
+
+  const heading = (controls: ReactNode) => (
+    <div className="ai-assistant__heading">
+      <h2 className="ai-assistant__title">
+        <PandaIcon />
+      </h2>
+      <div className="ai-assistant__controls">{controls}</div>
+    </div>
+  );
+
+  const conversation = (
+    <>
+      <div className="ai-assistant__log">
+        <div className="ai-assistant__log-view" ref={logRef}>
+          {log.map((message, index) => (
+            <p
+              key={index}
+              className={`ai-assistant__message ai-assistant__message--${message.role}`}
+            >
+              {message.content}
+            </p>
+          ))}
+        </div>
+      </div>
+      <p className="ai-assistant__status" hidden={status === null}>
+        {status}
+      </p>
+      {mounted && (
+        <form className="ai-assistant__form" onSubmit={onSubmit}>
+          <textarea
+            className="ai-assistant__input"
+            placeholder={strings.message}
+            rows={1}
+            value={draftText}
+            onChange={(event) => setDraftText(event.target.value)}
+            onKeyDown={onInputKeyDown}
+          />
+          <button
+            className="ai-assistant__send"
+            type="submit"
+            disabled={busy || draftText.trim() === ""}
+            aria-label={strings.send}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+          </button>
+        </form>
+      )}
+    </>
+  );
+
   return (
     <section
       ref={sectionRef}
@@ -626,16 +918,39 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       data-error={strings.error}
       data-message={strings.message}
     >
-      {placement === "minimized" ? (
-        <button
-          type="button"
-          className="ai-assistant__launcher"
-          aria-label="AI"
-          onClick={openWindow}
-        >
-          <span aria-hidden="true">🧸</span>
-        </button>
-      ) : (
+      {placement === "docked" || placement === "fullscreen" ? (
+        <div className="ai-assistant__panel">
+          {heading(
+            <>
+              {placement === "docked" ? (
+                <>
+                  {controlButton("Float", floatAssistant, floatIcon)}
+                  {controlButton(
+                    "Full screen",
+                    fullScreenAssistant,
+                    fullScreenIcon,
+                  )}
+                </>
+              ) : (
+                controlButton("Dock", dockAssistant, dockIcon)
+              )}
+              {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
+            </>,
+          )}
+          {conversation}
+          {placement === "docked" && (
+            <div
+              className="ai-assistant__divider"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Assistant panel width"
+              tabIndex={0}
+              onPointerDown={onDividerPointerDown}
+              onKeyDown={onDividerKeyDown}
+            />
+          )}
+        </div>
+      ) : placement === "floating" ? (
         <div
           ref={windowRef}
           className="ai-assistant__window"
@@ -647,97 +962,14 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             height: rect.height,
           }}
         >
-          <div className="ai-assistant__heading">
-            <h2 className="ai-assistant__title">🧸</h2>
-            <div className="ai-assistant__controls">
-              <button
-                type="button"
-                className="ai-assistant__control"
-                aria-label="Center"
-                onClick={centerWindow}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" />
-                  <path
-                    d="M11 11h2v2h-2v-2"
-                    fill="currentColor"
-                    stroke="none"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="ai-assistant__control"
-                aria-label="Minimize"
-                onClick={minimizeWindow}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="ai-assistant__log">
-            <div className="ai-assistant__log-view" ref={logRef}>
-              {log.map((message, index) => (
-                <p
-                  key={index}
-                  className={`ai-assistant__message ai-assistant__message--${message.role}`}
-                >
-                  {message.content}
-                </p>
-              ))}
-            </div>
-          </div>
-          <p className="ai-assistant__status" hidden={status === null}>
-            {status}
-          </p>
-          {mounted && (
-            <form className="ai-assistant__form" onSubmit={onSubmit}>
-              <textarea
-                className="ai-assistant__input"
-                placeholder={strings.message}
-                rows={1}
-                value={draftText}
-                onChange={(event) => setDraftText(event.target.value)}
-                onKeyDown={onInputKeyDown}
-              />
-              <button
-                className="ai-assistant__send"
-                type="submit"
-                disabled={busy || draftText.trim() === ""}
-                aria-label={strings.send}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 19V5M5 12l7-7 7 7" />
-                </svg>
-              </button>
-            </form>
+          {heading(
+            <>
+              {!narrowScreen && controlButton("Dock", dockAssistant, dockIcon)}
+              {controlButton("Center", centerWindow, centerIcon)}
+              {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
+            </>,
           )}
+          {conversation}
           {resizeHandles.map((handle) => (
             <div
               key={handle}
@@ -746,7 +978,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
             />
           ))}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

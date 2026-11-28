@@ -31,16 +31,22 @@ import MenuDismiss from "./MenuDismiss";
 // screen the menu sits before the article, closed, and the
 // bottom bar's Contents button is its control; on a wide
 // screen the stylesheet keeps the content always visible,
-// so the menu is a plain sidebar there. The summary is the
-// menu's name and nothing more: the stylesheet never shows
-// it, at either width. A page whose sidebar would be
-// empty — an article with no headings for its table of
-// contents — passes no content, and the aside stays empty,
-// rather than holding a menu that opens onto nothing.
+// so the menu is a plain sidebar there. While the AI panel
+// stands on a wide screen, the sidebar leaves the layout
+// and the menu is a drawer again; its control there is
+// the article title's own button (see TocToggle), as the
+// bottom bar's button is on a narrow screen. The summary
+// is the menu's name and nothing more: the stylesheet
+// never shows it, at either width. A page whose
+// sidebar would be empty — an article with no headings for
+// its table of contents — passes no content, and the aside
+// stays empty, rather than holding a menu that opens onto
+// nothing.
 //
 // The bottom bar stands after the grid's regions: the
 // stylesheet shows it only on a narrow screen, where it
-// holds the controls that float separately on a wide one.
+// holds in one bar the controls a wide screen spreads
+// over the page.
 
 type Props = {
   language: string;

@@ -1,7 +1,9 @@
 import { articlePageDataFull } from "../lib/page-data";
 import type { PageEntry } from "../lib/types";
+import AiLauncher from "./AiLauncher";
 import ArticleMeta from "./ArticleMeta";
 import RedirectStub from "./RedirectStub";
+import TocToggle from "./TocToggle";
 
 // One article page, or one redirect stub. `lang` is the language
 // the page is served for: the article's own language, or, for a
@@ -39,8 +41,12 @@ export default async function ArticleView({
   return (
     <article className="article">
       <header className="article__header">
-        <h1 className="article__title">{entry.data.title}</h1>
+        <h1 className="article__title">
+          <TocToggle label={data.ui.contents} />
+          {entry.data.title}
+        </h1>
         <ArticleMeta {...data.meta} />
+        <AiLauncher />
       </header>
 
       <div className="article__main">{data.body}</div>

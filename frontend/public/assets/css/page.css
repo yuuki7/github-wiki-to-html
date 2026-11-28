@@ -75,8 +75,12 @@ body {
   display: contents;
 }
 
-/* Article header */
+/* Article header. It carries the AI assistant's launcher
+   at its top right (see the assistant's rules below), so
+   it is the button's containing block, and the title
+   keeps clear of the button's corner. */
 .article__header {
+  position: relative;
   grid-row: article-header;
   width: 100%;
   max-width: var(--line-length);
@@ -85,6 +89,7 @@ body {
 
 .article__title {
   margin: 0;
+  padding-inline-end: 2.75rem;
   line-height: calc(1em + 0.3ex);
 }
 
@@ -377,45 +382,86 @@ body {
   inset-inline-start: anchor(--language-menu-button start);
 }
 
-/* The AI assistant: a launcher button and a window, both
-   floating over the page — the box's own element takes no
-   room in the layout, so the right sidebar it sits in is
-   left blank. Minimized, only the button shows, framed at
-   the page's bottom right corner with a margin from the
-   edges, mirroring the narrow screen's Contents button at
-   the bottom left. The button opens the window at its
-   default place, the same corner; from there the window
-   can be dragged anywhere by its heading, resized at any
-   edge or corner, and centred from its heading; minimizing
-   it back to the button keeps where it was, so it opens
-   again where it left off, and the default place is where
-   a freshly loaded page puts it. The
-   article never moves for it. The window is a column: the
-   heading, the conversation scrolling between, and the
-   form at the bottom, and it grows out of its own bottom
-   corner as it opens. The form is rendered once the box's
-   script has mounted: without script there is no form,
-   rather than a form that does nothing. */
-.ai-assistant__launcher {
-  position: fixed;
-  inset-inline-end: var(--body-margin-horizontal);
-  inset-block-end: max(1rem, env(safe-area-inset-bottom));
-  z-index: 50;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  background-color: var(--surface-color);
-  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
-  line-height: 1;
+/* The AI assistant: its launcher, a panel, and a window.
+   Minimized, nothing of the box stands on the page but
+   the launcher — the panda at the article header's top
+   right — and the box's own element, in the right
+   sidebar, is empty and takes no room. Opened on a wide
+   screen the box docks: the sidebar itself stands as the
+   panel and the page lays itself out around it (see the
+   wide layout at the end of this file), and the panel is
+   a column like the window — the heading, the
+   conversation scrolling between, and the form at the
+   bottom. Floated, the box is the window it was: it
+   leaves the sidebar and floats over the page, dragged
+   by any empty part, resized at any edge or corner,
+   centred from its heading, growing out of its own
+   bottom corner as it opens; minimizing it keeps where
+   it was, so it opens again where it left off. The form
+   is rendered once the box's script has mounted: without
+   script there is no form, rather than a form that does
+   nothing. */
+.ai-launcher {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  padding: 0.4rem;
+  border: none;
+  background: none;
+  color: inherit;
+  line-height: 0;
   cursor: pointer;
 }
 
-/* The mark is sized on the span, not the button, so the
-   button's own font — the measure its ch-based inset is
-   taken in — stays the page's, and the inset lands where
-   the Contents button's does. */
-.ai-assistant__launcher span {
-  font-size: 1.5rem;
+.ai-launcher svg {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* The menu's toggle at the article title's head (see
+   TocToggle): it stands only while the AI panel does, on
+   a wide screen — the one state in which the menu has no
+   control of its own in the layout — and the wide layout
+   at the end of this file shows it there. */
+.toc-toggle {
+  display: none;
+}
+
+/* The docked panel: the conversation's column, filling
+   the sidebar the layout stands up for it. Its heading,
+   log, and form are the window's own, below. */
+.ai-assistant__panel {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.75rem;
+  background-color: var(--surface-color);
+}
+
+/* The divider at the panel's edge: an invisible strip
+   only its cursor names, centred on the boundary between
+   the article and the panel. Dragging it gives the panel
+   its width; it is a separator, so the keyboard works it
+   too, and focus shows it. */
+.ai-assistant__divider {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 0.75rem;
+  margin-inline-start: -0.375rem;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.ai-assistant__divider:hover,
+.ai-assistant__divider:focus-visible {
+  background-color: rgb(0 0 0 / 0.08);
+  outline: none;
 }
 
 @keyframes ai-assistant-grow {
@@ -471,16 +517,26 @@ body {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   margin-bottom: 0.75rem;
-  cursor: grab;
   user-select: none;
   touch-action: none;
+}
+
+/* In the floating window the heading is one of the
+   window's handles; in the panel it is a title bar only. */
+.ai-assistant__window .ai-assistant__heading {
+  cursor: grab;
 }
 
 .ai-assistant__title {
   grid-column: 2;
   margin: 0;
-  font-size: 1.5rem;
   line-height: 1;
+}
+
+.ai-assistant__title svg {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .ai-assistant__controls {
@@ -873,11 +929,6 @@ body {
     height: 1.35rem;
   }
 
-  .bottom-bar__bear {
-    font-size: 1.35rem;
-    line-height: 1;
-  }
-
   /* The Contents button shows the menu's state: the
      lines while the menu is closed, a cross while it
      is open. */
@@ -905,10 +956,6 @@ body {
   body:not(:has(.left-sidebar > details)) .bottom-bar__button--contents {
     opacity: 0.4;
     pointer-events: none;
-  }
-
-  .ai-assistant__launcher {
-    display: none;
   }
 
   html {
@@ -965,4 +1012,157 @@ body {
 
 .expressive-code .copy [aria-live].show {
   opacity: 1;
+}
+
+/* Wide screens with the AI panel standing (the body's
+   ai-open class, set by the assistant itself): the page
+   lays itself out again around the panel, in two
+   columns. The article keeps its own measure in the
+   first column, at the page's own edge — no column is
+   spent on the folded sidebar: it leaves the layout
+   entirely, and its menu is a drawer here again, under
+   the control of the article title's own button, its
+   panel opening over the article as on a narrow screen.
+   The second column is the panel's, as wide as the
+   screen leaves after the article, or the width the
+   reader gave it at the divider. The panel itself
+   stands fixed at the screen's full height, clear of
+   the article's scroll: the conversation is the
+   reader's place beside the article, not a part of the
+   article's own flow. */
+@media (min-width: 60.01rem) {
+  body.ai-open {
+    grid-template-columns:
+      minmax(0, var(--line-length))
+      var(--ai-column-width, calc(100dvw - var(--line-length) - 6ch));
+  }
+
+  body.ai-open .header,
+  body.ai-open .main,
+  body.ai-open .footer {
+    grid-column: 1;
+  }
+
+  /* The folded sidebar leaves the flow, as on a narrow
+     screen: it is the drawer's container, and nothing
+     of it is laid out in the page. */
+  body.ai-open .left-sidebar {
+    position: fixed;
+    z-index: 40;
+  }
+
+  /* The folded menu is a menu: a closed one hides its
+     content, against the wide screens' rule above. */
+  body.ai-open .left-sidebar > details:not([open])::details-content {
+    content-visibility: hidden;
+  }
+
+  /* The title's toggle stands while the panel does, on
+     a page that has a menu for it to open. Its icon
+     follows the menu's state, as the bottom bar's does:
+     the table of contents while the menu is closed, a
+     cross while it stands. */
+  body.ai-open:has(.left-sidebar > details) .toc-toggle {
+    display: inline-flex;
+    align-items: center;
+    margin-inline-end: 0.3em;
+    padding: 0.12em;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    vertical-align: -0.08em;
+    cursor: pointer;
+  }
+
+  .toc-toggle__icon {
+    display: block;
+    width: 0.85em;
+    height: 0.85em;
+  }
+
+  .toc-toggle__icon--close {
+    display: none;
+  }
+
+  body:has(.left-sidebar > details[open]) .toc-toggle__icon--menu {
+    display: none;
+  }
+
+  body:has(.left-sidebar > details[open]) .toc-toggle__icon--close {
+    display: block;
+  }
+
+  /* An open menu floats over the article, as on a narrow
+     screen: a panel in from the start, at the sidebar's
+     own measure, the full height of the screen. */
+  body.ai-open .left-sidebar > details[open]::details-content {
+    position: fixed;
+    inset: 0 auto 0 0;
+    box-sizing: border-box;
+    width: min(85vw, calc(var(--side-line-length) + 2rem));
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: var(--surface-color);
+    box-shadow: 0.5rem 0 1.5rem rgb(0 0 0 / 0.18);
+    z-index: 40;
+  }
+
+  /* The panel: the right sidebar itself, stood up at the
+     screen's edge for the panel's full height. Its grid
+     column stays behind it, at the same width, holding
+     the article's new place. */
+  body.ai-open .right-sidebar {
+    position: fixed;
+    top: 0;
+    inset-inline-end: 0;
+    z-index: 45;
+    width: var(
+      --ai-column-width,
+      calc(100dvw - var(--line-length) - 6ch)
+    );
+    max-width: none;
+    height: 100dvh;
+  }
+
+  body.ai-open .ai-assistant {
+    height: 100%;
+  }
+
+  body.ai-open .ai-assistant__panel {
+    border-inline-start: 1px solid var(--border-color);
+  }
+
+  /* The full screen: the page's own regions go, and the
+     panel takes the whole screen. The conversation keeps
+     the article's own measure, centred, however wide the
+     screen is: a wider line is hard on the eyes here as
+     much as in an article. */
+  body.ai-fullscreen .header,
+  body.ai-fullscreen .main,
+  body.ai-fullscreen .footer,
+  body.ai-fullscreen .left-sidebar {
+    display: none;
+  }
+
+  /* The sidebar's own justify-self: start would size the
+     fixed box to its content between the two insets, as
+     self-alignment governs a grid container's positioned
+     children; stretched, it takes the screen's width. */
+  body.ai-fullscreen .right-sidebar {
+    inset-inline: 0;
+    width: auto;
+    justify-self: stretch;
+  }
+
+  /* The measure is taken on the panel itself, as
+     padding: the panel's type is the page's own serif,
+     so its 66ch is the article's 66ch. Taken on the
+     conversation's elements, whose type is sans, the
+     same 66ch would stretch wider — a ch is the width
+     of the type it is measured in. */
+  body.ai-fullscreen .ai-assistant__panel {
+    border-inline-start: none;
+    padding-inline: max(0.75rem, calc((100% - var(--line-length)) / 2));
+  }
 }

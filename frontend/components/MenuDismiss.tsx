@@ -29,14 +29,21 @@ import { mostRecentLayer } from "../lib/layers";
 // acts on the press's release, before this click, so
 // whether the window stood when the click arrives is
 // not the test; the listener notes whether it stood
-// when the press began. One outside tap is not
-// swallowed: the header's language button. It opens a
-// menu of its own, and menus take each other's place —
+// when the press began. Two outside taps are not
+// swallowed: the header's language button, which opens a
+// menu of its own — menus take each other's place, so
 // the tap closes this menu and goes on to the button,
-// so the language menu opens at once, not on a second
-// tap. On a wide
-// screen the menu is a plain sidebar, never open, and the
-// listener does nothing.
+// and the language menu opens at once, not on a second
+// tap — and the article header's AI launcher, a control
+// like the bar's own buttons: the tap closes this menu
+// and goes on to it, so the assistant toggles at once.
+// The docked panel is no layer and notes no opening, so
+// without this the tap would close the menu and die
+// there, and the launcher would seem not to answer. On a
+// wide screen the menu is a plain sidebar, never open,
+// and the listener does nothing — except while the AI
+// panel stands, when the menu is a drawer again (see
+// the stylesheet) and everything above holds.
 
 export default function MenuDismiss() {
   useEffect(() => {
@@ -55,6 +62,10 @@ export default function MenuDismiss() {
       if (target.closest(".ai-assistant")) return;
       if (!details.contains(target)) {
         if (target.closest(".language-menu__button")) {
+          details.open = false;
+          return;
+        }
+        if (target.closest(".ai-launcher")) {
           details.open = false;
           return;
         }
