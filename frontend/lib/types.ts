@@ -83,6 +83,20 @@ export interface LanguageMenuData {
   links: { language: string; href: string | null }[];
 }
 
+// The left sidebar's menu as data, for the frame's drawer (see
+// TocDrawer): the same content the sidebar itself shows as a
+// plain list on a wide screen — an article's table of contents,
+// or a home page's list of articles — carried as items so the
+// drawer can render it wherever the menu opens as a panel over
+// the page. A table of contents item carries its heading's
+// depth; a list item has none.
+export interface SidebarMenuData {
+  kind: "toc" | "list";
+  label: string;
+  closeLabel: string;
+  items: { href: string; text: string; depth?: number | undefined }[];
+}
+
 // The strings the AI assistant needs, in its own terms. They are
 // derived from UiStrings, which names the same texts in the
 // site's interface vocabulary.

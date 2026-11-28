@@ -1,10 +1,10 @@
 // The menu's control while the AI panel stands on a wide
 // screen: a button at the head of the article's title,
-// wearing Lucide's table-of-contents. The menu itself —
-// the left sidebar's <details> — leaves the page's layout
-// while the panel stands, and opens as a drawer over the
-// article; this button is its toggle there, as the bottom
-// bar's Contents button is on a narrow screen, and the
+// wearing Lucide's table-of-contents. The menu itself
+// leaves the page's layout while the panel stands, and
+// opens as a drawer over the article (see TocDrawer);
+// this button is its toggle there, as the bottom bar's
+// Contents button is on a narrow screen, and the
 // stylesheet shows it in that one state only. Its icon
 // follows the menu's state in the stylesheet, as the
 // bar's does: the table of contents while the menu is
@@ -15,11 +15,10 @@
 // the next page's at every in-app navigation (see the
 // link interceptor's swap), and a control swapped in
 // with the article is inert. The frame works it: the
-// bottom bar, which keeps the menu's state for its own
-// button, hears clicks on this button's class and opens
-// or closes the menu (see BottomBar), and writes this
-// button's expanded state onto whichever copy stands at
-// every change of the menu's state.
+// drawer hears clicks on this button's class and opens
+// or closes itself, and writes this button's expanded
+// state onto whichever copy stands at every change of
+// the menu's state.
 
 export default function TocToggle({ label }: { label: string }) {
   return (

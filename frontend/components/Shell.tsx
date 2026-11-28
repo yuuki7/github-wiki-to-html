@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 import site from "../../site.json";
 import { homeHref } from "../lib/i18n";
 import type { FooterData } from "../lib/page-data";
-import type { AiStrings, AlternateLink } from "../lib/types";
+import type { AiStrings, AlternateLink, SidebarMenuData } from "../lib/types";
 import AiAssistant from "./AiAssistant";
 import LanguageMenu from "./LanguageMenu";
 import BottomBar from "./BottomBar";
 import CodeCopy from "./CodeCopy";
 import LinkInterceptor from "./link-interceptor";
-import MenuDismiss from "./MenuDismiss";
+import TocDrawer from "./TocDrawer";
 
 // The shell of the app: everything around the article — the
 // scripts, the header with the language switcher, the two
@@ -28,25 +28,21 @@ import MenuDismiss from "./MenuDismiss";
 // per page in this framework.
 //
 // The left sidebar is an <aside> — the page's complementary
-// region, at every width — holding a <details>: on a narrow
-// screen the menu sits before the article, closed, and the
-// bottom bar's Contents button is its control; on a wide
-// screen the stylesheet keeps the content always visible,
-// so the menu is a plain sidebar there. While the AI panel
-// stands on a wide screen, the sidebar leaves the layout
-// and the menu is a drawer again; its control there is
-// the article title's own button (see TocToggle), as the
-// bottom bar's button is on a narrow screen. Where the
-// menu is a drawer it also carries a close button of its
-// own, in a bar at the head of its panel: the button is
-// markup, and the frame works it (see BottomBar), as it
-// works the title's toggle. The summary
-// is the menu's name and nothing more: the stylesheet
-// never shows it, at either width. A page whose
-// sidebar would be empty — an article with no headings for
-// its table of contents — passes no content, and the aside
-// stays empty, rather than holding a menu that opens onto
-// nothing.
+// region, at every width — holding the page's menu as a
+// plain list: on a wide screen the menu is a plain sidebar
+// there. Where the menu is not in the layout — on a narrow
+// screen, and on a wide one while the AI panel stands —
+// the same menu opens as a drawer over the page: the frame
+// renders it from the same content carried as data (see
+// TocDrawer), worked by the bottom bar's Contents button
+// on a narrow screen and by the article title's own button
+// (see TocToggle) while the panel stands. The aside
+// carries the menu's names as its data attributes, so the
+// swap can hand the drawer each page's menu whole (see the
+// link interceptor's swap). A page whose sidebar would be
+// empty — an article with no headings for its table of
+// contents — passes no content, and the aside stays empty,
+// rather than holding a menu that opens onto nothing.
 //
 // The bottom bar stands after the grid's regions: the
 // stylesheet shows it only on a narrow screen, where it
@@ -60,6 +56,7 @@ type Props = {
   className?: string;
   aiStrings: AiStrings;
   leftSidebar?: ReactNode;
+  sidebarMenu?: SidebarMenuData | null;
   leftSidebarLabel: string;
   leftSidebarCloseLabel: string;
   homeLabel: string;
@@ -74,6 +71,7 @@ export default function Shell({
   className,
   aiStrings,
   leftSidebar,
+  sidebarMenu,
   leftSidebarLabel,
   leftSidebarCloseLabel,
   homeLabel,
@@ -104,31 +102,12 @@ export default function Shell({
           </nav>
         </header>
 
-        <aside className="left-sidebar">
-          {leftSidebar && (
-            <details>
-              <summary>{leftSidebarLabel}</summary>
-              <div className="left-sidebar__bar">
-                <button
-                  type="button"
-                  className="left-sidebar__close"
-                  aria-label={leftSidebarCloseLabel}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              {leftSidebar}
-            </details>
-          )}
+        <aside
+          className="left-sidebar"
+          data-contents-label={leftSidebarLabel}
+          data-close-label={leftSidebarCloseLabel}
+        >
+          {leftSidebar}
         </aside>
 
         <main className="main">{children}</main>
@@ -151,7 +130,7 @@ export default function Shell({
       />
       <LinkInterceptor />
       <CodeCopy />
-      <MenuDismiss />
+      <TocDrawer initialData={sidebarMenu ?? null} />
     </>
   );
 }

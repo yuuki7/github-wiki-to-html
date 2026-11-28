@@ -1,4 +1,4 @@
-import type { LanguageMenuData } from "../../lib/types";
+import type { LanguageMenuData, SidebarMenuData } from "../../lib/types";
 
 // The head elements that are one page's own: its title, its
 // canonical and alternate URLs, its author and social
@@ -232,16 +232,55 @@ export function swapPage(newDocument: Document): void {
   swapHeader(newDocument);
 
   // The left sidebar is an <aside> on every page; the menu
-  // inside it — a <details> — is present only on pages that
-  // have one: a page without a table of contents has none.
-  // The aside's children are replaced whole, so the new
-  // page's menu arrives as the page itself has it: closed.
-  // A menu the reader opened belongs to the page they are
-  // leaving; the page they arrive at starts with its own
-  // menu closed, as a fresh load would leave it.
+  // inside it is present only on pages that have one: a
+  // page without a table of contents has none. The aside's
+  // children are replaced whole, so the new page's menu
+  // arrives as the page itself has it.
   const left = document.querySelector(".left-sidebar");
   const newLeft = newDocument.querySelector(".left-sidebar");
   if (left && newLeft) replaceChildrenFrom(left, newLeft);
+
+  // The menu as a drawer is the frame's own component (see
+  // TocDrawer), and its panel is the component's to render:
+  // the swap cannot rewrite it in place as it does the
+  // sidebar's plain list. Instead the swap reads the new
+  // page's menu from the document itself — the menu's names
+  // from the sidebar's data attributes, and one item per
+  // entry of its list, a table of contents entry carrying
+  // its heading's depth out of its class — and hands it
+  // over as data. A page with no menu hands over no items,
+  // and the drawer stands down. A menu the reader opened
+  // belongs to the page they are leaving; the drawer closes
+  // on the navigation, as a fresh load would leave it.
+  if (newLeft) {
+    const items: SidebarMenuData["items"] = [];
+    newLeft.querySelectorAll("li").forEach((item) => {
+      const link = item.querySelector("a");
+      const href = link?.getAttribute("href");
+      if (!link || !href) return;
+      const depthToken = [...item.classList].find((token) =>
+        token.startsWith("toc__item--depth-"),
+      );
+      const depth = depthToken
+        ? Number(depthToken.slice("toc__item--depth-".length))
+        : NaN;
+      items.push({
+        href,
+        text: link.textContent.trim(),
+        depth: Number.isFinite(depth) ? depth : undefined,
+      });
+    });
+    window.dispatchEvent(
+      new CustomEvent<SidebarMenuData>("frame:sidebar-menu", {
+        detail: {
+          kind: newLeft.querySelector("nav.toc") ? "toc" : "list",
+          label: newLeft.getAttribute("data-contents-label") ?? "",
+          closeLabel: newLeft.getAttribute("data-close-label") ?? "",
+          items,
+        },
+      }),
+    );
+  }
 
   const main = document.querySelector(".main");
   const newMain = newDocument.querySelector(".main");

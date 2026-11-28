@@ -51,6 +51,23 @@ export default async function RouteShell({
           leftSidebarLabel={ui.contents}
           leftSidebarCloseLabel={ui.close}
           homeLabel={ui.home}
+          sidebarMenu={
+            data.listedEntries.length > 0
+              ? {
+                  kind: "list",
+                  label: ui.contents,
+                  closeLabel: ui.close,
+                  items: data.listedEntries.map((entry) => ({
+                    href: pageHref(
+                      route.lang,
+                      entry.data.slug,
+                      entry.data.translation ?? false,
+                    ),
+                    text: entry.data.title,
+                  })),
+                }
+              : null
+          }
           leftSidebar={
             data.listedEntries.length > 0 ? (
               <ul>
@@ -105,6 +122,20 @@ export default async function RouteShell({
         leftSidebarLabel={ui.contents}
         leftSidebarCloseLabel={ui.close}
         homeLabel={ui.home}
+        sidebarMenu={
+          tocItems(data.headings).length > 0
+            ? {
+                kind: "toc",
+                label: ui.contents,
+                closeLabel: ui.close,
+                items: tocItems(data.headings).map((heading) => ({
+                  href: `#${heading.slug}`,
+                  text: heading.text,
+                  depth: heading.depth,
+                })),
+              }
+            : null
+        }
         leftSidebar={
           tocItems(data.headings).length > 0 ? (
             <Toc headings={data.headings} />

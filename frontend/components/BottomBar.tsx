@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { noteLayerOpened } from "../lib/layers";
 import PandaIcon from "./PandaIcon";
 
 // The bar's fade, in the scroll's own terms. Fading is
@@ -70,15 +69,14 @@ const FADE_RATE = (1 - MIN_OPACITY) / FADE_DISTANCE;
 // The bar's buttons reach the things they control where
 // those things live. The home button is a plain link, and
 // in-app navigation carries it like any other. The
-// Contents button opens and closes the left sidebar's
-// <details> — the menu itself — and reports its state; the
-// menu has other closes besides (a tap beside its panel,
-// Escape, a link inside it), so the button takes its state
-// from the details' own toggle event, not from its
+// Contents button asks the frame's drawer to toggle
+// itself, with an event the drawer listens for, and takes
+// its state from the drawer's own reports — the menu has
+// other closes besides (a tap beside its panel, Escape, a
+// link inside it), so the button does not trust its
 // clicks. The AI button asks the assistant to toggle
-// itself, with an event the assistant listens for: the
-// assistant owns its window's state, and the bar does not
-// reach into it.
+// itself the same way: the assistant owns its window's
+// state, and the bar does not reach into it.
 
 type Props = {
   homeHref: string;
@@ -112,53 +110,16 @@ export default function BottomBar({
     return () => window.removeEventListener("frame:navigated", update);
   }, []);
 
+  // The menu's state, as the drawer reports it (see
+  // TocDrawer): the button wears it, and nothing here
+  // derives it from clicks of its own.
   useEffect(() => {
-    const onToggle = (event: Event) => {
-      const details = event.target;
-      if (
-        details instanceof HTMLDetailsElement &&
-        details.closest(".left-sidebar")
-      ) {
-        setMenuOpen(details.open);
-        if (details.open) noteLayerOpened("menu");
-        // The article title's own menu button (see
-        // TocToggle) reports the same state: write it onto
-        // whichever copy stands, as the swap writes the
-        // frame's other state after a navigation.
-        document
-          .querySelector(".toc-toggle")
-          ?.setAttribute("aria-expanded", String(details.open));
-      }
+    const onState = (event: Event) => {
+      const detail = (event as CustomEvent<{ open: boolean }>).detail;
+      if (detail) setMenuOpen(detail.open);
     };
-    document.addEventListener("toggle", onToggle, true);
-    return () => document.removeEventListener("toggle", onToggle, true);
-  }, []);
-
-  // The menu's other buttons are worked from here as
-  // well: the article title's toggle (see TocToggle) and
-  // the drawer's own close button (see Shell). The
-  // article is swapped for the next page's at every
-  // in-app navigation, and a button swapped in with it is
-  // inert; the sidebar itself is swapped too. A click on
-  // the title button's class opens or closes the menu,
-  // as this bar's own Contents button does; a click on
-  // the close button's class closes it.
-  useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const details = document.querySelector<HTMLDetailsElement>(
-        ".left-sidebar > details",
-      );
-      if (!details) return;
-      if (target.closest(".left-sidebar__close")) {
-        details.open = false;
-      } else if (target.closest(".toc-toggle")) {
-        details.open = !details.open;
-      }
-    };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    window.addEventListener("sidebar-menu:state", onState);
+    return () => window.removeEventListener("sidebar-menu:state", onState);
   }, []);
 
   // The bar's opacity, driven by the scroll position's
@@ -199,11 +160,11 @@ export default function BottomBar({
   // of its buttons gets the bar solid under the finger,
   // and the fading starts again from there. The Contents
   // button is the one exception: its press is not the
-  // restore, its opening of the menu is. The menu's
-  // toggle event reaches this effect after the open
-  // state has been painted — the button's icon already
-  // the close mark, the panel already standing — and
-  // only then does the bar turn opaque, so the reader
+  // restore, its opening of the menu is. The drawer's
+  // report of its opening reaches this effect after the
+  // open state has been painted — the button's icon
+  // already the close mark, the panel already standing —
+  // and only then does the bar turn opaque, so the reader
   // never sees a solid bar still wearing the menu icon,
   // nor a faded close mark waiting on the bar.
   useEffect(() => {
@@ -231,10 +192,7 @@ export default function BottomBar({
         settle();
         return;
       }
-      if (
-        document.querySelector<HTMLDetailsElement>(".left-sidebar > details")
-          ?.open
-      ) {
+      if (document.body.classList.contains("menu-open")) {
         // While the menu stands, the fading is off
         // entirely: the reader is working with the menu
         // and the bar that controls it, and the article's
@@ -287,13 +245,9 @@ export default function BottomBar({
       upTravel = 0;
       apply();
     };
-    const onMenuToggle = (event: Event) => {
-      const details = event.target;
-      if (
-        details instanceof HTMLDetailsElement &&
-        details.closest(".left-sidebar") &&
-        details.open
-      ) {
+    const onMenuState = (event: Event) => {
+      const detail = (event as CustomEvent<{ open: boolean }>).detail;
+      if (detail?.open) {
         opacity = 1;
         upTravel = 0;
         apply();
@@ -301,13 +255,13 @@ export default function BottomBar({
     };
     settle();
     bar.addEventListener("pointerdown", onPress);
-    document.addEventListener("toggle", onMenuToggle, true);
+    window.addEventListener("sidebar-menu:state", onMenuState);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("frame:navigated", onNavigated);
     return () => {
       window.clearTimeout(timer);
       bar.removeEventListener("pointerdown", onPress);
-      document.removeEventListener("toggle", onMenuToggle, true);
+      window.removeEventListener("sidebar-menu:state", onMenuState);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("frame:navigated", onNavigated);
     };
@@ -322,19 +276,13 @@ export default function BottomBar({
     const href = event.currentTarget.getAttribute("href");
     if (href && href === window.location.pathname) {
       event.preventDefault();
-      const details = document.querySelector<HTMLDetailsElement>(
-        ".left-sidebar > details",
-      );
-      if (details) details.open = false;
+      window.dispatchEvent(new Event("sidebar-menu:close"));
       window.dispatchEvent(new Event("ai-assistant:minimize"));
     }
   };
 
   const toggleMenu = () => {
-    const details = document.querySelector<HTMLDetailsElement>(
-      ".left-sidebar > details",
-    );
-    if (details) details.open = !details.open;
+    window.dispatchEvent(new Event("sidebar-menu:toggle"));
   };
 
   const toggleAssistant = () => {

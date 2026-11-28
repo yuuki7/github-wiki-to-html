@@ -17,7 +17,6 @@ import {
   type Message,
   type WebLLM,
 } from "../lib/ai-client";
-import { mostRecentLayer, noteLayerOpened } from "../lib/layers";
 import type { AiStrings } from "../lib/types";
 import PandaIcon from "./PandaIcon";
 import { Rnd } from "react-rnd";
@@ -332,7 +331,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     if (narrowScreen) {
       if (rect.width === 0) setRect(homeRect());
       setPlacement("floating");
-      noteLayerOpened("ai");
     } else {
       setPlacement("docked");
     }
@@ -353,7 +351,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   const floatAssistant = () => {
     if (rect.width === 0) setRect(homeRect());
     setPlacement("floating");
-    noteLayerOpened("ai");
   };
   const dockAssistant = () => {
     if (narrowScreen) return;
@@ -402,10 +399,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       effectivePlacement !== "fullscreen" &&
       !window.matchMedia("(max-width: 60rem)").matches
     ) {
-      const details = document.querySelector<HTMLDetailsElement>(
-        ".left-sidebar > details",
-      );
-      if (details) details.open = false;
+      window.dispatchEvent(new Event("sidebar-menu:close"));
     }
     window.addEventListener("frame:navigated", sync);
     return () => window.removeEventListener("frame:navigated", sync);
@@ -539,8 +533,10 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // and to the site header's empty ground alone — the
   // header stands at the article's head, and a tap on
   // its bare part is the same turning back — because
-  // there the frame's other parts carry the layers'
-  // own dealings (see lib/layers.ts). Neither screen
+  // there the frame's other parts carry their own
+  // dealings: the bottom bar works its buttons, and the
+  // menu's drawer stands over the article with a
+  // dismissal of its own. Neither screen
   // dismisses on a tap on something that acts — a link
   // above all, a button, a field, the header's own home
   // link and language button among them — which is that
@@ -553,15 +549,16 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // standing — the reader is reading the page alongside
   // it, not turning away from the window. (A scrollbar
   // drag gives the page no press at all, and leaves it
-  // standing likewise.) Two layers standing over the
-  // article close one at a time, the one opened most
-  // recently first (see lib/layers.ts): while the narrow
-  // screen's menu drawer is open, a tap on the article
-  // puts this window away only if the window was opened
-  // after the drawer — if the drawer is the more recent,
-  // the tap is the drawer's, and its own dismissal takes
-  // it on the click that follows. A second tap, with the
-  // more recent layer already gone, puts the other away.
+  // standing likewise.) Two layers can stand over the
+  // article at once — this window and the menu's drawer
+  // (see TocDrawer) — and a press puts away one of them:
+  // the drawer takes its own dismissal on the press
+  // itself, so a press that began with the drawer
+  // standing is the drawer's, and this window leaves it
+  // alone, noting whether the drawer stood when the
+  // press began — by the release that judges the tap,
+  // the drawer is already gone. A second press, with the
+  // drawer gone, puts the window away.
   // Presses inside the window are
   // the window's own business, and the bottom bar's AI
   // button is left alone — it toggles the window itself,
@@ -576,9 +573,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       scrollY: number;
       time: number;
     } | null = null;
+    let menuStoodAtPress = false;
     const eligible = (target: EventTarget | null): boolean => {
       if (!(target instanceof Element)) return false;
       if (target.closest(".ai-assistant__window")) return false;
+      if (target.closest(".sidebar-drawer__popup")) return false;
       if (target.closest(".bottom-bar__button--ai")) return false;
       if (
         target.closest(
@@ -596,6 +595,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       return true;
     };
     const onPointerDown = (event: PointerEvent) => {
+      menuStoodAtPress = !!document.querySelector(".sidebar-drawer__popup");
       if (event.button !== 0 || !eligible(event.target)) {
         tapStart = null;
         return;
@@ -615,13 +615,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       if (Math.abs(event.clientX - start.x) > 10) return;
       if (Math.abs(event.clientY - start.y) > 10) return;
       if (window.scrollY !== start.scrollY) return;
-      if (
-        document.querySelector<HTMLDetailsElement>(".left-sidebar > details")
-          ?.open &&
-        mostRecentLayer() !== "ai"
-      ) {
-        return;
-      }
+      if (menuStoodAtPress) return;
       minimizeAssistant();
     };
     const onPointerCancel = () => {
