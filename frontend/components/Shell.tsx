@@ -35,7 +35,11 @@ import MenuDismiss from "./MenuDismiss";
 // stands on a wide screen, the sidebar leaves the layout
 // and the menu is a drawer again; its control there is
 // the article title's own button (see TocToggle), as the
-// bottom bar's button is on a narrow screen. The summary
+// bottom bar's button is on a narrow screen. Where the
+// menu is a drawer it also carries a close button of its
+// own, in a bar at the head of its panel: the button is
+// markup, and the frame works it (see BottomBar), as it
+// works the title's toggle. The summary
 // is the menu's name and nothing more: the stylesheet
 // never shows it, at either width. A page whose
 // sidebar would be empty — an article with no headings for
@@ -56,6 +60,7 @@ type Props = {
   aiStrings: AiStrings;
   leftSidebar?: ReactNode;
   leftSidebarLabel: string;
+  leftSidebarCloseLabel: string;
   homeLabel: string;
   footer: FooterData;
   children: ReactNode;
@@ -69,6 +74,7 @@ export default function Shell({
   aiStrings,
   leftSidebar,
   leftSidebarLabel,
+  leftSidebarCloseLabel,
   homeLabel,
   footer,
   children,
@@ -128,6 +134,24 @@ export default function Shell({
           {leftSidebar && (
             <details>
               <summary>{leftSidebarLabel}</summary>
+              <div className="left-sidebar__bar">
+                <button
+                  type="button"
+                  className="left-sidebar__close"
+                  aria-label={leftSidebarCloseLabel}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               {leftSidebar}
             </details>
           )}

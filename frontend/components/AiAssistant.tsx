@@ -40,8 +40,8 @@ import PandaIcon from "./PandaIcon";
 // itself. The divider at the panel's edge gives the reader
 // the column's width. From the dock the box can be floated
 // — the window it was before, dragged by any empty part,
-// resized from any edge or corner, centred from its
-// heading — and docked back; and it can be made the whole
+// resized from any edge or corner — and docked back; and
+// it can be made the whole
 // screen, which on the home page is the way a reader who
 // came only for the assistant uses it. On a narrow screen
 // there is no dock: the box opens as the floating window,
@@ -263,8 +263,7 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
   // the window, and the window takes about seventy-two
   // hundredths of that part's width and height — large,
   // but plainly a window over the page, not the page
-  // itself. The centred size is still there, from the
-  // heading's centre button, when the reader asks for it.
+  // itself.
   // The narrow screen's bottom bar, measured where it
   // stands: the window's places on a narrow screen are
   // all in the part of the screen above it.
@@ -487,6 +486,25 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     };
     window.addEventListener("ai-assistant:toggle", onToggle);
     return () => window.removeEventListener("ai-assistant:toggle", onToggle);
+  });
+
+  // The article header's launcher is worked from here,
+  // not from the button itself: the article is swapped
+  // for the next page's at every in-app navigation, and
+  // the button swapped in with it is inert (see
+  // AiLauncher). A click on the button's class is the
+  // same ask as the toggle event above. The listener is
+  // renewed after every render, for the same reason.
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest(".ai-launcher")) {
+        if (placement === "minimized") openAssistant();
+        else minimizeAssistant();
+      }
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
   });
 
   // The bar's home button, pressed on the home page
@@ -738,55 +756,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
       window.addEventListener("pointercancel", onUp);
     };
 
-  // The centred window's place and size on a wide
-  // screen: over the page's central column, a margin in
-  // from the screen's top and bottom. The column is
-  // where the reading happens; the
-  // window covers it, centred, and no more of the page
-  // than that.
-  const columnRect = (): WindowRect => {
-    const margin = 24;
-    const main = document.querySelector(".main")?.getBoundingClientRect();
-    if (!main) {
-      return {
-        left: margin,
-        top: margin,
-        width: window.innerWidth - margin * 2,
-        height: window.innerHeight - margin * 2,
-      };
-    }
-    return {
-      left: main.left,
-      top: margin,
-      width: main.width,
-      height: window.innerHeight - margin * 2,
-    };
-  };
-
-  // The heading's other button takes the window to that
-  // fixed size and centres it there: larger than the
-  // default size, and the same whatever size the reader
-  // had given the window. It is always there, beside the
-  // minimize button: the window has no modes for it to
-  // change with. On a narrow screen the centred size is
-  // the whole of the screen above the bottom bar, a
-  // margin in from every edge of that part: the bar is
-  // the screen's own furniture and stays clear, as it
-  // does for the window's default place.
-  const centerWindow = () => {
-    if (window.matchMedia("(max-width: 60rem)").matches) {
-      const margin = 6;
-      setRect({
-        left: margin,
-        top: margin,
-        width: window.innerWidth - margin * 2,
-        height: window.innerHeight - bottomBarHeight() - margin * 2,
-      });
-      return;
-    }
-    setRect(columnRect());
-  };
-
   // The heading's controls and the conversation are the
   // same in every form the box takes; only the controls
   // differ, as the forms do. The icons are Lucide's, in
@@ -801,12 +770,6 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
     "aria-hidden": true,
   } as const;
 
-  const centerIcon = (
-    <svg {...iconProps}>
-      <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" />
-      <path d="M11 11h2v2h-2v-2" fill="currentColor" stroke="none" />
-    </svg>
-  );
   const minimizeIcon = (
     <svg {...iconProps}>
       <path d="M6 9l6 6 6-6" />
@@ -932,7 +895,10 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
                   )}
                 </>
               ) : (
-                controlButton("Dock", dockAssistant, dockIcon)
+                <>
+                  {controlButton("Float", floatAssistant, floatIcon)}
+                  {controlButton("Dock", dockAssistant, dockIcon)}
+                </>
               )}
               {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
             </>,
@@ -965,7 +931,11 @@ export default function AiAssistant({ strings }: { strings: AiStrings }) {
           {heading(
             <>
               {!narrowScreen && controlButton("Dock", dockAssistant, dockIcon)}
-              {controlButton("Center", centerWindow, centerIcon)}
+              {controlButton(
+                "Full screen",
+                fullScreenAssistant,
+                fullScreenIcon,
+              )}
               {controlButton("Minimize", minimizeAssistant, minimizeIcon)}
             </>,
           )}

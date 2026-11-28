@@ -258,6 +258,33 @@ body {
   margin-top: 0;
 }
 
+/* The menu drawer's own close button, in a bar at the
+   head of its panel: the bar stands only where the menu
+   is a drawer — the narrow layout below, and the wide
+   layout at the end of this file while the AI panel
+   stands. Where the sidebar stands in the layout there
+   is nothing to close, and the bar is not shown. The
+   button is markup: the frame works it (see BottomBar),
+   as it works the article title's toggle. */
+.left-sidebar__bar {
+  display: none;
+}
+
+.left-sidebar__close {
+  padding: 0.35rem;
+  border: none;
+  background: none;
+  color: inherit;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.left-sidebar__close svg {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 /* The lists in the left sidebar — the article list and the
    table of contents — are navigation, not bulleted content:
    no markers, and no marker indent either. */
@@ -395,8 +422,8 @@ body {
    bottom. Floated, the box is the window it was: it
    leaves the sidebar and floats over the page, dragged
    by any empty part, resized at any edge or corner,
-   centred from its heading, growing out of its own
-   bottom corner as it opens; minimizing it keeps where
+   growing out of its own bottom corner as it opens;
+   minimizing it keeps where
    it was, so it opens again where it left off. The form
    is rendered once the box's script has mounted: without
    script there is no form, rather than a form that does
@@ -417,6 +444,16 @@ body {
   display: block;
   width: 1.5rem;
   height: 1.5rem;
+}
+
+/* While the assistant stands, in any of its forms, the
+   launcher's panda is filled in: the pressed state the
+   assistant writes onto the button carries the filled
+   look, as the bottom bar's home icon is filled on the
+   home page. Put away, the mark is the line drawing
+   again. */
+.ai-launcher[aria-pressed="true"] svg {
+  fill: currentColor;
 }
 
 /* The menu's toggle at the article title's head (see
@@ -853,6 +890,13 @@ body {
     display: none;
   }
 
+  /* The drawer's own close button stands at the head of
+     its panel. */
+  .left-sidebar__bar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
   /* The menu is a menu here: a closed one hides its
      content, against the wide screens' rule above. The
      rule is for the closed state only — an open menu shows
@@ -1051,6 +1095,13 @@ body {
     z-index: 40;
   }
 
+  /* The drawer's own close button stands at the head of
+     its panel here as on a narrow screen. */
+  body.ai-open .left-sidebar__bar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
   /* The folded menu is a menu: a closed one hides its
      content, against the wide screens' rule above. */
   body.ai-open .left-sidebar > details:not([open])::details-content {
@@ -1135,9 +1186,13 @@ body {
 
   /* The full screen: the page's own regions go, and the
      panel takes the whole screen. The conversation keeps
-     the article's own measure, centred, however wide the
-     screen is: a wider line is hard on the eyes here as
-     much as in an article. */
+     a measure of 66ch, centred, however wide the screen
+     is — the article's own count of characters, in the
+     conversation's own type. What is easy on the eyes is
+     the count, not the width in millimetres: a ch is by
+     design the width of the type it is measured in, so
+     the same 66ch is wider here in millimetres than in
+     the article's serif, and that is as it should be. */
   body.ai-fullscreen .header,
   body.ai-fullscreen .main,
   body.ai-fullscreen .footer,
@@ -1155,14 +1210,27 @@ body {
     justify-self: stretch;
   }
 
-  /* The measure is taken on the panel itself, as
-     padding: the panel's type is the page's own serif,
-     so its 66ch is the article's 66ch. Taken on the
-     conversation's elements, whose type is sans, the
-     same 66ch would stretch wider — a ch is the width
-     of the type it is measured in. */
+  /* The column is measured once, on the panel, in the
+     conversation's own type: the panel takes the
+     conversation's sans while it fills the screen, so
+     the 66ch its padding leaves is the conversation's
+     66ch, and every part of the panel — heading,
+     conversation, status, form — stands in that one
+     column, their edges together. Measured on each part
+     in its own type instead, the parts in the page's
+     serif would stand narrower than the conversation,
+     and the heading's buttons would sit in from the
+     column's edge. The heading's title and the status
+     keep the page's serif, by the rule below: only the
+     measure is the conversation's. */
   body.ai-fullscreen .ai-assistant__panel {
     border-inline-start: none;
+    font-family: sans-serif;
     padding-inline: max(0.75rem, calc((100% - var(--line-length)) / 2));
+  }
+
+  body.ai-fullscreen .ai-assistant__title,
+  body.ai-fullscreen .ai-assistant__status {
+    font-family: "Palatino Linotype", Palatino, serif;
   }
 }

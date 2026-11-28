@@ -121,10 +121,44 @@ export default function BottomBar({
       ) {
         setMenuOpen(details.open);
         if (details.open) noteLayerOpened("menu");
+        // The article title's own menu button (see
+        // TocToggle) reports the same state: write it onto
+        // whichever copy stands, as the swap writes the
+        // frame's other state after a navigation.
+        document
+          .querySelector(".toc-toggle")
+          ?.setAttribute("aria-expanded", String(details.open));
       }
     };
     document.addEventListener("toggle", onToggle, true);
     return () => document.removeEventListener("toggle", onToggle, true);
+  }, []);
+
+  // The menu's other buttons are worked from here as
+  // well: the article title's toggle (see TocToggle) and
+  // the drawer's own close button (see Shell). The
+  // article is swapped for the next page's at every
+  // in-app navigation, and a button swapped in with it is
+  // inert; the sidebar itself is swapped too. A click on
+  // the title button's class opens or closes the menu,
+  // as this bar's own Contents button does; a click on
+  // the close button's class closes it.
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const details = document.querySelector<HTMLDetailsElement>(
+        ".left-sidebar > details",
+      );
+      if (!details) return;
+      if (target.closest(".left-sidebar__close")) {
+        details.open = false;
+      } else if (target.closest(".toc-toggle")) {
+        details.open = !details.open;
+      }
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
   }, []);
 
   // The bar's opacity, driven by the scroll position's
